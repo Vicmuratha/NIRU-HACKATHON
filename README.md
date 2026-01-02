@@ -435,15 +435,6 @@ python -m unittest tests/test_image.py
 python -m unittest -v tests/
 ```
 
-## 🎓 Demo & Presentation Tips
-
-### For the Hackathon Judges:
-1. **Start with Impact Story**: Show real examples of deepfakes affecting Kenya
-2. **Live Demo**: Upload authentic vs. manipulated content
-3. **Technical Deep Dive**: Explain AI models and detection techniques
-4. **Scalability**: Demonstrate handling of multiple requests
-5. **Future Roadmap**: Video analysis, mobile app, API partnerships
-
 ### Demo Script:
 1. Show dashboard (2 min)
 2. Upload authentic image → low risk score (1 min)
@@ -454,16 +445,6 @@ python -m unittest -v tests/
 7. Explain technical architecture (2 min)
 8. Q&A (3 min)
 
-## 🏆 Winning Factors
-
-- ✅ **Multimodal Analysis**: Images, Audio, Text
-- ✅ **Production Ready**: Complete backend + frontend
-- ✅ **Locally Relevant**: Designed for Kenyan context
-- ✅ **Scalable Architecture**: Handles high traffic
-- ✅ **Real Impact**: Addresses national security concerns
-- ✅ **Easy to Use**: Intuitive UI for all users
-- ✅ **Extensible**: Modular design for future features
-- ✅ **Well Documented**: Complete setup and API docs
 
 ## 📞 Support & Troubleshooting
 
@@ -490,17 +471,6 @@ brew install ffmpeg
 export CUDA_VISIBLE_DEVICES=""
 ```
 
-## 🎯 Next Steps After Winning
 
-- Partner with NCIC, IEBC for deployment
-- Mobile app development (iOS/Android)
-- WhatsApp bot integration
-- Browser extension for real-time verification
-- Training workshops for journalists
-- API partnerships with media houses
 
----
 
-**Good luck with your Jaseci Hackathon! 🚀**
-
-This comprehensive solution demonstrates technical excellence, practical impact, and scalability—exactly what judges look for in a winning project.
