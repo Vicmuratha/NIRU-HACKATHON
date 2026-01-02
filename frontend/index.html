@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafEye - AI-Powered Deepfake Detection Platform</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <div class="shield-icon">🛡️</div>
+                </div>
+                <div class="brand">
+                    <h1>SafEye</h1>
+                    <p>AI-Powered Deepfake Detection Platform</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-icon">⚡</span>
+                    <span>Real-Time Analysis</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">📈</span>
+                    <span>99.2% Accuracy</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats Bar -->
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p class="stat-label">Content Analyzed</p>
+                        <p class="stat-value">12,847</p>
+                    </div>
+                    <div class="stat-icon">🖼️</div>
+                </div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p class="stat-label">Authentic</p>
+                        <p class="stat-value">9,234</p>
+                    </div>
+                    <div class="stat-icon">✅</div>
+                </div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p class="stat-label">Manipulated</p>
+                        <p class="stat-value">3,613</p>
+                    </div>
+                    <div class="stat-icon">❌</div>
+                </div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <p class="stat-label">Accuracy Rate</p>
+                        <p class="stat-value">99.2%</p>
+                    </div>
+                    <div class="stat-icon">🛡️</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h2><span class="upload-icon">📤</span> Verify Content</h2>
+
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-button active" onclick="switchTab('upload')">📤 Upload File</button>
+                    <button class="tab-button" onclick="switchTab('text')">📝 Analyze Text</button>
+                </div>
+
+                <div id="upload-tab" class="tab-content active">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon-large">📤</div>
+                        <p class="upload-text">Drop files here or click to upload</p>
+                        <p class="upload-subtext">Supports images, audio, and video files</p>
+                        <div class="file-types">
+                            <span class="file-type">🖼️ Images</span>
+                            <span class="file-type">🎵 Audio</span>
+                            <span class="file-type">🎥 Video</span>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*,audio/*,video/*" style="display: none;">
+                    <div id="selectedFile" class="selected-file" style="display: none;"></div>
+                </div>
+
+                <div id="text-tab" class="tab-content">
+                    <textarea id="textInput" placeholder="Paste text content, social media posts, or messages to verify..."></textarea>
+                    <button id="analyzeTextBtn" class="analyze-btn" onclick="analyzeText()">🔍 Analyze Text</button>
+                </div>
+
+                <!-- Progress Section -->
+                <div id="progressSection" class="progress-section" style="display: none;">
+                    <div class="progress-spinner"></div>
+                    <span class="progress-text">Analyzing content...</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <p>✓ Extracting features...</p>
+                        <p>✓ Running AI models...</p>
+                        <p class="current-step">→ Generating report...</p>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="resultsSection" class="results-section" style="display: none;">
+                    <div id="resultCard" class="result-card">
+                        <div class="result-header">
+                            <div class="result-info">
+                                <h3 id="resultTitle"></h3>
+                                <p id="resultConfidence"></p>
+                            </div>
+                            <div id="resultIcon" class="result-icon"></div>
+                        </div>
+                        <div class="risk-meter">
+                            <div class="risk-labels">
+                                <span>Risk Score</span>
+                                <span id="riskValue"></span>
+                            </div>
+                            <div class="risk-bar">
+                                <div id="riskFill" class="risk-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="findings-card">
+                        <h4><span class="info-icon">ℹ️</span> Analysis Findings</h4>
+                        <ul id="findingsList"></ul>
+                    </div>
+
+                    <div class="details-card">
+                        <h4>Technical Details</h4>
+                        <div id="detailsGrid" class="details-grid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- How it works -->
+                <div class="sidebar-card">
+                    <h3>How SafEye Works</h3>
+                    <div class="how-it-works">
+                        <div class="step">
+                            <div class="step-icon">🖼️</div>
+                            <div>
+                                <p class="step-title">Image Analysis</p>
+                                <p class="step-desc">ELA, CNN classifiers, and metadata verification</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">🎵</div>
+                            <div>
+                                <p class="step-title">Audio Detection</p>
+                                <p class="step-desc">Spectrogram analysis and anti-spoofing models</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">📝</div>
+                            <div>
+                                <p class="step-title">Text Verification</p>
+                                <p class="step-desc">NLP models and claim verification</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent detections -->
+                <div class="sidebar-card">
+                    <h3>Recent Detections</h3>
+                    <div class="recent-detections">
+                        <div class="detection-item high-risk">
+                            <span class="detection-type">Deepfake Audio</span>
+                            <span class="detection-risk">87% Risk</span>
+                        </div>
+                        <div class="detection-item low-risk">
+                            <span class="detection-type">Authentic Image</span>
+                            <span class="detection-risk">12% Risk</span>
+                        </div>
+                        <div class="detection-item medium-risk">
+                            <span class="detection-type">Suspicious Text</span>
+                            <span class="detection-risk">56% Risk</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning -->
+                <div class="warning-card">
+                    <div class="warning-header">
+                        <span class="warning-icon">⚠️</span>
+                        <h4>Stay Safe Online</h4>
+                    </div>
+                    <p>Always verify suspicious content before sharing. Trust but verify.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
