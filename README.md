@@ -1,6 +1,6 @@
 # SafEye - AI-Powered Deepfake Detection Platform
 
-SafEye is a comprehensive AI-powered platform for detecting deepfakes, manipulated media, and misinformation across images, audio, and text content. Built for the Jaseci Hackathon, this platform provides real-time analysis with 99.2% accuracy.
+SafEye is a comprehensive AI-powered platform for detecting deepfakes, manipulated media, and misinformation across images, audio, and text content.This platform provides real-time analysis with 99.2% accuracy.
 
 ## 🚀 Features
 
