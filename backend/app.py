@@ -179,7 +179,7 @@ class ImageDeepfakeDetector:
         return results
 
 
-# ============== AUDIO DEEPFAKE DETECTION ==============
+## AUDIO DEEPFAKE DETECTION
 
 class AudioDeepfakeDetector:
     def __init__(self):
@@ -301,7 +301,7 @@ class AudioDeepfakeDetector:
         return results
 
 
-# ============== TEXT MISINFORMATION DETECTION ==============
+# TEXT MISINFORMATION DETECTION
 
 class TextMisinformationDetector:
     def __init__(self):
@@ -396,7 +396,7 @@ audio_detector = AudioDeepfakeDetector()
 text_detector = TextMisinformationDetector()
 
 
-# ============== API ENDPOINTS ==============
+#API ENDPOINTS 
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
