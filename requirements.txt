@@ -1,12 +1,29 @@
-flask==3.0.0
-flask-cors==4.0.0
-numpy>=1.24.4
-pillow>=10.1.0
-librosa>=0.10.1
-opencv-python>=4.8.1.78
-torch>=2.1.0
-torchvision>=0.16.0
-transformers>=4.35.0
-exifread>=3.0.0
-scipy>=1.11.4
-werkzeug>=3.0.1
+flask
+flask-cors
+flask-jwt-extended
+numpy
+pillow
+librosa
+opencv-python
+torch
+torchvision
+transformers
+deepface
+exifread
+scipy
+werkzeug
+opencv-python  # Added for sharpness detection in ImageDeepfakeDetector
+# tensorflow
+# Note: Keep tensorflow commented out initially.
+# DeepFace runs on either Torch or TF. Installing both on Python 3.13 is risky.
+# If your app fails without it, uncomment 'tensorflow' later.
+
+# Enhanced detection features added:
+# - Noise pattern analysis using scipy.fft
+# - Color distribution analysis using scipy.stats.entropy
+# - Voice consistency analysis using librosa MFCC segmentation
+# - Breathing pattern detection using librosa RMS
+# - Ensemble text classification using multiple transformer models
+# - Linguistic pattern analysis for manipulation detection
+# - Cross-modal verification for multi-file analysis
+# - Logging and analytics dashboard

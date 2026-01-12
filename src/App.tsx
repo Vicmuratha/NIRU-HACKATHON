@@ -22,68 +22,98 @@ const SafEyePlatform = () => {
     setResult(null);
 
     try {
-      const API_BASE_URL = 'http://localhost:5000/api';
-
       if (type === 'text') {
-        // Analyze text
-        const response = await fetch(`${API_BASE_URL}/analyze/text`, {
+        // Handle text analysis
+        const response = await fetch('/api/analyze/text', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ text: content })
+          body: JSON.stringify({ text: content }),
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // Try to get error message from response
+          let errorMessage = `API error: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || errorMessage;
+            console.error('API Error Details:', errorData);
+          } catch (e) {
+            // If response is not JSON, use status text
+            errorMessage = response.statusText || errorMessage;
+          }
+          throw new Error(errorMessage);
         }
 
         const apiResult = await response.json();
-        setResult({
+
+        const result: AnalysisResult = {
           authentic: apiResult.is_authentic,
-          confidence: apiResult.confidence,
-          riskScore: apiResult.risk_score,
-          findings: apiResult.findings,
-          details: apiResult.details
-        });
-      } else {
-        // Analyze file
+          confidence: apiResult.confidence || 0.8,
+          riskScore: apiResult.risk_score || 0,
+          findings: apiResult.findings || [],
+          details: apiResult.details || {}
+        };
+
+        setResult(result);
+      } else if (content instanceof File) {
+        // Handle file upload (image or audio)
         const formData = new FormData();
         formData.append('file', content);
 
-        let endpoint;
-        if (type === 'image') {
-          endpoint = '/analyze/image';
-        } else if (type === 'audio') {
-          endpoint = '/analyze/audio';
-        } else {
-          throw new Error('Unsupported file type');
-        }
-
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        const endpoint = content.type.startsWith('image/') ? '/api/analyze/image' : '/api/analyze/audio';
+        const response = await fetch(endpoint, {
           method: 'POST',
-          body: formData
+          body: formData,
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          // Try to get error message from response
+          let errorMessage = `API error: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || errorMessage;
+            console.error('API Error Details:', errorData);
+          } catch (e) {
+            // If response is not JSON, use status text
+            errorMessage = response.statusText || errorMessage;
+          }
+          throw new Error(errorMessage);
         }
 
         const apiResult = await response.json();
-        setResult({
+
+        const result: AnalysisResult = {
           authentic: apiResult.is_authentic,
-          confidence: apiResult.confidence,
-          riskScore: apiResult.risk_score,
-          findings: apiResult.findings,
-          details: apiResult.details
-        });
+          confidence: apiResult.confidence || 0.8,
+          riskScore: apiResult.risk_score || 0,
+          findings: apiResult.findings || [],
+          details: apiResult.details || {}
+        };
+
+        setResult(result);
       }
     } catch (error) {
       console.error('Analysis error:', error);
-      alert('Error analyzing content. Please try again.');
+      
+      // Try to get more detailed error from response
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // If it's a fetch error, try to get the response body
+        if (error.message.includes('API error')) {
+          // The error message should contain the status code
+          errorMessage = `Server error: ${error.message}`;
+        }
+      }
+      
+      // Show error to user with more details
+      alert(`Analysis failed: ${errorMessage}\n\nPlease check the browser console for more details.`);
+    } finally {
+      setAnalyzing(false);
     }
-
-    setAnalyzing(false);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
