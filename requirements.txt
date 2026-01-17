@@ -12,7 +12,7 @@ deepface
 exifread
 scipy
 werkzeug
-opencv-python  # Added for sharpness detection in ImageDeepfakeDetector
+gunicorn
 # tensorflow
 # Note: Keep tensorflow commented out initially.
 # DeepFace runs on either Torch or TF. Installing both on Python 3.13 is risky.
