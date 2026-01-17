@@ -1,4 +1,5 @@
-# SafEye - AI-Powered Deepfake Detection Platform     ***STILL IN DEVELOPMENT***
+# SafEye - AI-Powered Deepfake Detection Platform     
+***STILL IN DEVELOPMENT***
 
 SafEye is a comprehensive AI-powered platform for detecting deepfakes, manipulated media, and misinformation across images, audio, and text content.This platform provides real-time analysis with 99.2% accuracy.
 
