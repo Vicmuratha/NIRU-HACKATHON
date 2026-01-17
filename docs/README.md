@@ -1,19 +1,81 @@
 # SafEye - AI-Powered Deepfake Detection Platform     
 ***STILL IN DEVELOPMENT***
 
-SafEye is a comprehensive AI-powered platform for detecting deepfakes, manipulated media, and misinformation across images, audio, and text content.This platform provides real-time analysis with 99.2% accuracy.
+SafEye is a comprehensive AI-powered platform for detecting deepfakes, manipulated media, and misinformation across images, audio, and text content. This platform provides real-time analysis with 99.2% accuracy.
 
-# 🚀 Features
+## 🚀 Quick Start
+
+### Clone and Setup
+```bash
+git clone https://github.com/yourusername/NIRU-HACKATHON.git
+cd NIRU-HACKATHON
+
+# Download AI models (required)
+python models/download_models.py
+
+# Install dependencies
+pip install -r requirements.txt
+npm install
+
+# Start the application
+python app.py              # Backend on http://localhost:5000
+npm run dev               # Frontend on http://localhost:3000
+```
+
+## 📁 Project Structure
+
+```
+NIRU-HACKATHON/
+│
+├── backend/               # Python Flask backend
+│   └── app.py            # Main API server
+├── models/               # AI models (download required)
+│   ├── download_models.py # Model downloader script
+│   ├── audio_model/      # Audio detection models
+│   ├── text_model/       # Text detection models
+│   └── best_deepfake_detector.pth
+├── data/                 # Runtime data (ignored by git)
+│   └── detection_log.json
+├── docs/                 # Documentation
+│   └── README.md
+├── src/                  # React frontend source
+├── tests/                # Unit tests
+├── uploads/              # Temporary uploads (ignored)
+├── index.html           # Vite entry point
+├── package.json         # Frontend dependencies
+├── requirements.txt     # Backend dependencies
+└── .gitignore          # Git ignore rules
+```
+
+## 🧪 Features
 
 - **Multimodal Detection**: Analyze images, audio, and text content
 - **Real-time Analysis**: Instant results with confidence scores
 - **Advanced AI Models**: Uses state-of-the-art deep learning techniques
-- **User-friendly Interface**: Modern web interface with drag-and-drop functionality
-- **API-first Design**: RESTful API for easy integration
-- **Production Ready**: Scalable architecture with Docker support
+- **Modern React UI**: Beautiful interface with drag-and-drop functionality
+- **RESTful API**: Easy integration with other systems
+- **Kenya-Focused**: Specialized detection for local threats and scams
 
-## 📋 Requirements
+## ⚠️ Important Notes for GitHub Users
 
+### Large Model Files
+The AI models are **not included** in the repository due to size constraints:
+- Audio model: ~361MB
+- Text model: ~704MB
+- Image model: ~47MB
+- **Total: ~1.1GB**
+
+### Model Setup Required
+After cloning, run the model downloader:
+```bash
+python models/download_models.py
+```
+
+**Note**: You'll need to update the download URLs in `download_models.py` with actual model hosting locations (GitHub releases, cloud storage, etc.).
+
+## 📋 System Requirements
+
+### Python Dependencies
 ```
 flask==3.0.0
 flask-cors==4.0.0
@@ -29,6 +91,14 @@ exifread==3.0.0
 scipy==1.11.4
 werkzeug==3.0.1
 tensorflow==2.15.0
+```
+
+### Node.js Dependencies
+```
+react==19.2.3
+vite==7.3.0
+lucide-react==0.562.0
+tailwindcss==3.4.0
 ```
 
 ## 🛠 Installation
@@ -471,7 +541,3 @@ brew install ffmpeg
 # Use CPU
 export CUDA_VISIBLE_DEVICES=""
 ```
-
-
-
-

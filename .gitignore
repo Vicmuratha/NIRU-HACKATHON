@@ -103,6 +103,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
+.env.*.local
 .venv
 env/
 venv/
@@ -339,11 +341,19 @@ typings/
 *.tmp
 *.temp
 
-# Uploaded files (assuming uploads are temporary)
+# Uploaded files (temporary runtime data)
 uploads/*
 !uploads/.gitkeep
 
-# Models (if large, ignore)
-models/*.pkl
-models/*.h5
-models/*.onnx
+# Runtime data and logs
+data/detection_log.json
+*.log
+
+# Large model files (use Git LFS or download scripts)
+models/*.pth
+models/*/*.safetensors
+models/*/*.bin
+models/*/*.h5
+models/*/*.pkl
+models/*/*.onnx
+models/*/*.pb

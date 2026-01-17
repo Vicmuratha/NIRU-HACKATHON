@@ -395,12 +395,6 @@ class UltraImageDetector:
                 findings.append(f"⚠️ Face texture: {face_result['assessment']}")
             else:
                 findings.append(f"✓ Natural face texture detected")
-=======
-            if face_result['risk'] > 60:
-                findings.append(f"⚠️ Face texture: {face_result['assessment']}")
-            else:
-                findings.append(f"✓ Natural face texture detected")
->>>>>>> 3dd3b3e (Update backend logic, remove old detectors, and sync styles)
 
         # === NOISE (3% weight) ===
         NOISE_WEIGHT = 0.03
@@ -670,14 +664,9 @@ class UltraAudioDetector:
                 }
             }
 
-            return result
->>>>>>> 3dd3b3e (Update backend logic, remove old detectors, and sync styles)
             print(f"  🎯 RESULT: Risk={risk}%, Authentic={result['is_authentic']}")
 
             return result
-=======
-            return result
->>>>>>> 3dd3b3e (Update backend logic, remove old detectors, and sync styles)
 
         except Exception as e:
             print(f"❌ Audio analysis error: {e}")
@@ -828,7 +817,7 @@ text_detector = UltraTextDetector()
 # ============== ACCURACY TRACKING ==============
 class AccuracyTracker:
     def __init__(self):
-        self.log_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'detection_log.json')
+        self.log_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'detection_log.json')
 
     def log_detection(self, media_type, result, actual_label=None):
         """Log each detection for accuracy tracking"""
@@ -1083,7 +1072,7 @@ def test_model():
     print()
 
     app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
->>>>>>> 3dd3b3e (Update backend logic, remove old detectors, and sync styles)
+
 if __name__ == '__main__':
     print("=" * 80)
     print("🇰🇪 SafEye - High-confidence AI-assisted Detection System")
@@ -1103,24 +1092,3 @@ if __name__ == '__main__':
     print()
 
     app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
-=======
-    print("=" * 80)
-    print("🇰🇪 SafEye - High-confidence AI-assisted Detection System")
-    print("=" * 80)
-    print("Version: 2.0 (Competition Grade)")
-    print("Detection Mode: High-confidence AI-assisted ensemble")
-    print("Kenya Focus: Protecting 50M+ Kenyans from digital deception")
-    print("-" * 80)
-    print("Use Cases:")
-    print("  ✓ Election 2027: Protect 20M+ voters from political deepfakes")
-    print("  ✓ M-Pesa Security: Secure 30M+ users from voice cloning scams")
-    print("  ✓ Diaspora Protection: Protect $400M+ monthly remittances")
-    print("  ✓ Media Integrity: Support 500+ Kenyan media outlets")
-    print("-" * 80)
-    print("🚀 Starting server on http://0.0.0.0:5000")
-    print("=" * 80)
-    print()
-
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
->>>>>>> 3dd3b3e (Update backend logic, remove old detectors, and sync styles)
-    print()
