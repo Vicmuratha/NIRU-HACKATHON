@@ -1,10 +1,14 @@
-SafEye - AI-Powered Deepfake Detection Platform
-STILL IN DEVELOPMENT
+# SafEye - AI-Powered Deepfake Detection Platform
+
+> STILL IN DEVELOPMENT
 
 SafEye is a comprehensive AI-powered platform for detecting deepfakes, manipulated media, and misinformation across images, audio, and text content. This platform provides real-time analysis with 99.2% accuracy.
 
-🚀 Quick Start
-Clone and Setup
+## 🚀 Quick Start
+
+### Clone and Setup
+
+```bash
 git clone https://github.com/yourusername/NIRU-HACKATHON.git
 cd NIRU-HACKATHON
 
@@ -18,7 +22,11 @@ npm install
 # Start the application
 python app.py              # Backend on http://localhost:5000
 npm run dev               # Frontend on http://localhost:3000
-📁 Project Structure
+```
+
+## 📁 Project Structure
+
+```
 NIRU-HACKATHON/
 │
 ├── backend/               # Python Flask backend
@@ -39,29 +47,43 @@ NIRU-HACKATHON/
 ├── package.json         # Frontend dependencies
 ├── requirements.txt     # Backend dependencies
 └── .gitignore          # Git ignore rules
-🧪 Features
-Multimodal Detection: Analyze images, audio, and text content
-Real-time Analysis: Instant results with confidence scores
-Advanced AI Models: Uses state-of-the-art deep learning techniques
-Modern React UI: Beautiful interface with drag-and-drop functionality
-RESTful API: Easy integration with other systems
-Kenya-Focused: Specialized detection for local threats and scams
-⚠️ Important Notes for GitHub Users
-Large Model Files
+```
+
+## 🧪 Features
+
+- **Multimodal Detection**: Analyze images, audio, and text content
+- **Real-time Analysis**: Instant results with confidence scores
+- **Advanced AI Models**: Uses state-of-the-art deep learning techniques
+- **Modern React UI**: Beautiful interface with drag-and-drop functionality
+- **RESTful API**: Easy integration with other systems
+- **Kenya-Focused**: Specialized detection for local threats and scams
+
+## ⚠️ Important Notes for GitHub Users
+
+### Large Model Files
+
 The AI models are not included in the repository due to size constraints:
 
-Audio model: ~361MB
-Text model: ~704MB
-Image model: ~47MB
-Total: ~1.1GB
-Model Setup Required
+- Audio model: ~361MB
+- Text model: ~704MB
+- Image model: ~47MB
+- **Total: ~1.1GB**
+
+### Model Setup Required
+
 After cloning, run the model downloader:
 
+```bash
 python models/download_models.py
-Note: You'll need to update the download URLs in download_models.py with actual model hosting locations (GitHub releases, cloud storage, etc.).
+```
 
-📋 System Requirements
-Python Dependencies
+> **Note**: You'll need to update the download URLs in `download_models.py` with actual model hosting locations (GitHub releases, cloud storage, etc.).
+
+## 📋 System Requirements
+
+### Python Dependencies
+
+```
 flask==3.0.0
 flask-cors==4.0.0
 numpy==1.24.3
@@ -76,27 +98,44 @@ exifread==3.0.0
 scipy==1.11.4
 werkzeug==3.0.1
 tensorflow==2.15.0
-Node.js Dependencies
+```
+
+### Node.js Dependencies
+
+```
 react==19.2.3
 vite==7.3.0
 lucide-react==0.562.0
 tailwindcss==3.4.0
-🛠 Installation
-System Prerequisites
-Ubuntu/Debian:
+```
+
+## 🛠 Installation
+
+### System Prerequisites
+
+#### Ubuntu/Debian:
+```bash
 sudo apt-get update
 sudo apt-get install -y python3-pip python3-dev
 sudo apt-get install -y libsndfile1 ffmpeg
 sudo apt-get install -y libsm6 libxext6 libxrender-dev
-MacOS:
+```
+
+#### MacOS:
+```bash
 brew install python@3.10
 brew install ffmpeg
 brew install portaudio
-Windows:
-Install Python 3.10+ from python.org
-Install Visual C++ Build Tools
-Install ffmpeg from ffmpeg.org
-Create Virtual Environment
+```
+
+#### Windows:
+- Install Python 3.10+ from python.org
+- Install Visual C++ Build Tools
+- Install ffmpeg from ffmpeg.org
+
+### Create Virtual Environment
+
+```bash
 # Create project directory
 mkdir safeye-platform
 cd safeye-platform
@@ -109,11 +148,20 @@ python3 -m venv venv
 source venv/bin/activate
 # On Windows:
 venv\Scripts\activate
-Install Dependencies
+```
+
+### Install Dependencies
+
+```bash
 pip install --upgrade pip
 pip install -r requirements.txt
-Download Pre-trained Models
-# Run this Python script to download models
+```
+
+### Download Pre-trained Models
+
+Run this Python script to download models:
+
+```python
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from deepface import DeepFace
@@ -128,7 +176,11 @@ print("Downloading face analysis models...")
 DeepFace.build_model("Facenet")
 
 print("All models downloaded successfully!")
-📁 Project Structure
+```
+
+## 📁 Project Structure
+
+```
 safeye-platform/
 │
 ├── app.py                 # Main Flask application
@@ -153,20 +205,34 @@ safeye-platform/
 │   └── test_text.py
 │
 └── README.md
-🎯 Running the Application
-Backend Server
+```
+
+## 🎯 Running the Application
+
+### Backend Server
+
+```bash
 # Start Flask backend
 python app.py
 
 # Server will run on http://localhost:5000
-Frontend (HTML/JS Version)
+```
+
+### Frontend (HTML/JS Version)
+
+```bash
 # Serve frontend files
 cd frontend
 python -m http.server 3000
 
 # Access at http://localhost:3000
-🧪 Testing the API
-Using cURL
+```
+
+## 🧪 Testing the API
+
+### Using cURL
+
+```bash
 # Test health endpoint
 curl http://localhost:5000/api/health
 
@@ -180,7 +246,11 @@ curl -X POST -F "file=@test_audio.mp3" http://localhost:5000/api/analyze/audio
 curl -X POST -H "Content-Type: application/json" \
   -d '{"text":"Breaking news! You wont believe what happened!"}' \
   http://localhost:5000/api/analyze/text
-Using Python
+```
+
+### Using Python
+
+```python
 import requests
 
 # Test image
@@ -192,19 +262,28 @@ with open('test_image.jpg', 'rb') as f:
 # Test text
 data = {'text': 'This is a test message'}
 response = requests.post('http://localhost:5000/api/analyze/text', json=data)
-print(response.json())
-⚙️ Configuration Options
-Environment Variables
-Create a .env file:
+    print(response.json())
+```
 
+## ⚙️ Configuration Options
+
+### Environment Variables
+
+Create a `.env` file:
+
+```bash
 FLASK_ENV=production
 FLASK_DEBUG=False
 MAX_FILE_SIZE=52428800
 UPLOAD_FOLDER=uploads
 SECRET_KEY=your-secret-key-here
-Advanced Configuration
-# In app.py, add these configurations:
+```
 
+### Advanced Configuration
+
+In `app.py`, add these configurations:
+
+```python
 app.config.update(
     MAX_CONTENT_LENGTH=50 * 1024 * 1024,  # 50MB
     UPLOAD_FOLDER='uploads',
@@ -212,8 +291,13 @@ app.config.update(
     SQLALCHEMY_DATABASE_URI='sqlite:///safeye.db',  # For production
     REDIS_URL='redis://localhost:6379/0',  # For caching
 )
-🐳 Docker Deployment
-Dockerfile
+```
+
+## 🐳 Docker Deployment
+
+### Dockerfile
+
+```dockerfile
 FROM python:3.10-slim
 
 WORKDIR /app
@@ -235,7 +319,11 @@ EXPOSE 5000
 
 # Run application
 CMD ["python", "app.py"]
-docker-compose.yml
+```
+
+### docker-compose.yml
+
+```yaml
 version: '3.8'
 services:
   safeye-api:
@@ -246,8 +334,13 @@ services:
       - ./uploads:/app/uploads
     environment:
       - FLASK_ENV=production
-🚀 Deployment Options
-Azure Deployment
+```
+
+## 🚀 Deployment Options
+
+### Azure Deployment
+
+```bash
 # Install Azure CLI
 az login
 
@@ -262,7 +355,11 @@ az webapp create --resource-group safeye-rg --plan safeye-plan --name safeye-api
 
 # Deploy code
 az webapp up --name safeye-api --resource-group safeye-rg
-AWS Deployment
+```
+
+### AWS Deployment
+
+```bash
 # Install AWS CLI and EB CLI
 pip install awsebcli
 
@@ -274,15 +371,24 @@ eb create safeye-env
 
 # Deploy
 eb deploy
-⚡ Performance Optimization
-Model Optimization
+```
+
+## ⚡ Performance Optimization
+
+### Model Optimization
+
+```python
 # Use quantization for faster inference
 import torch.quantization
 
 model = torch.quantization.quantize_dynamic(
     model, {torch.nn.Linear}, dtype=torch.qint8
 )
-Caching with Redis
+```
+
+### Caching with Redis
+
+```python
 import redis
 import json
 
@@ -298,7 +404,11 @@ def cache_result(file_hash, result):
         3600,  # 1 hour TTL
         json.dumps(result)
     )
-Async Processing with Celery
+```
+
+### Async Processing with Celery
+
+```python
 from celery import Celery
 
 celery = Celery('safeye', broker='redis://localhost:6379/0')
@@ -306,7 +416,11 @@ celery = Celery('safeye', broker='redis://localhost:6379/0')
 @celery.task
 def analyze_image_async(filepath):
     return image_detector.analyze_image(filepath)
-🛡️ Security Best Practices
+```
+
+## 🛡️ Security Best Practices
+
+```python
 # Add rate limiting
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -338,16 +452,25 @@ CORS(app, resources={
         "allow_headers": ["Content-Type"]
     }
 })
-📚 API Documentation
-Endpoints
-Health Check
-GET /api/health
-Response: {"status": "healthy"}
-Image Analysis
-POST /api/analyze/image
-Content-Type: multipart/form-data
-Body: file (image file)
-Response:
+```
+
+## 📚 API Documentation
+
+### Endpoints
+
+#### Health Check
+
+- **GET** `/api/health`
+- **Response**: `{"status": "healthy"}`
+
+#### Image Analysis
+
+- **POST** `/api/analyze/image`
+- **Content-Type**: `multipart/form-data`
+- **Body**: `file` (image file)
+- **Response**:
+
+```json
 {
   "risk_score": 23.5,
   "is_authentic": true,
@@ -359,11 +482,16 @@ Response:
     "metadata_integrity": "INTACT"
   }
 }
-Audio Analysis
-POST /api/analyze/audio
-Content-Type: multipart/form-data
-Body: file (audio file)
-Response:
+```
+
+#### Audio Analysis
+
+- **POST** `/api/analyze/audio`
+- **Content-Type**: `multipart/form-data`
+- **Body**: `file` (audio file)
+- **Response**:
+
+```json
 {
   "risk_score": 67.8,
   "is_authentic": false,
@@ -375,11 +503,16 @@ Response:
     "pitch_consistency": "ABNORMAL"
   }
 }
-Text Analysis
-POST /api/analyze/text
-Content-Type: application/json
-Body: {"text": "content to analyze"}
-Response:
+```
+
+#### Text Analysis
+
+- **POST** `/api/analyze/text`
+- **Content-Type**: `application/json`
+- **Body**: `{"text": "content to analyze"}`
+- **Response**:
+
+```json
 {
   "risk_score": 45.2,
   "is_authentic": true,
@@ -391,7 +524,11 @@ Response:
     "credibility": "HIGH"
   }
 }
-🧪 Running Tests
+```
+
+## 🧪 Running Tests
+
+```bash
 # Run all tests
 python -m unittest discover tests/
 
@@ -400,29 +537,49 @@ python -m unittest tests/test_image.py
 
 # Run with verbose output
 python -m unittest -v tests/
-Demo Script:
-Show dashboard (2 min)
-Upload authentic image → low risk score (1 min)
-Upload manipulated image → high risk score + analysis (2 min)
-Analyze suspicious audio clip (2 min)
-Check misinformation text (1 min)
-Show statistics and impact metrics (1 min)
-Explain technical architecture (2 min)
-Q&A (3 min)
-📞 Support & Troubleshooting
-Common Issues:
-Issue: Models not downloading
+```
 
-# Solution: Install with specific versions
+## 🎯 Demo Script
+
+- Show dashboard (2 min)
+- Upload authentic image → low risk score (1 min)
+- Upload manipulated image → high risk score + analysis (2 min)
+- Analyze suspicious audio clip (2 min)
+- Check misinformation text (1 min)
+- Show statistics and impact metrics (1 min)
+- Explain technical architecture (2 min)
+- Q&A (3 min)
+
+## 📞 Support & Troubleshooting
+
+### Common Issues
+
+#### Issue: Models not downloading
+
+**Solution**: Install with specific versions
+
+```bash
 pip install transformers==4.35.0 --no-cache-dir
-Issue: ffmpeg not found
+```
 
-# Ubuntu
+#### Issue: ffmpeg not found
+
+**Ubuntu**:
+
+```bash
 sudo apt-get install ffmpeg
+```
 
-# Mac
+**Mac**:
+
+```bash
 brew install ffmpeg
-Issue: CUDA errors
+```
 
-# Use CPU
+#### Issue: CUDA errors
+
+**Solution**: Use CPU
+
+```bash
 export CUDA_VISIBLE_DEVICES=""
+```
