@@ -6,9 +6,19 @@ import warnings
 import threading
 import uuid
 import json
+import logging
 from datetime import datetime
+from typing import Dict, Any, List, Optional
 import numpy as np
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Set environment variables for TensorFlow
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -45,7 +55,7 @@ class UltraImageDetector:
         self.ai_model = None
         self.ai_processor = None
         self.lock = threading.Lock()
-        print("🔧 Ultra-Accurate Image Detector initialized")
+        logger.info("🔧 Ultra-Accurate Image Detector initialized")
 
     def load_ai_model(self):
         """Lazy load the deep learning deepfake detection model"""
@@ -56,7 +66,7 @@ class UltraImageDetector:
                         from transformers import AutoModelForImageClassification, AutoImageProcessor
                         import torch
 
-                        print("📥 Loading deepfake detection AI model (this may take a minute)...")
+                        logger.info("📥 Loading deepfake detection AI model (this may take a minute)...")
                         self.ai_model = AutoModelForImageClassification.from_pretrained(
                             "dima806/deepfake_vs_real_image_detection"
                         )
@@ -64,10 +74,10 @@ class UltraImageDetector:
                             "dima806/deepfake_vs_real_image_detection"
                         )
                         self.ai_model.eval()
-                        print("✅ AI model loaded successfully")
+                        logger.info("✅ AI model loaded successfully")
                     except Exception as e:
-                        print(f"⚠️ Could not load AI model: {e}")
-                        print("   Falling back to heuristic-only detection")
+                        logger.warning(f"⚠️ Could not load AI model: {e}")
+                        logger.info("   Falling back to heuristic-only detection")
                         self.ai_model = "unavailable"
 
     def ai_deepfake_check(self, image_path):
@@ -107,7 +117,7 @@ class UltraImageDetector:
                 'real_confidence': real_confidence
             }
         except Exception as e:
-            print(f"❌ AI detection error: {e}")
+            logger.error(f"❌ AI detection error: {e}")
             return {'available': False, 'fake_confidence': 0}
 
     def error_level_analysis(self, image_path):
