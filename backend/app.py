@@ -36,10 +36,19 @@ CORS(app)
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'safeye-hackathon-secret-2026')
 jwt = JWTManager(app)
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+# Get the current working directory (which is /code)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Define folders relative to the current directory
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+DATA_FOLDER = os.path.join(BASE_DIR, 'data')
+
+# Create them if they don't exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(DATA_FOLDER, exist_ok=True)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ============== AUTHENTICATION ==============
 @app.route('/api/login', methods=['POST'])
@@ -1064,25 +1073,6 @@ def test_model():
 
 # ============== RUN SERVER ==============
 
-    print("=" * 80)
-    print("🇰🇪 SafEye - High-confidence AI-assisted Detection System")
-    print("=" * 80)
-    print("Version: 2.0 (Competition Grade)")
-    print("Detection Mode: High-confidence AI-assisted ensemble")
-    print("Kenya Focus: Protecting 50M+ Kenyans from digital deception")
-    print("-" * 80)
-    print("Use Cases:")
-    print("  ✓ Election 2027: Protect 20M+ voters from political deepfakes")
-    print("  ✓ M-Pesa Security: Secure 30M+ users from voice cloning scams")
-    print("  ✓ Diaspora Protection: Protect $400M+ monthly remittances")
-    print("  ✓ Media Integrity: Support 500+ Kenyan media outlets")
-    print("-" * 80)
-    print("🚀 Starting server on http://0.0.0.0:5000")
-    print("=" * 80)
-    print()
-
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
-
 if __name__ == '__main__':
     print("=" * 80)
     print("🇰🇪 SafEye - High-confidence AI-assisted Detection System")
@@ -1097,8 +1087,13 @@ if __name__ == '__main__':
     print("  ✓ Diaspora Protection: Protect $400M+ monthly remittances")
     print("  ✓ Media Integrity: Support 500+ Kenyan media outlets")
     print("-" * 80)
-    print("🚀 Starting server on http://0.0.0.0:5000")
+    print("🚀 Starting server on http://0.0.0.0:7860")
     print("=" * 80)
     print()
-
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+    
+    # Ensure data directory exists for logging
+    os.makedirs(os.path.join(os.path.dirname(__file__), 'data'), exist_ok=True)
+    
+    # MODIFICATION FOR HUGGING FACE:
+    # We use port 7860. The host must be 0.0.0.0
+    app.run(host='0.0.0.0', port=7860)
