@@ -2,403 +2,119 @@
 
 > STILL IN DEVELOPMENT
 
-SafEye is a comprehensive AI-powered platform for detecting deepfakes, manipulated media, and misinformation across images, audio, and text content. This platform provides real-time analysis with 99.2% accuracy.
+SafEye is a multi-modal deepfake and misinformation detection platform for images, audio, and text. It includes a React frontend, a detection API, and an OAuth-based demo auth server.
 
-## 🚀 Quick Start
+## ✅ What’s in this repo
 
-### Clone and Setup
+- **Frontend**: React + Vite UI in [src](src)
+- **Detection API**: Flask app with image, audio, and text analyzers in [backend/app.py](backend/app.py)
+- **Auth demo**: OAuth login server in [app.py](app.py)
+- **Models**: Local model assets under [models](models)
+
+## 🚀 Quick start (development)
+
+### 1) Install dependencies
 
 ```bash
-git clone https://github.com/yourusername/NIRU-HACKATHON.git
-cd NIRU-HACKATHON
-
-# Download AI models (required)
-python models/download_models.py
-
-# Install dependencies
 pip install -r requirements.txt
 npm install
-
-# Start the application
-python app.py              # Backend on http://localhost:5000
-npm run dev               # Frontend on http://localhost:3000
 ```
 
-## 📁 Project Structure
+### 2) Download model assets
+
+```bash
+python models/download_models.py
+```
+
+If your model URLs are not set, update them inside [models/download_models.py](models/download_models.py).
+
+### 3) Run the detection API
+
+```bash
+python backend/app.py
+```
+
+This starts the detection API on http://localhost:7860.
+
+### 4) Run the auth demo server (optional)
+
+```bash
+python app.py
+```
+
+This starts the auth server on http://localhost:5000.
+
+### 5) Run the frontend
+
+```bash
+npm run dev
+```
+
+The frontend runs on http://localhost:3000 and proxies `/api` to http://localhost:5000 as configured in [vite.config.ts](vite.config.ts). If you want the frontend to call the detection API on port 7860, update the proxy target in [vite.config.ts](vite.config.ts) or run the detection API on port 5000.
+
+## 🔌 API endpoints (detection service)
+
+From [backend/app.py](backend/app.py):
+
+- `GET /api/health`
+- `POST /api/analyze/image` (multipart file upload)
+- `POST /api/analyze/audio` (multipart file upload)
+- `POST /api/analyze/text` (JSON body with `text`)
+- `GET /api/analytics`
+- `GET /api/test-model`
+
+## 🔐 Auth demo routes (optional server)
+
+From [app.py](app.py):
+
+- `GET /login`, `GET /signup`
+- `GET /auth/google`, `GET /auth/github`
+- `GET /logout`
+- `GET /api/me`
+
+## ⚙️ Configuration
+
+Create a `.env` file in the repo root and set any of the following as needed:
+
+```
+FLASK_SECRET_KEY=your-secret-key
+FRONTEND_URL=http://localhost:3000
+JWT_SECRET_KEY=your-jwt-secret
+
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+```
+
+## 🧪 Tests
+
+Test files live in [tests](tests). You can run them with your preferred Python test runner.
+
+## 🐳 Docker
+
+The root [Dockerfile](Dockerfile) runs `app:app` via Gunicorn (auth demo server). If you want a container for the detection API, adjust the command to point at `backend.app:app` or run [backend/app.py](backend/app.py) directly.
+
+## 📦 Dependencies
+
+- Python dependencies are listed in [requirements.txt](requirements.txt)
+- Frontend dependencies are listed in [package.json](package.json)
+
+## 📁 Project layout
 
 ```
 NIRU-HACKATHON/
-│
-├── backend/               # Python Flask backend
-│   └── app.py            # Main API server
-├── models/               # AI models (download required)
-│   ├── download_models.py # Model downloader script
-│   ├── audio_model/      # Audio detection models
-│   ├── text_model/       # Text detection models
-│   └── best_deepfake_detector.pth
-├── data/                 # Runtime data (ignored by git)
-│   └── detection_log.json
-├── docs/                 # Documentation
-│   └── README.md
-├── src/                  # React frontend source
-├── tests/                # Unit tests
-├── uploads/              # Temporary uploads (ignored)
-├── index.html           # Vite entry point
-├── package.json         # Frontend dependencies
-├── requirements.txt     # Backend dependencies
-└── .gitignore          # Git ignore rules
+├── app.py                 # OAuth demo server
+├── backend/               # Detection API
+├── models/                # Model assets + downloader
+├── src/                   # React UI
+├── static/                # Static assets (CSS)
+├── templates/             # Auth pages
+├── tests/                 # Unit tests
+├── uploads/               # Temporary uploads
+└── data/                  # Detection logs
 ```
-
-## 🧪 Features
-
-- **Multimodal Detection**: Analyze images, audio, and text content
-- **Real-time Analysis**: Instant results with confidence scores
-- **Advanced AI Models**: Uses state-of-the-art deep learning techniques
-- **Modern React UI**: Beautiful interface with drag-and-drop functionality
-- **RESTful API**: Easy integration with other systems
-- **Kenya-Focused**: Specialized detection for local threats and scams
-
-## ⚠️ Important Notes for GitHub Users
-
-### Large Model Files
-
-The AI models are not included in the repository due to size constraints:
-
-- Audio model: ~361MB
-- Text model: ~704MB
-- Image model: ~47MB
-- **Total: ~1.1GB**
-
-### Model Setup Required
-
-After cloning, run the model downloader:
-
-```bash
-python models/download_models.py
-```
-
-> **Note**: You'll need to update the download URLs in `download_models.py` with actual model hosting locations (GitHub releases, cloud storage, etc.).
-
-## 📋 System Requirements
-
-### Python Dependencies
-
-```
-flask==3.0.0
-flask-cors==4.0.0
-numpy==1.24.3
-pillow==10.1.0
-librosa==0.10.1
-opencv-python==4.8.1.78
-torch==2.1.0
-torchvision==0.16.0
-transformers==4.35.0
-deepface==0.0.79
-exifread==3.0.0
-scipy==1.11.4
-werkzeug==3.0.1
-tensorflow==2.15.0
-```
-
-### Node.js Dependencies
-
-```
-react==19.2.3
-vite==7.3.0
-lucide-react==0.562.0
-tailwindcss==3.4.0
-```
-
-## 🛠 Installation
-
-### System Prerequisites
-
-#### Ubuntu/Debian:
-```bash
-sudo apt-get update
-sudo apt-get install -y python3-pip python3-dev
-sudo apt-get install -y libsndfile1 ffmpeg
-sudo apt-get install -y libsm6 libxext6 libxrender-dev
-```
-
-#### MacOS:
-```bash
-brew install python@3.10
-brew install ffmpeg
-brew install portaudio
-```
-
-#### Windows:
-- Install Python 3.10+ from python.org
-- Install Visual C++ Build Tools
-- Install ffmpeg from ffmpeg.org
-
-### Create Virtual Environment
-
-```bash
-# Create project directory
-mkdir safeye-platform
-cd safeye-platform
-
-# Create virtual environment
-python3 -m venv venv
-
-# Activate virtual environment
-# On Linux/Mac:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-```
-
-### Install Dependencies
-
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### Download Pre-trained Models
-
-Run this Python script to download models:
-
-```python
-import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from deepface import DeepFace
-
-# Download text analysis models
-print("Downloading text analysis models...")
-tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased')
-model = AutoModelForSequenceClassification.from_pretrained('distilbert-base-uncased')
-
-# Download face analysis models
-print("Downloading face analysis models...")
-DeepFace.build_model("Facenet")
-
-print("All models downloaded successfully!")
-```
-
-## 📁 Project Structure
-
-```
-safeye-platform/
-│
-├── app.py                 # Main Flask application
-├── requirements.txt       # Python dependencies
-├── uploads/              # Temporary file storage
-├── models/               # Pre-trained models
-│
-├── detectors/
-│   ├── __init__.py
-│   ├── image_detector.py
-│   ├── audio_detector.py
-│   └── text_detector.py
-│
-├── frontend/
-│   ├── index.html
-│   ├── styles.css
-│   └── app.js
-│
-├── tests/
-│   ├── test_image.py
-│   ├── test_audio.py
-│   └── test_text.py
-│
-└── README.md
-```
-
-## 🎯 Running the Application
-
-### Backend Server
-
-```bash
-# Start Flask backend
-python app.py
-
-# Server will run on http://localhost:5000
-```
-
-### Frontend (HTML/JS Version)
-
-```bash
-# Serve frontend files
-cd frontend
-python -m http.server 3000
-
-# Access at http://localhost:3000
-```
-
-## 🧪 Testing the API
-
-### Using cURL
-
-```bash
-# Test health endpoint
-curl http://localhost:5000/api/health
-
-# Test image analysis
-curl -X POST -F "file=@test_image.jpg" http://localhost:5000/api/analyze/image
-
-# Test audio analysis
-curl -X POST -F "file=@test_audio.mp3" http://localhost:5000/api/analyze/audio
-
-# Test text analysis
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"text":"Breaking news! You wont believe what happened!"}' \
-  http://localhost:5000/api/analyze/text
-```
-
-### Using Python
-
-```python
-import requests
-
-# Test image
-with open('test_image.jpg', 'rb') as f:
-    files = {'file': f}
-    response = requests.post('http://localhost:5000/api/analyze/image', files=files)
-    print(response.json())
-
-# Test text
-data = {'text': 'This is a test message'}
-response = requests.post('http://localhost:5000/api/analyze/text', json=data)
-    print(response.json())
-```
-
-## ⚙️ Configuration Options
-
-### Environment Variables
-
-Create a `.env` file:
-
-```bash
-FLASK_ENV=production
-FLASK_DEBUG=False
-MAX_FILE_SIZE=52428800
-UPLOAD_FOLDER=uploads
-SECRET_KEY=your-secret-key-here
-```
-
-### Advanced Configuration
-
-In `app.py`, add these configurations:
-
-```python
-app.config.update(
-    MAX_CONTENT_LENGTH=50 * 1024 * 1024,  # 50MB
-    UPLOAD_FOLDER='uploads',
-    ALLOWED_EXTENSIONS={'png', 'jpg', 'jpeg', 'mp3', 'wav', 'mp4', 'avi', 'mov', 'txt'},
-    SQLALCHEMY_DATABASE_URI='sqlite:///safeye.db',  # For production
-    REDIS_URL='redis://localhost:6379/0',  # For caching
-)
-```
-
-## 🐳 Docker Deployment
-
-### Dockerfile
-
-```dockerfile
-FROM python:3.10-slim
-
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libsndfile1 ffmpeg libsm6 libxext6 libxrender-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application
-COPY . .
-
-# Expose port
-EXPOSE 5000
-
-# Run application
-CMD ["python", "app.py"]
-```
-
-### docker-compose.yml
-
-```yaml
-version: '3.8'
-services:
-  safeye-api:
-    build: .
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./uploads:/app/uploads
-    environment:
-      - FLASK_ENV=production
-```
-
-## 🚀 Deployment Options
-
-### Azure Deployment
-
-```bash
-# Install Azure CLI
-az login
-
-# Create resource group
-az group create --name safeye-rg --location eastus
-
-# Create App Service plan
-az appservice plan create --name safeye-plan --resource-group safeye-rg --sku B1 --is-linux
-
-# Create web app
-az webapp create --resource-group safeye-rg --plan safeye-plan --name safeye-api --runtime "PYTHON|3.10"
-
-# Deploy code
-az webapp up --name safeye-api --resource-group safeye-rg
-```
-
-### AWS Deployment
-
-```bash
-# Install AWS CLI and EB CLI
-pip install awsebcli
-
-# Initialize Elastic Beanstalk
-eb init -p python-3.10 safeye-platform
-
-# Create environment
-eb create safeye-env
-
-# Deploy
-eb deploy
-```
-
-## ⚡ Performance Optimization
-
-### Model Optimization
-
-```python
-# Use quantization for faster inference
-import torch.quantization
-
-model = torch.quantization.quantize_dynamic(
-    model, {torch.nn.Linear}, dtype=torch.qint8
-)
-```
-
-### Caching with Redis
-
-```python
-import redis
-import json
-
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
-
-def get_cached_result(file_hash):
-    cached = redis_client.get(f"analysis:{file_hash}")
-    return json.loads(cached) if cached else None
-
-def cache_result(file_hash, result):
     redis_client.setex(
         f"analysis:{file_hash}",
         3600,  # 1 hour TTL

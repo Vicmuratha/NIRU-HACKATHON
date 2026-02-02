@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, url_for, redirect, session
+from flask import Flask, render_template, url_for, redirect, session, jsonify
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 
@@ -63,6 +63,13 @@ def signup():
 def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
+
+@app.route('/api/me')
+def get_current_user():
+    user = session.get('user')
+    if not user:
+        return jsonify({'user': None}), 200
+    return jsonify({'user': user}), 200
 
 # --- GOOGLE ROUTES ---
 @app.route('/auth/google')
