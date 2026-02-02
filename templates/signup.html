@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - SafEye</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="bg">
+        <span class="orb one"></span>
+        <span class="orb two"></span>
+        <span class="orb three"></span>
+    </div>
+    <div class="container">
+        <div class="header">
+            <div class="brand">
+                <div class="logo"></div>
+                <div class="name">SafEye</div>
+            </div>
+            <div class="chip-row">
+                <span class="chip">Threat intelligence</span>
+                <span class="chip">Community protection</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h2>Create account</h2>
+                <div class="subtitle">Join the defense against deepfakes</div>
+                <p class="lead">
+                    Get access to detection workflows, audit trails, and safety alerts that keep
+                    your teams and communities protected.
+                </p>
+                <div class="feature-list">
+                    <div class="feature">
+                        <span class="dot"></span>
+                        <div>
+                            <div class="feature-title">Unified detection hub</div>
+                            <div class="feature-text">Images, audio, and text in one place.</div>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <span class="dot"></span>
+                        <div>
+                            <div class="feature-title">Rapid onboarding</div>
+                            <div class="feature-text">Start verifying content in minutes.</div>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <span class="dot"></span>
+                        <div>
+                            <div class="feature-title">Secure collaboration</div>
+                            <div class="feature-text">Share findings with your team safely.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel form-panel">
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+            <form method="POST" action="/signup">
+            <div class="form-group">
+                <label for="username">Full Name</label>
+                <input type="text" id="username" name="username" placeholder="John Doe" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="john@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a password" required>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required>
+            </div>
+            
+                    <button type="submit" class="btn">Sign Up</button>
+
+                    <div class="divider">or continue with</div>
+                    <div class="social">
+                        <a class="social-btn" href="/auth/google">Google</a>
+                        <a class="social-btn" href="/auth/github">GitHub</a>
+                    </div>
+            
+                    <div class="link-text">
+                        Already have an account? <a href="/login">Log In</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

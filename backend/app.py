@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from werkzeug.utils import secure_filename
@@ -31,13 +31,18 @@ import exifread
 
 warnings.filterwarnings('ignore')
 
-app = Flask(__name__)
+# Get the project root directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, 'templates'),
+    static_folder=os.path.join(BASE_DIR, 'static')
+)
 CORS(app)
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'safeye-hackathon-secret-2026')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'super_secret_key')
 jwt = JWTManager(app)
-
-# Get the current working directory (which is /code)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Define folders relative to the current directory
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
@@ -52,11 +57,55 @@ app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
 # ============== AUTHENTICATION ==============
 @app.route('/api/login', methods=['POST'])
-def login():
+def api_login():
     data = request.get_json()
     if data.get('username') == 'admin' and data.get('password') == 'password':
         return jsonify(access_token=create_access_token(identity='admin')), 200
     return jsonify({'error': 'Invalid credentials'}), 401
+
+# ============== WEB AUTH PAGES (HACKATHON DEMO) ==============
+# Dummy database for hackathon demo (replace with real DB if you have time)
+users_db: Dict[str, Dict[str, str]] = {}
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        # Simple check (Demo Logic)
+        if email in users_db and users_db[email]['password'] == password:
+            return f"Welcome back, {users_db[email]['name']}! (Redirecting to Dashboard...)"
+        else:
+            flash("Invalid email or password!")
+            return redirect(url_for('login_page'))
+
+    return render_template('login.html')
+
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup_page():
+    if request.method == 'POST':
+        name = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        if password != confirm_password:
+            flash("Passwords do not match!")
+            return redirect(url_for('signup_page'))
+
+        if email in users_db:
+            flash("Email already exists!")
+            return redirect(url_for('signup_page'))
+
+        # Save user (Demo Logic)
+        users_db[email] = {'name': name, 'password': password}
+        flash("Account created! Please log in.")
+        return redirect(url_for('login_page'))
+
+    return render_template('signup.html')
 
 # ============== ULTRA-ACCURATE IMAGE DETECTOR ==============
 class UltraImageDetector:
