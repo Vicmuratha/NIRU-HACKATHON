@@ -1,6 +1,8 @@
 flask
 flask-cors
 flask-jwt-extended
+authlib
+python-dotenv
 werkzeug
 gunicorn
 numpy

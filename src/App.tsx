@@ -144,85 +144,198 @@ const SafEyePlatform = () => {
     return 'bg-red-100 border-red-300';
   };
 
+  const stats = [
+    { label: 'Content Analyzed', value: '12,847', icon: Image, accent: 'blue' },
+    { label: 'Authentic', value: '9,234', icon: CheckCircle, accent: 'green' },
+    { label: 'Manipulated', value: '3,613', icon: XCircle, accent: 'red' },
+    { label: 'Accuracy Rate', value: '99.2%', icon: Shield, accent: 'purple' },
+  ];
+
+  const accentClassMap: Record<string, string> = {
+    blue: 'bg-blue-400/20 text-blue-200',
+    green: 'bg-emerald-400/20 text-emerald-200',
+    red: 'bg-rose-400/20 text-rose-200',
+    purple: 'bg-purple-400/20 text-purple-200'
+  };
+
+  const trustSignals = [
+    'Real-time deepfake defense',
+    'Financial scam protection',
+    'Election integrity monitoring',
+    'Media authenticity verification'
+  ];
+
+  const workflowSteps = [
+    {
+      title: 'Secure Upload',
+      description: 'Drop files or paste text. We hash, sandbox, and isolate each scan.',
+      icon: Upload
+    },
+    {
+      title: 'Multi-Model Analysis',
+      description: 'Ensembles of CNNs, audio spoofing models, and NLP verification.',
+      icon: Zap
+    },
+    {
+      title: 'Actionable Verdicts',
+      description: 'Clear risk scores, evidence trails, and mitigation guidance.',
+      icon: Shield
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950 text-white">
+      {/* Ambient Glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-24 h-96 w-96 rounded-full bg-blue-500/30 blur-3xl" />
+        <div className="absolute top-24 right-10 h-80 w-80 rounded-full bg-purple-500/30 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+      </div>
+
       {/* Header */}
-      <header className="bg-white shadow-md border-b-4 border-blue-600">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-3 rounded-xl shadow-lg">
-                <Shield className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  SafEye
-                </h1>
-                <p className="text-sm text-gray-600">AI-Powered Deepfake Detection Platform</p>
-              </div>
+      <header className="relative z-10 border-b border-white/10 bg-black/30 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-3 rounded-2xl shadow-2xl">
+              <Shield className="w-7 h-7 text-white" />
             </div>
-            <div className="hidden md:flex items-center space-x-6">
-              <div className="flex items-center space-x-2 text-sm">
-                <Zap className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700 font-medium">Real-Time Analysis</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm">
-                <TrendingUp className="w-4 h-4 text-blue-500" />
-                <span className="text-gray-700 font-medium">99.2% Accuracy</span>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">SafEye</h1>
+              <p className="text-xs text-white/70">AI-Powered Deepfake Detection Platform</p>
             </div>
+          </div>
+          <div className="hidden md:flex items-center space-x-8 text-sm text-white/80">
+            <div className="flex items-center space-x-2">
+              <Zap className="w-4 h-4 text-emerald-400" />
+              <span>Real-Time Analysis</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <TrendingUp className="w-4 h-4 text-cyan-400" />
+              <span>99.2% Accuracy</span>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <a
+              href="/login"
+              className="px-4 py-2 rounded-xl border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition"
+            >
+              Log in
+            </a>
+            <a
+              href="/signup"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-900 font-semibold shadow-lg hover:shadow-cyan-500/30 transition"
+            >
+              Sign up
+            </a>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-4 rounded-xl shadow-md border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Content Analyzed</p>
-                <p className="text-2xl font-bold text-gray-800">12,847</p>
-              </div>
-              <Image className="w-10 h-10 text-blue-500 opacity-20" />
+      <main className="relative z-10">
+        {/* Hero */}
+        <section className="max-w-7xl mx-auto px-6 pt-14 pb-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/70">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              Live threat defense for Kenya & beyond
+            </div>
+            <h2 className="text-4xl md:text-5xl font-semibold leading-tight">
+              Detect deepfakes with <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">extreme clarity</span> and instant decisions.
+            </h2>
+            <p className="text-lg text-white/70">
+              SafEye combines vision, audio, and language intelligence to protect communities, institutions, and families from digital deception.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/login"
+                className="px-6 py-3 rounded-xl bg-white text-slate-900 font-semibold shadow-xl hover:shadow-white/30 transition"
+              >
+                Enter Detection Studio
+              </a>
+              <a
+                href="#detection"
+                className="px-6 py-3 rounded-xl border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition"
+              >
+                Explore Demo
+              </a>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+              {trustSignals.map((signal) => (
+                <div key={signal} className="flex items-center gap-2 text-sm text-white/70">
+                  <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                  {signal}
+                </div>
+              ))}
             </div>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-md border-l-4 border-green-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Authentic</p>
-                <p className="text-2xl font-bold text-gray-800">9,234</p>
+          <div className="space-y-6">
+            <div className="bg-white/10 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-white/50">Live Threat Index</p>
+                  <h3 className="text-2xl font-semibold mt-2">Moderate Risk</h3>
+                </div>
+                <div className="h-14 w-14 rounded-2xl bg-amber-400/20 text-amber-200 flex items-center justify-center">
+                  <AlertCircle className="w-7 h-7" />
+                </div>
               </div>
-              <CheckCircle className="w-10 h-10 text-green-500 opacity-20" />
+              <div className="mt-6 space-y-3 text-sm text-white/70">
+                <div className="flex justify-between">
+                  <span>Political content scans</span>
+                  <span className="text-emerald-200">+22%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Voice cloning reports</span>
+                  <span className="text-amber-200">+12%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Image manipulation flags</span>
+                  <span className="text-rose-200">+8%</span>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {workflowSteps.map((step) => (
+                <div key={step.title} className="bg-white/10 border border-white/10 rounded-2xl p-4 text-sm text-white/70">
+                  <step.icon className="w-5 h-5 text-cyan-300 mb-3" />
+                  <h4 className="text-white font-semibold mb-2">{step.title}</h4>
+                  <p>{step.description}</p>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-md border-l-4 border-red-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Manipulated</p>
-                <p className="text-2xl font-bold text-gray-800">3,613</p>
-              </div>
-              <XCircle className="w-10 h-10 text-red-500 opacity-20" />
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-xl shadow-md border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Accuracy Rate</p>
-                <p className="text-2xl font-bold text-gray-800">99.2%</p>
-              </div>
-              <Shield className="w-10 h-10 text-purple-500 opacity-20" />
-            </div>
-          </div>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Stats Bar */}
+        <section className="max-w-7xl mx-auto px-6 pb-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div key={stat.label} className="bg-white/10 border border-white/10 rounded-2xl p-5 shadow-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-white/60 uppercase tracking-[0.2em]">{stat.label}</p>
+                      <p className="text-2xl font-semibold mt-2">{stat.value}</p>
+                    </div>
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${accentClassMap[stat.accent]}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section id="detection" className="max-w-7xl mx-auto px-6 pb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Upload Section */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <Upload className="w-6 h-6 mr-2 text-blue-600" />
-                Verify Content
+            <div className="bg-white/10 border border-white/10 rounded-3xl shadow-2xl p-6 backdrop-blur-xl">
+              <h2 className="text-2xl font-semibold text-white mb-6 flex items-center">
+                <Upload className="w-6 h-6 mr-2 text-cyan-300" />
+                Detection Studio
               </h2>
 
               {/* Tab Navigation */}
@@ -231,8 +344,8 @@ const SafEyePlatform = () => {
                   onClick={() => setActiveTab('upload')}
                   className={`px-4 py-2 font-medium transition-all ${
                     activeTab === 'upload'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-600 hover:text-gray-800'
+                      ? 'text-white border-b-2 border-cyan-300'
+                      : 'text-white/60 hover:text-white'
                   }`}
                 >
                   <div className="flex items-center space-x-2">
@@ -244,8 +357,8 @@ const SafEyePlatform = () => {
                   onClick={() => setActiveTab('text')}
                   className={`px-4 py-2 font-medium transition-all ${
                     activeTab === 'text'
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-600 hover:text-gray-800'
+                      ? 'text-white border-b-2 border-cyan-300'
+                      : 'text-white/60 hover:text-white'
                   }`}
                 >
                   <div className="flex items-center space-x-2">
@@ -259,16 +372,16 @@ const SafEyePlatform = () => {
                 <div>
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-3 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
+                    className="border-2 border-dashed border-white/30 rounded-2xl p-12 text-center cursor-pointer hover:border-cyan-300 hover:bg-white/10 transition-all"
                   >
-                    <Upload className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                    <p className="text-lg font-semibold text-gray-700 mb-2">
+                    <Upload className="w-16 h-16 mx-auto text-white/60 mb-4" />
+                    <p className="text-lg font-semibold text-white mb-2">
                       Drop files here or click to upload
                     </p>
-                    <p className="text-sm text-gray-500 mb-4">
+                    <p className="text-sm text-white/60 mb-4">
                       Supports images, audio, and video files
                     </p>
-                    <div className="flex justify-center space-x-4 text-xs text-gray-600">
+                    <div className="flex justify-center space-x-4 text-xs text-white/60">
                       <span className="flex items-center">
                         <Image className="w-4 h-4 mr-1" /> Images
                       </span>
@@ -288,8 +401,8 @@ const SafEyePlatform = () => {
                     className="hidden"
                   />
                   {file && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm font-medium text-blue-900">
+                    <div className="mt-4 p-4 bg-white/10 rounded-lg border border-white/10">
+                      <p className="text-sm font-medium text-white">
                         Selected: {file.name}
                       </p>
                     </div>
@@ -301,12 +414,12 @@ const SafEyePlatform = () => {
                     value={textInput}
                     onChange={(e) => setTextInput(e.target.value)}
                     placeholder="Paste text content, social media posts, or messages to verify..."
-                    className="w-full h-40 p-4 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none resize-none"
+                    className="w-full h-40 p-4 border-2 border-white/20 bg-white/5 text-white rounded-2xl focus:border-cyan-300 focus:outline-none resize-none"
                   />
                   <button
                     onClick={handleTextAnalysis}
                     disabled={!textInput.trim() || analyzing}
-                    className="mt-4 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mt-4 w-full bg-gradient-to-r from-cyan-300 to-blue-500 text-slate-900 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {analyzing ? 'Analyzing...' : 'Analyze Text'}
                   </button>
@@ -315,15 +428,15 @@ const SafEyePlatform = () => {
 
               {/* Analysis Progress */}
               {analyzing && (
-                <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+                <div className="mt-6 p-6 bg-white/10 rounded-2xl border border-white/10">
                   <div className="flex items-center space-x-3 mb-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="font-semibold text-gray-800">Analyzing content...</span>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-300"></div>
+                    <span className="font-semibold text-white">Analyzing content...</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full animate-pulse" style={{ width: '70%' }}></div>
+                  <div className="w-full bg-white/20 rounded-full h-2">
+                    <div className="bg-gradient-to-r from-cyan-300 to-blue-500 h-2 rounded-full animate-pulse" style={{ width: '70%' }}></div>
                   </div>
-                  <div className="mt-3 text-sm text-gray-600 space-y-1">
+                  <div className="mt-3 text-sm text-white/70 space-y-1">
                     <p>✓ Extracting features...</p>
                     <p>✓ Running AI models...</p>
                     <p className="animate-pulse">→ Generating report...</p>
@@ -334,7 +447,7 @@ const SafEyePlatform = () => {
               {/* Results */}
               {result && !analyzing && (
                 <div className="mt-6 space-y-4">
-                  <div className={`p-6 rounded-xl border-2 ${getRiskBg(result.riskScore)}`}>
+                  <div className={`p-6 rounded-2xl border-2 ${getRiskBg(result.riskScore)} text-slate-900`}>
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h3 className="text-xl font-bold text-gray-800 mb-1">
@@ -369,9 +482,9 @@ const SafEyePlatform = () => {
                     </div>
                   </div>
 
-                  <div className="bg-white p-6 rounded-xl border border-gray-200">
-                    <h4 className="font-bold text-gray-800 mb-3 flex items-center">
-                      <Info className="w-5 h-5 mr-2 text-blue-600" />
+                  <div className="bg-white/10 p-6 rounded-2xl border border-white/10">
+                    <h4 className="font-bold text-white mb-3 flex items-center">
+                      <Info className="w-5 h-5 mr-2 text-cyan-300" />
                       Analysis Findings
                     </h4>
                     <ul className="space-y-2">
@@ -380,21 +493,21 @@ const SafEyePlatform = () => {
                           <span className={result.authentic ? 'text-green-500' : 'text-red-500'}>
                             {result.authentic ? '✓' : '⚠'}
                           </span>
-                          <span className="text-gray-700">{finding}</span>
+                          <span className="text-white/80">{finding}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                    <h4 className="font-bold text-gray-800 mb-3">Technical Details</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-white/10 p-6 rounded-2xl border border-white/10">
+                    <h4 className="font-bold text-white mb-3">Technical Details</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm text-white/80">
                       {Object.entries(result.details).map(([key, value]) => (
                         <div key={key}>
-                          <span className="text-gray-600 capitalize">
+                          <span className="text-white/60 capitalize">
                             {key.replace(/_/g, ' ')}:
                           </span>
-                          <span className="ml-2 font-semibold text-gray-800">{String(value)}</span>
+                          <span className="ml-2 font-semibold text-white">{String(value)}</span>
                         </div>
                       ))}
                     </div>
@@ -406,69 +519,70 @@ const SafEyePlatform = () => {
 
           {/* Info Sidebar */}
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-xl p-6 text-white">
-              <h3 className="text-xl font-bold mb-4">How SafEye Works</h3>
-              <div className="space-y-4 text-sm">
+            <div className="bg-gradient-to-br from-cyan-400/20 via-blue-500/20 to-purple-500/20 rounded-3xl shadow-2xl p-6 border border-white/10">
+              <h3 className="text-xl font-semibold mb-4">How SafEye Works</h3>
+              <div className="space-y-4 text-sm text-white/70">
                 <div className="flex items-start space-x-3">
-                  <div className="bg-white bg-opacity-20 rounded-full p-2 mt-1">
+                  <div className="bg-white/10 rounded-full p-2 mt-1">
                     <Image className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold mb-1">Image Analysis</p>
-                    <p className="text-blue-100">ELA, CNN classifiers, and metadata verification</p>
+                    <p className="font-semibold text-white mb-1">Image Analysis</p>
+                    <p>ELA, CNN classifiers, and metadata verification</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <div className="bg-white bg-opacity-20 rounded-full p-2 mt-1">
+                  <div className="bg-white/10 rounded-full p-2 mt-1">
                     <Mic className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold mb-1">Audio Detection</p>
-                    <p className="text-blue-100">Spectrogram analysis and anti-spoofing models</p>
+                    <p className="font-semibold text-white mb-1">Audio Detection</p>
+                    <p>Spectrogram analysis and anti-spoofing models</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <div className="bg-white bg-opacity-20 rounded-full p-2 mt-1">
+                  <div className="bg-white/10 rounded-full p-2 mt-1">
                     <FileText className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold mb-1">Text Verification</p>
-                    <p className="text-blue-100">NLP models and claim verification</p>
+                    <p className="font-semibold text-white mb-1">Text Verification</p>
+                    <p>NLP models and claim verification</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Recent Detections</h3>
+            <div className="bg-white/10 rounded-3xl shadow-2xl p-6 border border-white/10">
+              <h3 className="text-lg font-semibold mb-4">Recent Detections</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                  <span className="font-medium text-gray-800">Deepfake Audio</span>
-                  <span className="text-red-600 font-bold">87% Risk</span>
+                <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-xl">
+                  <span className="font-medium">Deepfake Audio</span>
+                  <span className="text-red-300 font-bold">87% Risk</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <span className="font-medium text-gray-800">Authentic Image</span>
-                  <span className="text-green-600 font-bold">12% Risk</span>
+                <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-xl">
+                  <span className="font-medium">Authentic Image</span>
+                  <span className="text-emerald-300 font-bold">12% Risk</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                  <span className="font-medium text-gray-800">Suspicious Text</span>
-                  <span className="text-yellow-600 font-bold">56% Risk</span>
+                <div className="flex items-center justify-between p-3 bg-yellow-500/10 rounded-xl">
+                  <span className="font-medium">Suspicious Text</span>
+                  <span className="text-yellow-200 font-bold">56% Risk</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4">
+            <div className="bg-amber-500/10 border border-amber-400/30 rounded-2xl p-4">
               <div className="flex items-start space-x-2">
-                <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-amber-300 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-semibold text-orange-900 mb-1">Stay Safe Online</p>
-                  <p className="text-orange-800">Always verify suspicious content before sharing. Trust but verify.</p>
+                  <p className="font-semibold text-amber-200 mb-1">Stay Safe Online</p>
+                  <p className="text-amber-100/80">Always verify suspicious content before sharing. Trust but verify.</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+      </main>
     </div>
   );
 };

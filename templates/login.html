@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SafEye</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="bg">
+        <span class="orb one"></span>
+        <span class="orb two"></span>
+        <span class="orb three"></span>
+    </div>
+    <div class="container">
+        <div class="header">
+            <div class="brand">
+                <div class="logo"></div>
+                <div class="name">SafEye</div>
+            </div>
+            <div class="chip-row">
+                <span class="chip">AI verified</span>
+                <span class="chip">Bank-grade security</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h2>Welcome back</h2>
+                <div class="subtitle">Secure access to AI-powered detection</div>
+                <p class="lead">
+                    Resume your protection dashboard with real-time insights, confidence scores, and
+                    forensic evidence across image, audio, and text.
+                </p>
+                <div class="feature-list">
+                    <div class="feature">
+                        <span class="dot"></span>
+                        <div>
+                            <div class="feature-title">Instant risk scoring</div>
+                            <div class="feature-text">Actionable verdicts in seconds.</div>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <span class="dot"></span>
+                        <div>
+                            <div class="feature-title">Multi-model verification</div>
+                            <div class="feature-text">Cross-checks for higher confidence.</div>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <span class="dot"></span>
+                        <div>
+                            <div class="feature-title">Forensic traceability</div>
+                            <div class="feature-text">See why content is flagged.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel form-panel">
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+            <form method="POST" action="/login">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+            
+                    <button type="submit" class="btn">Log In</button>
+
+                    <div class="divider">or continue with</div>
+                    <div class="social">
+                        <a class="social-btn" href="/auth/google">Google</a>
+                        <a class="social-btn" href="/auth/github">GitHub</a>
+                    </div>
+            
+                    <div class="link-text">
+                        Don't have an account? <a href="/signup">Sign Up</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
