@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Image, Mic, FileText, Video, AlertCircle, CheckCircle, XCircle, Info, Zap, Shield, TrendingUp } from 'lucide-react';
 
 interface AnalysisResult {
@@ -9,13 +9,35 @@ interface AnalysisResult {
   details: Record<string, any>;
 }
 
+interface UserProfile {
+  name: string;
+  email?: string;
+  picture?: string;
+}
+
 const SafEyePlatform = () => {
   const [activeTab, setActiveTab] = useState('upload');
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [textInput, setTextInput] = useState('');
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const response = await fetch('/api/me', { credentials: 'include' });
+        const data = await response.json();
+        setUser(data.user || null);
+      } catch (error) {
+        console.error('Failed to load user:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   const analyzeContent = async (content: string | File, type: string) => {
     setAnalyzing(true);
@@ -214,19 +236,67 @@ const SafEyePlatform = () => {
               <span>99.2% Accuracy</span>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <a
-              href="/login"
-              className="px-4 py-2 rounded-xl border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition"
-            >
-              Log in
-            </a>
-            <a
-              href="/signup"
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-900 font-semibold shadow-lg hover:shadow-cyan-500/30 transition"
-            >
-              Sign up
-            </a>
+          <div className="flex items-center space-x-3 relative">
+            {user ? (
+              <button
+                onClick={() => setShowProfile((prev) => !prev)}
+                className="flex items-center space-x-2 rounded-full bg-white/10 border border-white/20 px-3 py-2 hover:border-white/40 transition"
+              >
+                <img
+                  src={user.picture || 'https://ui-avatars.com/api/?name=SafEye&background=0ea5e9&color=fff'}
+                  alt="Profile"
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+                <span className="text-sm text-white/80 hidden md:inline">{user.name}</span>
+              </button>
+            ) : (
+              <>
+                <a
+                  href="/login"
+                  className="px-4 py-2 rounded-xl border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition"
+                >
+                  Log in
+                </a>
+                <a
+                  href="/signup"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-900 font-semibold shadow-lg hover:shadow-cyan-500/30 transition"
+                >
+                  Sign up
+                </a>
+              </>
+            )}
+
+            {user && showProfile && (
+              <div className="absolute right-0 top-12 w-64 rounded-2xl border border-white/10 bg-slate-950/90 backdrop-blur-xl shadow-2xl p-4 text-sm text-white/80">
+                <div className="flex items-center space-x-3 pb-3 border-b border-white/10">
+                  <img
+                    src={user.picture || 'https://ui-avatars.com/api/?name=SafEye&background=0ea5e9&color=fff'}
+                    alt="Profile"
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-semibold text-white">{user.name}</p>
+                    <p className="text-xs text-white/60">{user.email || 'Verified user'}</p>
+                  </div>
+                </div>
+                <div className="py-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/60">Plan</span>
+                    <span className="text-white">Pro Demo</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/60">Role</span>
+                    <span className="text-white">Analyst</span>
+                  </div>
+                </div>
+                <a
+                  href="/logout"
+                  className="block text-center mt-2 w-full rounded-xl bg-white text-slate-900 font-semibold py-2 hover:shadow-lg transition"
+                >
+                  Sign out
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </header>
