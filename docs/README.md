@@ -11,6 +11,25 @@ cd NIRU-HACKATHON
 # Download AI models (required)
 python models/download_models.py
 
+# Azure Blob Storage (optional)
+# Set these env vars before running the downloader
+AZURE_STORAGE_CONNECTION_STRING=...
+AZURE_STORAGE_CONTAINER=your-container
+AZURE_AUDIO_BLOBS=audio_model/config.json,audio_model/model.safetensors,audio_model/preprocessor_config.json
+AZURE_TEXT_BLOBS=text_model/config.json,text_model/model.safetensors,text_model/tokenizer_config.json,text_model/added_tokens.json,text_model/special_tokens_map.json,text_model/spm.model
+AZURE_IMAGE_BLOBS=image_model/config.json,image_model/model.safetensors,image_model/preprocessor_config.json
+# Optional: single blob (e.g., a zip/tar.gz archive)
+AZURE_IMAGE_BLOB=image_model.zip
+
+# Or use public URLs + optional SAS
+AZURE_BLOB_BASE_URL=https://<account>.blob.core.windows.net
+AZURE_SAS_TOKEN=sv=...  # optional
+
+# Auto-download on API startup (Azure App Service)
+DOWNLOAD_MODELS_ON_STARTUP=true
+IMAGE_MODEL_DIR=/code/models/image_model
+TEXT_MODEL_DIR=/code/models/text_model
+
 # Install dependencies
 pip install -r requirements.txt
 npm install

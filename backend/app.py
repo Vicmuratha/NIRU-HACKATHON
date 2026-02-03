@@ -52,6 +52,26 @@ DATA_FOLDER = os.path.join(BASE_DIR, 'data')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(DATA_FOLDER, exist_ok=True)
 
+# Optional: download model assets on startup (Azure Blob)
+def download_models_on_startup():
+    flag = os.getenv("DOWNLOAD_MODELS_ON_STARTUP", "").strip().lower()
+    if flag not in {"1", "true", "yes"}:
+        return
+
+    try:
+        import sys
+        if BASE_DIR not in sys.path:
+            sys.path.insert(0, BASE_DIR)
+
+        from models import download_models as model_downloader
+        logger.info("📦 Downloading models on startup...")
+        model_downloader.main()
+        logger.info("✅ Model download completed")
+    except Exception as e:
+        logger.warning(f"⚠️ Model download skipped/failed: {e}")
+
+download_models_on_startup()
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
@@ -124,13 +144,18 @@ class UltraImageDetector:
                         from transformers import AutoModelForImageClassification, AutoImageProcessor
                         import torch
 
+                        local_model_dir = os.getenv(
+                            "IMAGE_MODEL_DIR",
+                            os.path.join(BASE_DIR, "models", "image_model")
+                        )
+                        use_local = os.path.isdir(local_model_dir) and os.path.exists(
+                            os.path.join(local_model_dir, "config.json")
+                        )
+
                         logger.info("📥 Loading deepfake detection AI model (this may take a minute)...")
-                        self.ai_model = AutoModelForImageClassification.from_pretrained(
-                            "dima806/deepfake_vs_real_image_detection"
-                        )
-                        self.ai_processor = AutoImageProcessor.from_pretrained(
-                            "dima806/deepfake_vs_real_image_detection"
-                        )
+                        model_source = local_model_dir if use_local else "dima806/deepfake_vs_real_image_detection"
+                        self.ai_model = AutoModelForImageClassification.from_pretrained(model_source)
+                        self.ai_processor = AutoImageProcessor.from_pretrained(model_source)
                         self.ai_model.eval()
                         logger.info("✅ AI model loaded successfully")
                     except Exception as e:
@@ -765,9 +790,18 @@ class UltraTextDetector:
             if self.pipeline is None:
                 from transformers import pipeline
                 print("📥 Loading fake news detection model...")
+                local_model_dir = os.getenv(
+                    "TEXT_MODEL_DIR",
+                    os.path.join(BASE_DIR, "models", "text_model")
+                )
+                use_local = os.path.isdir(local_model_dir) and os.path.exists(
+                    os.path.join(local_model_dir, "config.json")
+                )
+                model_source = local_model_dir if use_local else "hamzab/roberta-fake-news-classification"
                 self.pipeline = pipeline(
                     "text-classification",
-                    model="hamzab/roberta-fake-news-classification"
+                    model=model_source,
+                    tokenizer=model_source,
                 )
                 print("✅ Model loaded")
 
