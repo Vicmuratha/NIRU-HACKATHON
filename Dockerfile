@@ -45,4 +45,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
 # Start Command
 # Changed Port to 8000
 # Added --timeout 600 (10 minutes) to allow AI models to load without crashing
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--threads", "2", "--timeout", "600", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--threads", "2", "--timeout", "600", "backend.simple_app:app"]

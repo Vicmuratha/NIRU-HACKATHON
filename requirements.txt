@@ -1,17 +1,12 @@
 flask
-flask-cors
-flask-jwt-extended
 authlib
+requests
 python-dotenv
-werkzeug
-gunicorn
-numpy
-scipy
+transformers
+torch
+torchvision
+torchaudio
 pillow
 librosa
-exifread
-transformers
-# Use headless OpenCV to avoid "libGL.so not found" errors
-opencv-python-headless
-# DeepFace requires a backend. We installed the engine in Docker, so we just need the wrapper here.
-deepface
+soundfile
+gunicorn
