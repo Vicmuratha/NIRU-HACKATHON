@@ -212,6 +212,7 @@ const SafEyePlatform = () => {
         <div className="absolute -top-32 -left-24 h-96 w-96 rounded-full bg-blue-500/30 blur-3xl" />
         <div className="absolute top-24 right-10 h-80 w-80 rounded-full bg-purple-500/30 blur-3xl" />
         <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+        <div className="absolute inset-0 grid-overlay" />
       </div>
 
       {/* Header */}
@@ -339,7 +340,45 @@ const SafEyePlatform = () => {
             </div>
           </div>
           <div className="space-y-6">
-            <div className="bg-white/10 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
+            <div className="relative overflow-hidden bg-white/10 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl neon-card">
+              <div className="absolute inset-0 scanline" />
+              <div className="absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" />
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 orbit-slow" />
+                <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-400/40 orbit-fast" />
+                <div className="absolute left-[63%] top-[28%] h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.9)]" />
+                <div className="absolute left-[28%] top-[68%] h-2 w-2 rounded-full bg-purple-300 shadow-[0_0_12px_rgba(192,132,252,0.9)]" />
+              </div>
+              <div className="relative">
+                <p className="text-xs uppercase tracking-[0.3em] text-white/50">Command Center</p>
+                <h3 className="text-2xl font-semibold mt-2">Signal Integrity Grid</h3>
+                <div className="mt-6 grid grid-cols-3 gap-3 text-xs text-white/70">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                    <p className="text-white/50">Latency</p>
+                    <p className="text-lg font-semibold text-white">0.8s</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                    <p className="text-white/50">Alerts</p>
+                    <p className="text-lg font-semibold text-white">142</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                    <p className="text-white/50">Coverage</p>
+                    <p className="text-lg font-semibold text-white">96%</p>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <div className="flex items-center justify-between text-sm text-white/70">
+                    <span>Neural confidence</span>
+                    <span className="text-emerald-200 font-semibold">98.6%</span>
+                  </div>
+                  <div className="mt-2 h-2 rounded-full bg-white/10">
+                    <div className="h-2 rounded-full bg-gradient-to-r from-emerald-300 to-cyan-300 w-[82%] animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/10 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl floaty">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.25em] text-white/50">Live Threat Index</p>
@@ -366,7 +405,7 @@ const SafEyePlatform = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {workflowSteps.map((step) => (
-                <div key={step.title} className="bg-white/10 border border-white/10 rounded-2xl p-4 text-sm text-white/70">
+                <div key={step.title} className="bg-white/10 border border-white/10 rounded-2xl p-4 text-sm text-white/70 neon-card">
                   <step.icon className="w-5 h-5 text-cyan-300 mb-3" />
                   <h4 className="text-white font-semibold mb-2">{step.title}</h4>
                   <p>{step.description}</p>
@@ -395,6 +434,99 @@ const SafEyePlatform = () => {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        {/* Trusted Marquee */}
+        <section className="max-w-7xl mx-auto px-6 pb-12">
+          <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 backdrop-blur-xl neon-card">
+            <p className="text-xs uppercase tracking-[0.35em] text-white/50">Trusted by public safety teams</p>
+            <div className="marquee mt-5">
+              <div className="marquee-track">
+                <span>National CERT</span>
+                <span>Ministry of ICT</span>
+                <span>Election Integrity Unit</span>
+                <span>Financial Crimes Taskforce</span>
+                <span>Open Media Alliance</span>
+                <span>University AI Lab</span>
+                <span>Telecom Security</span>
+                <span>Digital Forensics Bureau</span>
+                <span>National CERT</span>
+                <span>Ministry of ICT</span>
+                <span>Election Integrity Unit</span>
+                <span>Financial Crimes Taskforce</span>
+                <span>Open Media Alliance</span>
+                <span>University AI Lab</span>
+                <span>Telecom Security</span>
+                <span>Digital Forensics Bureau</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Threat Intelligence */}
+        <section className="max-w-7xl mx-auto px-6 pb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-white/10 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl neon-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/50">Threat intelligence</p>
+                  <h3 className="text-2xl font-semibold mt-2">Multi-signal fusion map</h3>
+                </div>
+                <div className="rounded-2xl bg-emerald-400/20 px-4 py-2 text-xs font-semibold text-emerald-200">Live</div>
+              </div>
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-white/70">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white/50">Vision Signal</p>
+                  <p className="text-lg font-semibold text-white">87.4%</p>
+                  <p className="text-xs text-white/50">ELA + CNN ensemble</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white/50">Audio Signal</p>
+                  <p className="text-lg font-semibold text-white">91.1%</p>
+                  <p className="text-xs text-white/50">Spoofing defense</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white/50">Language Signal</p>
+                  <p className="text-lg font-semibold text-white">88.3%</p>
+                  <p className="text-xs text-white/50">Claim verification</p>
+                </div>
+              </div>
+              <div className="mt-6 h-40 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/0 p-6">
+                <div className="flex h-full items-end gap-3">
+                  {[32, 58, 46, 72, 61, 84, 66, 92].map((value, idx) => (
+                    <div key={idx} className="flex-1">
+                      <div className="w-full rounded-full bg-white/10" style={{ height: '100%' }}>
+                        <div
+                          className="w-full rounded-full bg-gradient-to-t from-cyan-300/80 to-blue-500/80"
+                          style={{ height: `${value}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="bg-white/10 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl neon-card">
+              <h4 className="text-lg font-semibold">Response Playbooks</h4>
+              <div className="mt-6 space-y-4 text-sm text-white/70">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white font-semibold">Public Advisory</p>
+                  <p className="text-xs text-white/50 mt-1">Auto-generated brief with evidence trail.</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white font-semibold">Stakeholder Alert</p>
+                  <p className="text-xs text-white/50 mt-1">Notify regulators, media teams, and community leads.</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white font-semibold">Rapid Takedown</p>
+                  <p className="text-xs text-white/50 mt-1">Coordinate platform reporting with audit logs.</p>
+                </div>
+              </div>
+              <div className="mt-6 rounded-2xl border border-cyan-300/30 bg-cyan-400/10 p-4 text-xs text-cyan-100/80">
+                Median time-to-action: <span className="font-semibold text-cyan-100">2m 14s</span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -648,6 +780,37 @@ const SafEyePlatform = () => {
                   <p className="text-amber-100/80">Always verify suspicious content before sharing. Trust but verify.</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="max-w-7xl mx-auto px-6 pb-20">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/20 via-blue-500/20 to-purple-500/20 p-8 shadow-2xl backdrop-blur-xl neon-card">
+          <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-cyan-400/30 blur-3xl" />
+          <div className="absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-purple-400/30 blur-3xl" />
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+            <div className="lg:col-span-2">
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">Deploy in minutes</p>
+              <h3 className="text-3xl md:text-4xl font-semibold mt-3">Activate a national-grade deepfake shield.</h3>
+              <p className="text-white/70 mt-3">
+                Integrate SafEye with your newsroom, hotline, or security command center. Deliver verified evidence in real time.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
+              <a
+                href="/signup"
+                className="px-6 py-3 rounded-2xl bg-white text-slate-900 font-semibold shadow-xl hover:shadow-white/30 transition text-center"
+              >
+                Start a free pilot
+              </a>
+              <a
+                href="/login"
+                className="px-6 py-3 rounded-2xl border border-white/30 text-white/80 hover:text-white hover:border-white/60 transition text-center"
+              >
+                Speak with security
+              </a>
             </div>
           </div>
         </div>

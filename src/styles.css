@@ -18,6 +18,73 @@ body {
     padding: 0;
 }
 
+/* Enhanced cinematic UI effects */
+.grid-overlay {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(circle at 20% 10%, rgba(0, 0, 0, 0.9), transparent 60%),
+        radial-gradient(circle at 80% 40%, rgba(0, 0, 0, 0.9), transparent 55%);
+    opacity: 0.4;
+}
+
+.neon-card {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.floaty {
+    animation: floaty 6s ease-in-out infinite;
+}
+
+.orbit-slow {
+    animation: spin 18s linear infinite;
+}
+
+.orbit-fast {
+    animation: spin 10s linear infinite reverse;
+}
+
+.scanline {
+    background: linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.08) 35%, transparent 70%);
+    animation: scan 6s ease-in-out infinite;
+}
+
+.marquee {
+    overflow: hidden;
+    position: relative;
+}
+
+.marquee-track {
+    display: flex;
+    gap: 2.5rem;
+    width: max-content;
+    animation: marquee 28s linear infinite;
+}
+
+.marquee-track span {
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.65);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+@keyframes floaty {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes scan {
+    0% { transform: translateX(-40%); opacity: 0.2; }
+    50% { opacity: 0.6; }
+    100% { transform: translateX(40%); opacity: 0.2; }
+}
+
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
 /* Header */
 header {
     background: white;
