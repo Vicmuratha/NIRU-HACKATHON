@@ -6,9 +6,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    watch: {
+      ignored: ['**/node_modules/**', '**/deploy_package/**', '**/.git/**', '**/__pycache__/**']
+    },
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:7860',
         changeOrigin: true
       }
     }
