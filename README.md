@@ -1,15 +1,75 @@
 # SafEye - AI-Powered Deepfake Detection Platform
 
-> STILL IN DEVELOPMENT
+[![Development Status](https://img.shields.io/badge/Status-In%20Development-yellow)](https://github.com/Vicmuratha/NIRU-HACKATHON)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![React](https://img.shields.io/badge/React-18.3+-61DAFB.svg?logo=react)](https://reactjs.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0+-000000.svg?logo=flask)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/License-ISC-green.svg)](LICENSE)
 
-SafEye is a multi-modal deepfake and misinformation detection platform for images, audio, and text. It includes a React frontend, a detection API, and an OAuth-based demo auth server.
+> **⚠️ STILL IN DEVELOPMENT** - Some features may be incomplete or experimental
 
-## ✅ What’s in this repo
+SafEye is a comprehensive multi-modal AI-powered platform designed to detect deepfakes and misinformation in images, audio, and text. Built for real-time analysis with high accuracy, it provides a modern React frontend, a robust Flask-based detection API, and an OAuth-based authentication server.
 
-- **Frontend**: React + Vite UI in [src](src)
-- **Detection API**: Flask app with image, audio, and text analyzers in [backend/app.py](backend/app.py)
-- **Auth demo**: OAuth login server in [app.py](app.py)
-- **Models**: Local model assets under [models](models)
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Prerequisites](#-prerequisites)
+- [Quick Start](#-quick-start-development)
+- [Project Structure](#-whats-in-this-repo)
+- [API Endpoints](#-api-endpoints-detection-service)
+- [Configuration](#️-configuration)
+- [Testing](#-tests)
+- [Docker](#-docker)
+- [API Documentation](#-api-documentation)
+- [Troubleshooting](#-support--troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+## 🎯 Features
+
+- **Multi-Modal Detection**: Analyze images, audio, and text content for deepfakes and manipulation
+- **Real-Time Analysis**: Get instant results with detailed confidence scores and risk assessments
+- **Modern React UI**: Intuitive drag-and-drop interface built with React, Vite, and Tailwind CSS
+- **RESTful API**: Easy integration with Flask-based backend API
+- **OAuth Authentication**: Secure login with Google and GitHub integration
+- **Advanced AI Models**: State-of-the-art deep learning models for accurate detection
+- **Comprehensive Analytics**: Track detection statistics and analysis history
+
+## 📦 Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Python**: 3.10 or higher
+- **Node.js**: 18 or higher
+- **npm**: 8 or higher
+- **ffmpeg**: Required for audio processing
+  - Ubuntu/Debian: `sudo apt-get install ffmpeg`
+  - macOS: `brew install ffmpeg`
+  - Windows: Download from [ffmpeg.org](https://ffmpeg.org)
+- **Git**: For cloning the repository
+
+## 📁 What's in this repo
+
+```
+NIRU-HACKATHON/
+├── src/                   # React + Vite frontend UI
+├── backend/               # Flask detection API
+│   └── app.py            # Image, audio, and text analyzers
+├── app.py                 # OAuth authentication server
+├── models/                # AI model assets and downloader
+├── static/                # Static assets (CSS, images)
+├── templates/             # Authentication page templates
+├── tests/                 # Unit tests
+├── uploads/               # Temporary file uploads
+└── docs/                  # Additional documentation
+```
+
+**Key Components:**
+- **Frontend**: Modern React + Vite UI with Tailwind CSS in [src](src)
+- **Detection API**: Flask app with specialized analyzers in [backend/app.py](backend/app.py)
+- **Auth Server**: OAuth 2.0 login server in [app.py](app.py)
+- **AI Models**: Pre-trained models for deepfake detection under [models](models) (~1.1GB total)
+
 
 ## 🚀 Quick start (development)
 
@@ -141,60 +201,6 @@ NIRU-HACKATHON/
 ├── uploads/               # Temporary uploads
 └── data/                  # Detection logs
 ```
-    redis_client.setex(
-        f"analysis:{file_hash}",
-        3600,  # 1 hour TTL
-        json.dumps(result)
-    )
-```
-
-### Async Processing with Celery
-
-```python
-from celery import Celery
-
-celery = Celery('safeye', broker='redis://localhost:6379/0')
-
-@celery.task
-def analyze_image_async(filepath):
-    return image_detector.analyze_image(filepath)
-```
-
-## 🛡️ Security Best Practices
-
-```python
-# Add rate limiting
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-
-limiter = Limiter(
-    app=app,
-    key_func=get_remote_address,
-    default_limits=["100 per hour"]
-)
-
-# Add file validation
-def validate_file(file):
-    # Check file size
-    if file.content_length > app.config['MAX_CONTENT_LENGTH']:
-        raise ValueError("File too large")
-
-    # Check file type
-    allowed_types = {'image/jpeg', 'image/png', 'audio/mpeg', 'audio/wav'}
-    if file.content_type not in allowed_types:
-        raise ValueError("Invalid file type")
-
-    return True
-
-# Add CORS security
-CORS(app, resources={
-    r"/api/*": {
-        "origins": ["http://localhost:3000"],
-        "methods": ["GET", "POST"],
-        "allow_headers": ["Content-Type"]
-    }
-})
-```
 
 ## 📚 API Documentation
 
@@ -325,3 +331,41 @@ brew install ffmpeg
 ```bash
 export CUDA_VISIBLE_DEVICES=""
 ```
+
+### Need Help?
+
+- Check the [documentation](docs/) for more detailed guides
+- Review the [roadmap](docs/ROADMAP.md) for planned features
+- Open an [issue](https://github.com/Vicmuratha/NIRU-HACKATHON/issues) for bug reports or feature requests
+
+## 🤝 Contributing
+
+We welcome contributions to SafEye! Here's how you can help:
+
+1. **Fork the repository** and create your branch from `master`
+2. **Make your changes** and add tests if applicable
+3. **Ensure the test suite passes**: `python -m unittest discover tests/`
+4. **Update documentation** to reflect any changes
+5. **Submit a pull request** with a clear description of your changes
+
+### Development Guidelines
+
+- Follow existing code style and conventions
+- Write clear commit messages
+- Add tests for new features
+- Update the README if you change functionality
+
+## 📄 License
+
+This project is licensed under the ISC License. See the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built for hackathons and educational purposes
+- Powered by state-of-the-art AI models from Hugging Face
+- Frontend built with React, Vite, and Tailwind CSS
+- Backend powered by Flask and PyTorch
+
+---
+
+**Note**: SafEye is still in development. Some features may be incomplete or experimental. Use responsibly and always verify critical detections manually.
