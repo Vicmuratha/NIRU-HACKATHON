@@ -342,7 +342,7 @@ export CUDA_VISIBLE_DEVICES=""
 
 We welcome contributions to SafEye! Here's how you can help:
 
-1. **Fork the repository** and create your branch from `master`
+1. **Fork the repository** and create your branch from `main`
 2. **Make your changes** and add tests if applicable
 3. **Ensure the test suite passes**: `python -m unittest discover tests/`
 4. **Update documentation** to reflect any changes
