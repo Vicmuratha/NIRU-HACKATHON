@@ -31,6 +31,12 @@ def download_file(url, dest_path, desc=""):
 
 def download_from_azure_blob(container, blob_name, dest_path, desc=""):
     """Download a blob from Azure Storage using connection string or public URL."""
+    
+    # Skip if file already exists
+    if dest_path.exists():
+        print(f"✅ {desc} already exists. Skipping download.")
+        return True
+    
     conn_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     base_url = os.getenv("AZURE_BLOB_BASE_URL")
     sas_token = os.getenv("AZURE_SAS_TOKEN")
@@ -83,7 +89,7 @@ def setup_audio_model():
     """Download and setup audio deepfake detection model"""
     print("\n🎵 Setting up Audio Detection Model...")
 
-    audio_dir = Path("models/audio_model")
+    audio_dir = Path("audio_model")
     audio_dir.mkdir(parents=True, exist_ok=True)
 
     container = os.getenv("AZURE_STORAGE_CONTAINER", "")
@@ -107,7 +113,7 @@ def setup_text_model():
     """Download and setup text misinformation detection model"""
     print("\n📝 Setting up Text Detection Model...")
 
-    text_dir = Path("models/text_model")
+    text_dir = Path("text_model")
     text_dir.mkdir(parents=True, exist_ok=True)
 
     container = os.getenv("AZURE_STORAGE_CONTAINER", "")
@@ -131,7 +137,7 @@ def setup_image_model():
     """Download and setup image deepfake detection model"""
     print("\n🖼️  Setting up Image Detection Model...")
 
-    image_dir = Path("models/image_model")
+    image_dir = Path("image_model")
     image_dir.mkdir(parents=True, exist_ok=True)
 
     container = os.getenv("AZURE_STORAGE_CONTAINER", "")
