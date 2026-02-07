@@ -4,104 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - SafEye</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="bg">
-        <span class="orb one"></span>
-        <span class="orb two"></span>
-        <span class="orb three"></span>
+    <!-- Animated Background -->
+    <div class="bg-mesh">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
     </div>
-    <div class="container">
-        <div class="header">
-            <div class="brand">
-                <div class="logo"></div>
-                <div class="name">SafEye</div>
-            </div>
-            <div class="chip-row">
-                <span class="chip">Threat intelligence</span>
-                <span class="chip">Community protection</span>
-            </div>
-        </div>
+    <div class="grid-overlay"></div>
+    <div class="particles-container" id="particles"></div>
 
-        <div class="grid">
-            <div class="panel">
-                <h2>Create account</h2>
-                <div class="subtitle">Join the defense against deepfakes</div>
-                <p class="lead">
-                    Get access to detection workflows, audit trails, and safety alerts that keep
-                    your teams and communities protected.
-                </p>
-                <div class="feature-list">
-                    <div class="feature">
-                        <span class="dot"></span>
+    <div class="auth-wrapper">
+        <!-- Left Panel - Branding -->
+        <div class="auth-brand-panel">
+            <div class="brand-content">
+                <div class="brand-logo">
+                    <div class="logo-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <span class="logo-text">Safe<span class="text-gradient">Eye</span></span>
+                </div>
+                <div class="brand-badge">
+                    <span class="badge-dot"></span>
+                    Community Protection
+                </div>
+
+                <h1 class="brand-title">Join the<br><span class="text-gradient">defense</span></h1>
+                <p class="brand-subtitle">Get access to detection workflows, audit trails, and safety alerts that keep your teams and communities protected.</p>
+
+                <div class="brand-features">
+                    <div class="brand-feature">
+                        <div class="feature-icon feature-icon-violet">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        </div>
                         <div>
-                            <div class="feature-title">Unified detection hub</div>
-                            <div class="feature-text">Images, audio, and text in one place.</div>
+                            <div class="feature-name">Unified Detection Hub</div>
+                            <div class="feature-desc">Images, audio, and text in one place</div>
                         </div>
                     </div>
-                    <div class="feature">
-                        <span class="dot"></span>
+                    <div class="brand-feature">
+                        <div class="feature-icon feature-icon-cyan">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        </div>
                         <div>
-                            <div class="feature-title">Rapid onboarding</div>
-                            <div class="feature-text">Start verifying content in minutes.</div>
+                            <div class="feature-name">Rapid Onboarding</div>
+                            <div class="feature-desc">Start verifying content in minutes</div>
                         </div>
                     </div>
-                    <div class="feature">
-                        <span class="dot"></span>
+                    <div class="brand-feature">
+                        <div class="feature-icon feature-icon-emerald">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
                         <div>
-                            <div class="feature-title">Secure collaboration</div>
-                            <div class="feature-text">Share findings with your team safely.</div>
+                            <div class="feature-name">Secure Collaboration</div>
+                            <div class="feature-desc">Share findings with your team safely</div>
                         </div>
                     </div>
                 </div>
+
+                <div class="brand-stats">
+                    <div class="stat-item"><div class="stat-value">99.2%</div><div class="stat-label">Accuracy</div></div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item"><div class="stat-value">14K+</div><div class="stat-label">Scans</div></div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item"><div class="stat-value">&lt;2s</div><div class="stat-label">Response</div></div>
+                </div>
             </div>
+        </div>
 
-            <div class="panel form-panel">
+        <!-- Right Panel - Form -->
+        <div class="auth-form-panel">
+            <div class="form-content">
+                <div class="form-header">
+                    <h2 class="form-title">Create your account</h2>
+                    <p class="form-subtitle">Start protecting against deepfakes today</p>
+                </div>
 
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert-banner">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-            <form method="POST" action="/signup">
-            <div class="form-group">
-                <label for="username">Full Name</label>
-                <input type="text" id="username" name="username" placeholder="John Doe" required>
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="john@example.com" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Create a password" required>
-            </div>
-
-            <div class="form-group">
-                <label for="confirm_password">Confirm Password</label>
-                <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required>
-            </div>
-            
-                    <button type="submit" class="btn">Sign Up</button>
-
-                    <div class="divider">or continue with</div>
-                    <div class="social">
-                        <a class="social-btn" href="/auth/google">Google</a>
-                        <a class="social-btn" href="/auth/github">GitHub</a>
+                <form method="POST" action="/signup" class="auth-form">
+                    <div class="input-group">
+                        <label for="username">Full Name</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <input type="text" id="username" name="username" placeholder="John Doe" required autocomplete="name">
+                        </div>
                     </div>
-            
-                    <div class="link-text">
-                        Already have an account? <a href="/login">Log In</a>
+
+                    <div class="input-group">
+                        <label for="email">Email Address</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                            <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+                        </div>
                     </div>
+
+                    <div class="input-group-row">
+                        <div class="input-group">
+                            <label for="password">Password</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                <input type="password" id="password" name="password" placeholder="Create password" required autocomplete="new-password">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="confirm_password">Confirm</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required autocomplete="new-password">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <span>Create Account</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </button>
                 </form>
+
+                <div class="auth-divider"><span>or continue with</span></div>
+
+                <div class="social-buttons">
+                    <a href="/auth/google" class="social-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                        <span>Google</span>
+                    </a>
+                    <a href="/auth/github" class="social-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        <span>GitHub</span>
+                    </a>
+                </div>
+
+                <div class="auth-footer">
+                    Already have an account? <a href="/login">Sign in</a>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
+            p.style.background = ['#8b5cf6','#06b6d4','#f43f5e','#10b981'][Math.floor(Math.random()*4)];
+            p.style.opacity = Math.random() * 0.4 + 0.1;
+            p.style.animationDelay = Math.random() * 15 + 's';
+            p.style.animationDuration = (Math.random() * 10 + 15) + 's';
+            p.style.boxShadow = '0 0 ' + (Math.random()*6+2) + 'px ' + p.style.background;
+            container.appendChild(p);
+        }
+        document.querySelectorAll('.input-wrapper input').forEach(input => {
+            input.addEventListener('focus', () => input.parentElement.classList.add('focused'));
+            input.addEventListener('blur', () => input.parentElement.classList.remove('focused'));
+        });
+    </script>
 </body>
 </html>
