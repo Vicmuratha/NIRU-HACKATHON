@@ -86,54 +86,110 @@
                     <p class="form-subtitle">Start protecting against deepfakes today</p>
                 </div>
 
-                {% with messages = get_flashed_messages() %}
+                <!-- Flash messages from backend -->
+                <div id="flash-messages">
+                {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert-banner">
+                        {% for category, message in messages %}
+                            <div class="alert-banner {{ 'alert-success' if category == 'success' else '' }}">
+                                {% if category == 'success' %}
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                {% else %}
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                {% endif %}
                                 {{ message }}
                             </div>
                         {% endfor %}
                     {% endif %}
                 {% endwith %}
+                </div>
 
-                <form method="POST" action="/signup" class="auth-form">
+                <!-- Client-side error display -->
+                <div id="client-error" class="alert-banner" style="display:none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span id="client-error-text"></span>
+                </div>
+
+                <form method="POST" action="/signup" class="auth-form" id="signup-form" novalidate>
                     <div class="input-group">
                         <label for="username">Full Name</label>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper" id="username-wrapper">
                             <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             <input type="text" id="username" name="username" placeholder="John Doe" required autocomplete="name">
+                            <svg class="input-status-icon valid-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg class="input-status-icon invalid-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </div>
+                        <span class="field-error" id="username-error"></span>
                     </div>
 
                     <div class="input-group">
                         <label for="email">Email Address</label>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper" id="email-wrapper">
                             <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                             <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+                            <svg class="input-status-icon valid-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg class="input-status-icon invalid-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </div>
+                        <span class="field-error" id="email-error"></span>
                     </div>
 
-                    <div class="input-group-row">
-                        <div class="input-group">
-                            <label for="password">Password</label>
-                            <div class="input-wrapper">
-                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                <input type="password" id="password" name="password" placeholder="Create password" required autocomplete="new-password">
-                            </div>
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrapper" id="password-wrapper">
+                            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <input type="password" id="password" name="password" placeholder="Create a strong password" required autocomplete="new-password">
+                            <button type="button" class="toggle-pw-btn" id="toggle-pw" aria-label="Show password" tabindex="-1">
+                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </button>
                         </div>
-                        <div class="input-group">
-                            <label for="confirm_password">Confirm</label>
-                            <div class="input-wrapper">
-                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required autocomplete="new-password">
+                        <span class="field-error" id="password-error"></span>
+                        <!-- Password Strength Meter -->
+                        <div class="pw-strength" id="pw-strength" style="display:none;">
+                            <div class="pw-strength-bar">
+                                <div class="pw-strength-fill" id="pw-strength-fill"></div>
                             </div>
+                            <span class="pw-strength-label" id="pw-strength-label"></span>
                         </div>
+                        <ul class="pw-requirements" id="pw-requirements" style="display:none;">
+                            <li id="req-length"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> At least 8 characters</li>
+                            <li id="req-upper"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> One uppercase letter</li>
+                            <li id="req-number"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> One number</li>
+                            <li id="req-special"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> One special character (!@#$...)</li>
+                        </ul>
                     </div>
 
-                    <button type="submit" class="submit-btn">
-                        <span>Create Account</span>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    <div class="input-group">
+                        <label for="confirm_password">Confirm Password</label>
+                        <div class="input-wrapper" id="confirm-wrapper">
+                            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat your password" required autocomplete="new-password">
+                            <button type="button" class="toggle-pw-btn" id="toggle-cpw" aria-label="Show password" tabindex="-1">
+                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </button>
+                        </div>
+                        <span class="field-error" id="confirm-error"></span>
+                    </div>
+
+                    <div class="terms-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="terms" id="terms">
+                            <span class="custom-checkbox">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            </span>
+                            <span>I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a></span>
+                        </label>
+                        <span class="field-error" id="terms-error"></span>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        <span class="btn-text">Create Account</span>
+                        <svg class="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                        <span class="btn-loader" style="display:none;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg>
+                            Creating account...
+                        </span>
                     </button>
                 </form>
 
@@ -158,6 +214,7 @@
     </div>
 
     <script>
+        // ─── Particles ───
         const container = document.getElementById('particles');
         for (let i = 0; i < 30; i++) {
             const p = document.createElement('div');
@@ -171,9 +228,255 @@
             p.style.boxShadow = '0 0 ' + (Math.random()*6+2) + 'px ' + p.style.background;
             container.appendChild(p);
         }
+
+        // ─── Input focus glow ───
         document.querySelectorAll('.input-wrapper input').forEach(input => {
-            input.addEventListener('focus', () => input.parentElement.classList.add('focused'));
-            input.addEventListener('blur', () => input.parentElement.classList.remove('focused'));
+            input.addEventListener('focus', () => input.closest('.input-wrapper').classList.add('focused'));
+            input.addEventListener('blur', () => input.closest('.input-wrapper').classList.remove('focused'));
+        });
+
+        // ─── Password toggles ───
+        function setupToggle(btnId, inputId) {
+            const btn = document.getElementById(btnId);
+            const inp = document.getElementById(inputId);
+            if (!btn || !inp) return;
+            btn.addEventListener('click', () => {
+                const isPw = inp.type === 'password';
+                inp.type = isPw ? 'text' : 'password';
+                btn.querySelector('.eye-open').style.display = isPw ? 'none' : 'block';
+                btn.querySelector('.eye-closed').style.display = isPw ? 'block' : 'none';
+                btn.setAttribute('aria-label', isPw ? 'Hide password' : 'Show password');
+            });
+        }
+        setupToggle('toggle-pw', 'password');
+        setupToggle('toggle-cpw', 'confirm_password');
+
+        // ─── Validation helpers ───
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function showFieldError(wrapperId, errorId, message) {
+            const wrapper = document.getElementById(wrapperId);
+            const error = document.getElementById(errorId);
+            wrapper.classList.add('input-error');
+            wrapper.classList.remove('input-valid');
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+
+        function showFieldValid(wrapperId, errorId) {
+            const wrapper = document.getElementById(wrapperId);
+            const error = document.getElementById(errorId);
+            wrapper.classList.remove('input-error');
+            wrapper.classList.add('input-valid');
+            error.textContent = '';
+            error.style.display = 'none';
+        }
+
+        function clearFieldState(wrapperId, errorId) {
+            const wrapper = document.getElementById(wrapperId);
+            const error = document.getElementById(errorId);
+            wrapper.classList.remove('input-error', 'input-valid');
+            error.textContent = '';
+            error.style.display = 'none';
+        }
+
+        // ─── Password Strength ───
+        const pwInput = document.getElementById('password');
+        const cpwInput = document.getElementById('confirm_password');
+        const strengthMeter = document.getElementById('pw-strength');
+        const strengthFill = document.getElementById('pw-strength-fill');
+        const strengthLabel = document.getElementById('pw-strength-label');
+        const pwReqs = document.getElementById('pw-requirements');
+
+        function getPasswordStrength(pw) {
+            let score = 0;
+            if (pw.length >= 8) score++;
+            if (pw.length >= 12) score++;
+            if (/[A-Z]/.test(pw)) score++;
+            if (/[0-9]/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+            return score; // 0-5
+        }
+
+        const strengthData = [
+            { label: '', color: 'transparent', width: '0%' },
+            { label: 'Weak', color: '#f43f5e', width: '20%' },
+            { label: 'Fair', color: '#f97316', width: '40%' },
+            { label: 'Good', color: '#eab308', width: '60%' },
+            { label: 'Strong', color: '#10b981', width: '80%' },
+            { label: 'Very Strong', color: '#06b6d4', width: '100%' },
+        ];
+
+        function updateRequirement(id, met) {
+            const el = document.getElementById(id);
+            el.classList.toggle('met', met);
+        }
+
+        pwInput.addEventListener('input', () => {
+            const val = pwInput.value;
+            if (val === '') {
+                clearFieldState('password-wrapper', 'password-error');
+                strengthMeter.style.display = 'none';
+                pwReqs.style.display = 'none';
+                return;
+            }
+            strengthMeter.style.display = 'flex';
+            pwReqs.style.display = 'block';
+
+            const score = getPasswordStrength(val);
+            const data = strengthData[score];
+            strengthFill.style.width = data.width;
+            strengthFill.style.background = data.color;
+            strengthLabel.textContent = data.label;
+            strengthLabel.style.color = data.color;
+
+            updateRequirement('req-length', val.length >= 8);
+            updateRequirement('req-upper', /[A-Z]/.test(val));
+            updateRequirement('req-number', /[0-9]/.test(val));
+            updateRequirement('req-special', /[^A-Za-z0-9]/.test(val));
+
+            if (score >= 3) showFieldValid('password-wrapper', 'password-error');
+            else showFieldError('password-wrapper', 'password-error', 'Password is too weak');
+
+            // Re-check confirm match if filled
+            if (cpwInput.value) validateConfirm();
+        });
+
+        // ─── Confirm password match ───
+        function validateConfirm() {
+            const val = cpwInput.value;
+            if (val === '') { clearFieldState('confirm-wrapper', 'confirm-error'); return; }
+            if (val === pwInput.value) showFieldValid('confirm-wrapper', 'confirm-error');
+            else showFieldError('confirm-wrapper', 'confirm-error', 'Passwords do not match');
+        }
+        cpwInput.addEventListener('input', validateConfirm);
+
+        // ─── Live validation for name & email ───
+        const nameInput = document.getElementById('username');
+        const emailInput = document.getElementById('email');
+
+        nameInput.addEventListener('input', () => {
+            const val = nameInput.value.trim();
+            if (val === '') { clearFieldState('username-wrapper', 'username-error'); return; }
+            if (val.length >= 2) showFieldValid('username-wrapper', 'username-error');
+            else showFieldError('username-wrapper', 'username-error', 'Name must be at least 2 characters');
+        });
+
+        emailInput.addEventListener('input', () => {
+            const val = emailInput.value.trim();
+            if (val === '') { clearFieldState('email-wrapper', 'email-error'); return; }
+            if (isValidEmail(val)) showFieldValid('email-wrapper', 'email-error');
+            else showFieldError('email-wrapper', 'email-error', 'Please enter a valid email address');
+        });
+
+        // ─── Form submit with validation + loading ───
+        const form = document.getElementById('signup-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const clientError = document.getElementById('client-error');
+        const clientErrorText = document.getElementById('client-error-text');
+
+        function showClientError(msg) {
+            clientErrorText.textContent = msg;
+            clientError.style.display = 'flex';
+            clientError.classList.add('shake');
+            setTimeout(() => clientError.classList.remove('shake'), 500);
+        }
+
+        function hideClientError() {
+            clientError.style.display = 'none';
+        }
+
+        form.addEventListener('submit', (e) => {
+            hideClientError();
+            let hasError = false;
+            let firstErrorField = null;
+
+            // Validate name
+            const name = nameInput.value.trim();
+            if (!name) {
+                showFieldError('username-wrapper', 'username-error', 'Full name is required');
+                hasError = true;
+                firstErrorField = firstErrorField || nameInput;
+            } else if (name.length < 2) {
+                showFieldError('username-wrapper', 'username-error', 'Name must be at least 2 characters');
+                hasError = true;
+                firstErrorField = firstErrorField || nameInput;
+            }
+
+            // Validate email
+            const email = emailInput.value.trim();
+            if (!email) {
+                showFieldError('email-wrapper', 'email-error', 'Email is required');
+                hasError = true;
+                firstErrorField = firstErrorField || emailInput;
+            } else if (!isValidEmail(email)) {
+                showFieldError('email-wrapper', 'email-error', 'Please enter a valid email address');
+                hasError = true;
+                firstErrorField = firstErrorField || emailInput;
+            }
+
+            // Validate password
+            const password = pwInput.value;
+            if (!password) {
+                showFieldError('password-wrapper', 'password-error', 'Password is required');
+                hasError = true;
+                firstErrorField = firstErrorField || pwInput;
+            } else if (getPasswordStrength(password) < 3) {
+                showFieldError('password-wrapper', 'password-error', 'Password is too weak — see requirements above');
+                hasError = true;
+                firstErrorField = firstErrorField || pwInput;
+            }
+
+            // Validate confirm
+            const confirm = cpwInput.value;
+            if (!confirm) {
+                showFieldError('confirm-wrapper', 'confirm-error', 'Please confirm your password');
+                hasError = true;
+                firstErrorField = firstErrorField || cpwInput;
+            } else if (confirm !== password) {
+                showFieldError('confirm-wrapper', 'confirm-error', 'Passwords do not match');
+                hasError = true;
+                firstErrorField = firstErrorField || cpwInput;
+            }
+
+            // Validate terms
+            const termsCheck = document.getElementById('terms');
+            const termsError = document.getElementById('terms-error');
+            if (!termsCheck.checked) {
+                termsError.textContent = 'You must agree to the terms to continue';
+                termsError.style.display = 'block';
+                hasError = true;
+            } else {
+                termsError.textContent = '';
+                termsError.style.display = 'none';
+            }
+
+            if (hasError) {
+                e.preventDefault();
+                showClientError('Please fix the errors above to continue');
+                if (firstErrorField) firstErrorField.focus();
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.querySelector('.btn-text').style.display = 'none';
+            submitBtn.querySelector('.btn-arrow').style.display = 'none';
+            submitBtn.querySelector('.btn-loader').style.display = 'flex';
+            submitBtn.classList.add('loading');
+        });
+
+        // ─── Clear terms error on check ───
+        document.getElementById('terms').addEventListener('change', function() {
+            const termsError = document.getElementById('terms-error');
+            if (this.checked) { termsError.textContent = ''; termsError.style.display = 'none'; }
+        });
+
+        // ─── Auto-dismiss flash messages after 5s ───
+        document.querySelectorAll('#flash-messages .alert-banner').forEach(el => {
+            setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(-8px)'; setTimeout(() => el.remove(), 300); }, 5000);
         });
     </script>
 </body>

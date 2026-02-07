@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template, url_for, redirect, session, jsonify
+import hashlib
+from flask import Flask, render_template, url_for, redirect, session, jsonify, request, flash
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 
@@ -44,6 +45,9 @@ github = oauth.register(
 # Dummy Database
 users_db = {}
 
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
 @app.route('/')
 def home():
     user = session.get('user')
@@ -51,12 +55,72 @@ def home():
         return redirect(FRONTEND_URL)
     return redirect(url_for('login'))
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        if not email or not password:
+            flash('Please fill in all fields', 'error')
+            return redirect(url_for('login'))
+
+        user = users_db.get(email)
+        if not user or user['password'] != hash_password(password):
+            flash('Invalid email or password', 'error')
+            return redirect(url_for('login'))
+
+        session['user'] = {
+            'name': user['name'],
+            'email': email,
+            'picture': None
+        }
+        return redirect(url_for('home'))
+
     return render_template('login.html')
 
-@app.route('/signup')
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        # Validation
+        if not username or not email or not password or not confirm_password:
+            flash('Please fill in all fields', 'error')
+            return redirect(url_for('signup'))
+
+        if len(username) < 2:
+            flash('Name must be at least 2 characters', 'error')
+            return redirect(url_for('signup'))
+
+        if '@' not in email or '.' not in email:
+            flash('Please enter a valid email address', 'error')
+            return redirect(url_for('signup'))
+
+        if len(password) < 8:
+            flash('Password must be at least 8 characters', 'error')
+            return redirect(url_for('signup'))
+
+        if password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return redirect(url_for('signup'))
+
+        if email in users_db:
+            flash('An account with this email already exists', 'error')
+            return redirect(url_for('signup'))
+
+        # Store user
+        users_db[email] = {
+            'name': username,
+            'password': hash_password(password)
+        }
+
+        flash('Account created successfully! Please sign in.', 'success')
+        return redirect(url_for('login'))
+
     return render_template('signup.html')
 
 @app.route('/logout')

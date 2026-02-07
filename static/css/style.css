@@ -669,6 +669,249 @@ body {
    RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
 
+/* ─── PASSWORD TOGGLE BUTTON ─── */
+.toggle-pw-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+    z-index: 2;
+}
+
+.toggle-pw-btn:hover {
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* ─── INPUT STATUS ICONS (valid/invalid check/X) ─── */
+.input-status-icon {
+    position: absolute;
+    right: 12px;
+    display: none;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Move status icon left when toggle button exists */
+.input-wrapper:has(.toggle-pw-btn) .input-status-icon {
+    right: 40px;
+}
+
+.input-wrapper.input-valid .valid-icon { display: block; }
+.input-wrapper.input-error .invalid-icon { display: block; }
+.input-wrapper.input-valid .invalid-icon { display: none; }
+.input-wrapper.input-error .valid-icon { display: none; }
+
+/* ─── INPUT VALIDATION STATES ─── */
+.input-wrapper.input-valid input {
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.input-wrapper.input-valid.focused input,
+.input-wrapper.input-valid input:focus {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08), 0 0 20px rgba(16, 185, 129, 0.06);
+}
+
+.input-wrapper.input-error input {
+    border-color: rgba(244, 63, 94, 0.4);
+}
+
+.input-wrapper.input-error.focused input,
+.input-wrapper.input-error input:focus {
+    border-color: rgba(244, 63, 94, 0.5);
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.08), 0 0 20px rgba(244, 63, 94, 0.06);
+}
+
+.input-wrapper.input-valid .input-icon { color: #10b981; }
+.input-wrapper.input-error .input-icon { color: #f43f5e; }
+
+/* ─── FIELD ERROR TEXT ─── */
+.field-error {
+    font-size: 0.76em;
+    color: #fb7185;
+    display: none;
+    padding-left: 2px;
+    animation: fieldErrorIn 0.25s ease;
+}
+
+@keyframes fieldErrorIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── REMEMBER / TERMS ROW ─── */
+.remember-row,
+.terms-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.84em;
+    color: var(--text-secondary);
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.custom-checkbox {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: var(--bg-input);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    color: transparent;
+}
+
+.checkbox-label input:checked + .custom-checkbox {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3);
+}
+
+.terms-link {
+    color: var(--accent-violet);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.terms-link:hover {
+    color: #a78bfa;
+    text-decoration: underline;
+}
+
+/* ─── BUTTON STATES (loading) ─── */
+.btn-text,
+.btn-arrow {
+    transition: opacity 0.2s;
+}
+
+.btn-loader {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.submit-btn.loading {
+    opacity: 0.8;
+    cursor: wait;
+    pointer-events: none;
+}
+
+/* ─── ALERT SUCCESS VARIANT ─── */
+.alert-banner.alert-success {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.alert-banner {
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+/* ─── SHAKE ANIMATION ─── */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-6px); }
+    30% { transform: translateX(5px); }
+    45% { transform: translateX(-4px); }
+    60% { transform: translateX(3px); }
+    75% { transform: translateX(-2px); }
+}
+
+.shake {
+    animation: shake 0.5s ease;
+}
+
+/* ─── PASSWORD STRENGTH METER ─── */
+.pw-strength {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.pw-strength-bar {
+    flex: 1;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+
+.pw-strength-fill {
+    height: 100%;
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.4s ease, background 0.4s ease;
+}
+
+.pw-strength-label {
+    font-size: 0.72em;
+    font-weight: 700;
+    min-width: 72px;
+    text-align: right;
+    letter-spacing: 0.02em;
+    transition: color 0.3s;
+}
+
+/* ─── PASSWORD REQUIREMENTS LIST ─── */
+.pw-requirements {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+    margin-top: 4px;
+}
+
+.pw-requirements li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72em;
+    color: var(--text-muted);
+    transition: color 0.25s;
+}
+
+.pw-requirements li svg {
+    color: var(--text-muted);
+    opacity: 0.4;
+    transition: color 0.25s, opacity 0.25s;
+}
+
+.pw-requirements li.met {
+    color: #10b981;
+}
+
+.pw-requirements li.met svg {
+    color: #10b981;
+    opacity: 1;
+}
+
 @media (max-width: 960px) {
     .auth-wrapper {
         grid-template-columns: 1fr;

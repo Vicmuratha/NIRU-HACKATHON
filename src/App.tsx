@@ -23,6 +23,12 @@ interface AnalysisResult {
   is_authentic?: boolean;
 }
 
+interface UserInfo {
+  name: string;
+  email: string;
+  picture?: string | null;
+}
+
 type AnalysisTab = 'image' | 'audio' | 'text';
 type AppView = 'home' | 'analyze';
 
@@ -148,13 +154,22 @@ const VerdictBadge: React.FC<{ verdict: string }> = ({ verdict }) => {
 };
 
 // ─── NAVBAR ───
-const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void }> = ({ view, setView }) => {
+const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: UserInfo | null }> = ({ view, setView, user }) => {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handler);
     return () => window.removeEventListener('scroll', handler);
   }, []);
+
+  const handleLogout = () => {
+    window.location.href = '/logout';
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   return (
     <motion.nav
@@ -199,15 +214,60 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void }> = ({ vi
             <Activity size={12} className="text-emerald-400" />
             <span>System Online</span>
           </div>
-          <button
-            onClick={() => setView('analyze')}
-            className="btn-glow text-sm !px-5 !py-2.5"
-          >
-            <span className="flex items-center gap-2">
-              <Scan size={14} />
-              Scan Now
-            </span>
-          </button>
+
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.12] rounded-full pl-1.5 pr-3.5 py-1.5 transition-all duration-300"
+              >
+                {user.picture ? (
+                  <img src={user.picture} alt={user.name} className="w-7 h-7 rounded-full ring-2 ring-violet-500/30" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-violet-500/30">
+                    {getInitials(user.name)}
+                  </div>
+                )}
+                <span className="hidden sm:block text-sm font-medium text-slate-300 max-w-[100px] truncate">{user.name.split(' ')[0]}</span>
+              </button>
+
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-56 bg-[#0c1220]/95 backdrop-blur-xl border border-white/[0.08] rounded-xl shadow-2xl shadow-black/40 overflow-hidden"
+                  >
+                    <div className="px-4 py-3 border-b border-white/[0.06]">
+                      <div className="text-sm font-semibold text-slate-200 truncate">{user.name}</div>
+                      <div className="text-xs text-slate-500 truncate">{user.email}</div>
+                    </div>
+                    <div className="p-1.5">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Sign out
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <button
+              onClick={() => setView('analyze')}
+              className="btn-glow text-sm !px-5 !py-2.5"
+            >
+              <span className="flex items-center gap-2">
+                <Scan size={14} />
+                Scan Now
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </motion.nav>
@@ -958,6 +1018,14 @@ const Footer: React.FC = () => (
 // ─── MAIN APP ───
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('home');
+  const [user, setUser] = useState<UserInfo | null>(null);
+
+  useEffect(() => {
+    fetch('/api/me', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => { if (data.user) setUser(data.user); })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="relative min-h-screen">
@@ -967,7 +1035,7 @@ const App: React.FC = () => {
       <Particles />
 
       {/* Navigation */}
-      <Navbar view={view} setView={setView} />
+      <Navbar view={view} setView={setView} user={user} />
 
       {/* Content */}
       <AnimatePresence mode="wait">
