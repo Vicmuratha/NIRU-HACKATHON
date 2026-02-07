@@ -1,14 +1,14 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield, ShieldCheck, ShieldAlert, ShieldX,
-  Upload, Image, Mic, FileText, Zap, Eye,
-  ChevronRight, X, Check, AlertTriangle, Info,
-  BarChart3, Lock, Globe, Cpu, Sparkles,
-  Menu, ArrowRight, ExternalLink, Activity,
-  Sun, Moon, Volume2, Type, Camera, Search,
-  TrendingUp, Users, FileWarning, BrainCircuit,
-  Scan, Fingerprint, AudioLines, Bot,
+  Shield, ShieldCheck, ShieldAlert,
+  Upload, Image, Mic, Zap, Eye,
+  ChevronRight, X, AlertTriangle,
+  BarChart3, Lock, Cpu, Sparkles,
+  ArrowRight, Activity,
+  Volume2, Type, Camera, Search,
+  BrainCircuit,
+  Scan, Fingerprint, AudioLines,
   CircleCheck, CircleX, CircleDot, Loader2
 } from 'lucide-react';
 
@@ -76,7 +76,6 @@ const AnimatedCounter: React.FC<{ value: number; suffix?: string; decimals?: num
 }) => {
   const [display, setDisplay] = useState(0);
   useEffect(() => {
-    let start = 0;
     const duration = 1500;
     const startTime = performance.now();
     const step = (time: number) => {

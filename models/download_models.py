@@ -12,6 +12,14 @@ import tarfile
 import shutil
 from pathlib import Path
 
+# Load .env from project root
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).resolve().parent.parent / '.env'
+    load_dotenv(env_path)
+except ImportError:
+    pass
+
 try:
     from azure.storage.blob import BlobClient
 except Exception:
@@ -50,12 +58,28 @@ def download_from_azure_blob(container, blob_name, dest_path, desc=""):
                 blob_name=blob_name,
             )
             dest_path.parent.mkdir(parents=True, exist_ok=True)
+            # Stream download in chunks for large files
+            download_stream = blob_client.download_blob()
+            file_size = download_stream.properties.size
+            downloaded = 0
             with open(dest_path, "wb") as f:
-                f.write(blob_client.download_blob().readall())
+                for chunk in download_stream.chunks():
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if file_size and file_size > 1_000_000:
+                        pct = int(downloaded / file_size * 100)
+                        mb_done = downloaded / 1_000_000
+                        mb_total = file_size / 1_000_000
+                        print(f"\r   ↳ {mb_done:.1f}/{mb_total:.1f} MB ({pct}%)", end="", flush=True)
+            if file_size and file_size > 1_000_000:
+                print()  # newline after progress
             print(f"✅ Downloaded {desc} from Azure")
             return True
         except Exception as e:
             print(f"❌ Failed to download {desc} from Azure: {e}")
+            # Remove partial file
+            if dest_path.exists():
+                dest_path.unlink()
             return False
 
     if base_url:
@@ -85,11 +109,14 @@ def extract_archive(archive_path, extract_to, desc=""):
         print(f"❌ Failed to extract {desc}: {e}")
         return False
 
+# Resolve base directory to the folder containing this script (models/)
+SCRIPT_DIR = Path(__file__).resolve().parent
+
 def setup_audio_model():
     """Download and setup audio deepfake detection model"""
     print("\n🎵 Setting up Audio Detection Model...")
 
-    audio_dir = Path("audio_model")
+    audio_dir = SCRIPT_DIR / "audio_model"
     audio_dir.mkdir(parents=True, exist_ok=True)
 
     container = os.getenv("AZURE_STORAGE_CONTAINER", "")
@@ -113,7 +140,7 @@ def setup_text_model():
     """Download and setup text misinformation detection model"""
     print("\n📝 Setting up Text Detection Model...")
 
-    text_dir = Path("text_model")
+    text_dir = SCRIPT_DIR / "text_model"
     text_dir.mkdir(parents=True, exist_ok=True)
 
     container = os.getenv("AZURE_STORAGE_CONTAINER", "")
@@ -137,7 +164,7 @@ def setup_image_model():
     """Download and setup image deepfake detection model"""
     print("\n🖼️  Setting up Image Detection Model...")
 
-    image_dir = Path("image_model")
+    image_dir = SCRIPT_DIR / "image_model"
     image_dir.mkdir(parents=True, exist_ok=True)
 
     container = os.getenv("AZURE_STORAGE_CONTAINER", "")
@@ -184,9 +211,8 @@ def main():
     print("🤖 SafEye Model Downloader")
     print("=" * 50)
 
-    # Create models directory
-    models_dir = Path("models")
-    models_dir.mkdir(exist_ok=True)
+    # Ensure the script directory exists
+    SCRIPT_DIR.mkdir(exist_ok=True)
 
     # Setup each model
     setup_audio_model()

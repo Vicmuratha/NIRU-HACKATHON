@@ -52,10 +52,11 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'super_secret_key')
 jwt = JWTManager(app)
 
 # Define folders relative to the current directory
-# Note: Use 'models' directory to match download_models.py behavior
+# Note: Use 'models' directory at project root to match download_models.py behavior
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 DATA_FOLDER = os.path.join(BASE_DIR, 'data')
-MODELS_DIR = os.path.join(BASE_DIR, 'models') # Explicitly define models dir
+MODELS_DIR = os.path.join(PROJECT_ROOT, 'models') # Project root models dir
 
 # Create them if they don't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -69,13 +70,17 @@ def download_models_on_startup():
         return
 
     try:
-        # Import directly assuming download_models.py is in the same folder
+        import sys
+        # download_models.py lives in the project-root 'models/' folder
+        models_script_dir = os.path.join(os.path.dirname(BASE_DIR), 'models')
+        if models_script_dir not in sys.path:
+            sys.path.insert(0, models_script_dir)
         import download_models as model_downloader
         logger.info("📦 Downloading models on startup...")
         model_downloader.main()
         logger.info("✅ Model download completed")
-    except ImportError:
-        logger.error("❌ Could not import 'download_models.py'. Make sure it is in the same folder.")
+    except ImportError as ie:
+        logger.error(f"❌ Could not import 'download_models.py': {ie}")
     except Exception as e:
         logger.warning(f"⚠️ Model download skipped/failed: {e}")
 
@@ -136,22 +141,52 @@ class UltraImageDetector:
         if self.ai_model is None:
             with self.lock:
                 if self.ai_model is None:
+                    import torch
+                    from torchvision import transforms
+
+                    local_model_dir = os.path.join(MODELS_DIR, "image_model")
+                    pth_path = os.path.join(local_model_dir, "best_deepfake_detector.pth")
+                    hf_config_path = os.path.join(local_model_dir, "config.json")
+
+                    # ── Option 1: Load custom EfficientNet-B4 .pth checkpoint ──
+                    if os.path.exists(pth_path) and os.path.getsize(pth_path) > 1000:
+                        try:
+                            from torchvision.models import efficientnet_b4
+                            logger.info("📥 Loading custom EfficientNet-B4 .pth model from LOCAL")
+                            model = efficientnet_b4(weights=None)
+                            # Replace classifier head for 2-class (real/fake)
+                            in_features = model.classifier[1].in_features
+                            model.classifier[1] = torch.nn.Linear(in_features, 2)
+
+                            ckpt = torch.load(pth_path, map_location='cpu', weights_only=False)
+                            state_dict = ckpt.get('model_state_dict', ckpt)
+                            model.load_state_dict(state_dict, strict=False)
+                            model.eval()
+
+                            self.ai_model = model
+                            self.ai_processor = transforms.Compose([
+                                transforms.Resize((380, 380)),
+                                transforms.CenterCrop(380),
+                                transforms.ToTensor(),
+                                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                            ])
+                            self._model_type = 'pth'
+                            logger.info("✅ Custom EfficientNet-B4 model loaded successfully")
+                            return
+                        except Exception as e:
+                            logger.warning(f"⚠️ Failed to load .pth model: {e}")
+
+                    # ── Option 2: HuggingFace format (config.json + model.safetensors) ──
                     try:
                         from transformers import AutoModelForImageClassification, AutoImageProcessor
-                        
-                        # --- FIX: Check the 'models' subdirectory ---
-                        local_model_dir = os.path.join(BASE_DIR, "models", "image_model")
-                        
-                        # Check if config exists to verify download success
-                        use_local = os.path.exists(os.path.join(local_model_dir, "config.json"))
-
-                        logger.info(f"📥 Loading deepfake detection AI model from: {'LOCAL' if use_local else 'HUGGING FACE'}")
+                        use_local = os.path.exists(hf_config_path)
+                        logger.info(f"📥 Loading deepfake detection AI model from: {'LOCAL HF' if use_local else 'HUGGING FACE HUB'}")
                         model_source = local_model_dir if use_local else "dima806/deepfake_vs_real_image_detection"
-                        
                         self.ai_model = AutoModelForImageClassification.from_pretrained(model_source)
                         self.ai_processor = AutoImageProcessor.from_pretrained(model_source)
                         self.ai_model.eval()
-                        logger.info("✅ AI model loaded successfully")
+                        self._model_type = 'hf'
+                        logger.info("✅ HuggingFace AI model loaded successfully")
                     except Exception as e:
                         logger.warning(f"⚠️ Could not load AI model: {e}")
                         self.ai_model = "unavailable"
@@ -163,14 +198,26 @@ class UltraImageDetector:
         try:
             import torch
             image = Image.open(image_path).convert('RGB')
-            if max(image.size) > 512:
-                image.thumbnail((512, 512), Image.Resampling.LANCZOS)
-            inputs = self.ai_processor(images=image, return_tensors="pt")
-            with torch.no_grad():
-                outputs = self.ai_model(**inputs)
-                probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
-            fake_confidence = float(probs[0][1].item())
-            real_confidence = float(probs[0][0].item())
+
+            if getattr(self, '_model_type', 'hf') == 'pth':
+                # Custom EfficientNet-B4
+                input_tensor = self.ai_processor(image).unsqueeze(0)
+                with torch.no_grad():
+                    outputs = self.ai_model(input_tensor)
+                    probs = torch.nn.functional.softmax(outputs, dim=-1)
+                fake_confidence = float(probs[0][1].item())
+                real_confidence = float(probs[0][0].item())
+            else:
+                # HuggingFace model
+                if max(image.size) > 512:
+                    image.thumbnail((512, 512), Image.Resampling.LANCZOS)
+                inputs = self.ai_processor(images=image, return_tensors="pt")
+                with torch.no_grad():
+                    outputs = self.ai_model(**inputs)
+                    probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
+                fake_confidence = float(probs[0][1].item())
+                real_confidence = float(probs[0][0].item())
+
             return {'available': True, 'fake_confidence': fake_confidence, 'real_confidence': real_confidence}
         except Exception as e:
             logger.error(f"❌ AI detection error: {e}")
@@ -357,7 +404,7 @@ class UltraTextDetector:
             if self.pipeline is None:
                 from transformers import pipeline
                 # --- FIX: Check the 'models' subdirectory ---
-                local_model_dir = os.path.join(BASE_DIR, "models", "text_model")
+                local_model_dir = os.path.join(MODELS_DIR, "text_model")
                 use_local = os.path.exists(os.path.join(local_model_dir, "config.json"))
                 model_source = local_model_dir if use_local else "hamzab/roberta-fake-news-classification"
                 self.pipeline = pipeline("text-classification", model=model_source, tokenizer=model_source)
