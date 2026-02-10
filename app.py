@@ -1,6 +1,7 @@
 import os
 import hashlib
-from flask import Flask, render_template, url_for, redirect, session, jsonify, request, flash
+import sqlite3
+from flask import Flask, render_template, url_for, redirect, session, jsonify, request, flash, g
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 
@@ -42,8 +43,36 @@ github = oauth.register(
     client_kwargs={'scope': 'user:email'},
 )
 
-# Dummy Database
-users_db = {}
+# ─── SQLite Database ───
+DB_PATH = os.path.join(BASE_DIR, 'users.db')
+
+def get_db():
+    if 'db' not in g:
+        g.db = sqlite3.connect(DB_PATH)
+        g.db.row_factory = sqlite3.Row
+    return g.db
+
+@app.teardown_appcontext
+def close_db(exception):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
+
+def init_db():
+    db = sqlite3.connect(DB_PATH)
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    db.commit()
+    db.close()
+
+init_db()
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -65,7 +94,8 @@ def login():
             flash('Please fill in all fields', 'error')
             return redirect(url_for('login'))
 
-        user = users_db.get(email)
+        db = get_db()
+        user = db.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
         if not user or user['password'] != hash_password(password):
             flash('Invalid email or password', 'error')
             return redirect(url_for('login'))
@@ -108,15 +138,18 @@ def signup():
             flash('Passwords do not match', 'error')
             return redirect(url_for('signup'))
 
-        if email in users_db:
+        db = get_db()
+        existing = db.execute('SELECT id FROM users WHERE email = ?', (email,)).fetchone()
+        if existing:
             flash('An account with this email already exists', 'error')
             return redirect(url_for('signup'))
 
         # Store user
-        users_db[email] = {
-            'name': username,
-            'password': hash_password(password)
-        }
+        db.execute(
+            'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+            (username, email, hash_password(password))
+        )
+        db.commit()
 
         flash('Account created successfully! Please sign in.', 'success')
         return redirect(url_for('login'))
