@@ -17,6 +17,7 @@
         <div class="orb orb-3"></div>
         <div class="orb orb-4"></div>
     </div>
+    <div class="noise-overlay"></div>
     <div class="grid-overlay"></div>
     <div class="particles-container" id="particles"></div>
 
@@ -68,13 +69,7 @@
                     </div>
                 </div>
 
-                <div class="brand-stats">
-                    <div class="stat-item"><div class="stat-value">99.2%</div><div class="stat-label">Accuracy</div></div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item"><div class="stat-value">14K+</div><div class="stat-label">Scans</div></div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item"><div class="stat-value">&lt;2s</div><div class="stat-label">Response</div></div>
-                </div>
+
             </div>
         </div>
 
@@ -84,6 +79,17 @@
                 <div class="form-header">
                     <h2 class="form-title">Create your account</h2>
                     <p class="form-subtitle">Start protecting against deepfakes today</p>
+                </div>
+
+                <!-- Step Indicator -->
+                <div class="form-step-indicator">
+                    <div class="step-dot active" id="step-1"></div>
+                    <div class="step-line"></div>
+                    <div class="step-dot" id="step-2"></div>
+                    <div class="step-line"></div>
+                    <div class="step-dot" id="step-3"></div>
+                    <div class="step-line"></div>
+                    <div class="step-dot" id="step-4"></div>
                 </div>
 
                 <!-- Flash messages from backend -->
@@ -216,16 +222,19 @@
     <script>
         // ─── Particles ───
         const container = document.getElementById('particles');
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 40; i++) {
             const p = document.createElement('div');
             p.className = 'particle';
             p.style.left = Math.random() * 100 + '%';
-            p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
-            p.style.background = ['#8b5cf6','#06b6d4','#f43f5e','#10b981'][Math.floor(Math.random()*4)];
-            p.style.opacity = Math.random() * 0.4 + 0.1;
-            p.style.animationDelay = Math.random() * 15 + 's';
-            p.style.animationDuration = (Math.random() * 10 + 15) + 's';
-            p.style.boxShadow = '0 0 ' + (Math.random()*6+2) + 'px ' + p.style.background;
+            const size = (Math.random() * 3 + 1);
+            p.style.width = p.style.height = size + 'px';
+            const colors = ['#8b5cf6','#06b6d4','#f43f5e','#10b981','#f59e0b'];
+            const color = colors[Math.floor(Math.random()*colors.length)];
+            p.style.background = color;
+            p.style.opacity = Math.random() * 0.35 + 0.08;
+            p.style.animationDelay = Math.random() * 20 + 's';
+            p.style.animationDuration = (Math.random() * 12 + 18) + 's';
+            p.style.boxShadow = '0 0 ' + (Math.random()*8+3) + 'px ' + color;
             container.appendChild(p);
         }
 
@@ -252,9 +261,7 @@
         setupToggle('toggle-cpw', 'confirm_password');
 
         // ─── Validation helpers ───
-        function isValidEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        }
+        function isValidEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 
         function showFieldError(wrapperId, errorId, message) {
             const wrapper = document.getElementById(wrapperId);
@@ -264,7 +271,6 @@
             error.textContent = message;
             error.style.display = 'block';
         }
-
         function showFieldValid(wrapperId, errorId) {
             const wrapper = document.getElementById(wrapperId);
             const error = document.getElementById(errorId);
@@ -273,13 +279,25 @@
             error.textContent = '';
             error.style.display = 'none';
         }
-
         function clearFieldState(wrapperId, errorId) {
             const wrapper = document.getElementById(wrapperId);
             const error = document.getElementById(errorId);
             wrapper.classList.remove('input-error', 'input-valid');
             error.textContent = '';
             error.style.display = 'none';
+        }
+
+        // ─── Step Indicator Logic ───
+        function updateSteps() {
+            const nameOk = nameInput.value.trim().length >= 2;
+            const emailOk = isValidEmail(emailInput.value.trim());
+            const pwOk = getPasswordStrength(pwInput.value) >= 3;
+            const cpwOk = cpwInput.value !== '' && cpwInput.value === pwInput.value;
+
+            document.getElementById('step-1').classList.toggle('active', true);
+            document.getElementById('step-2').classList.toggle('active', nameOk);
+            document.getElementById('step-3').classList.toggle('active', nameOk && emailOk);
+            document.getElementById('step-4').classList.toggle('active', nameOk && emailOk && pwOk && cpwOk);
         }
 
         // ─── Password Strength ───
@@ -297,7 +315,7 @@
             if (/[A-Z]/.test(pw)) score++;
             if (/[0-9]/.test(pw)) score++;
             if (/[^A-Za-z0-9]/.test(pw)) score++;
-            return score; // 0-5
+            return score;
         }
 
         const strengthData = [
@@ -310,8 +328,7 @@
         ];
 
         function updateRequirement(id, met) {
-            const el = document.getElementById(id);
-            el.classList.toggle('met', met);
+            document.getElementById(id).classList.toggle('met', met);
         }
 
         pwInput.addEventListener('input', () => {
@@ -320,6 +337,7 @@
                 clearFieldState('password-wrapper', 'password-error');
                 strengthMeter.style.display = 'none';
                 pwReqs.style.display = 'none';
+                updateSteps();
                 return;
             }
             strengthMeter.style.display = 'flex';
@@ -340,8 +358,8 @@
             if (score >= 3) showFieldValid('password-wrapper', 'password-error');
             else showFieldError('password-wrapper', 'password-error', 'Password is too weak');
 
-            // Re-check confirm match if filled
             if (cpwInput.value) validateConfirm();
+            updateSteps();
         });
 
         // ─── Confirm password match ───
@@ -351,7 +369,7 @@
             if (val === pwInput.value) showFieldValid('confirm-wrapper', 'confirm-error');
             else showFieldError('confirm-wrapper', 'confirm-error', 'Passwords do not match');
         }
-        cpwInput.addEventListener('input', validateConfirm);
+        cpwInput.addEventListener('input', () => { validateConfirm(); updateSteps(); });
 
         // ─── Live validation for name & email ───
         const nameInput = document.getElementById('username');
@@ -359,19 +377,21 @@
 
         nameInput.addEventListener('input', () => {
             const val = nameInput.value.trim();
-            if (val === '') { clearFieldState('username-wrapper', 'username-error'); return; }
+            if (val === '') { clearFieldState('username-wrapper', 'username-error'); updateSteps(); return; }
             if (val.length >= 2) showFieldValid('username-wrapper', 'username-error');
             else showFieldError('username-wrapper', 'username-error', 'Name must be at least 2 characters');
+            updateSteps();
         });
 
         emailInput.addEventListener('input', () => {
             const val = emailInput.value.trim();
-            if (val === '') { clearFieldState('email-wrapper', 'email-error'); return; }
+            if (val === '') { clearFieldState('email-wrapper', 'email-error'); updateSteps(); return; }
             if (isValidEmail(val)) showFieldValid('email-wrapper', 'email-error');
             else showFieldError('email-wrapper', 'email-error', 'Please enter a valid email address');
+            updateSteps();
         });
 
-        // ─── Form submit with validation + loading ───
+        // ─── Form submit ───
         const form = document.getElementById('signup-form');
         const submitBtn = document.getElementById('submit-btn');
         const clientError = document.getElementById('client-error');
@@ -383,75 +403,33 @@
             clientError.classList.add('shake');
             setTimeout(() => clientError.classList.remove('shake'), 500);
         }
-
-        function hideClientError() {
-            clientError.style.display = 'none';
-        }
+        function hideClientError() { clientError.style.display = 'none'; }
 
         form.addEventListener('submit', (e) => {
             hideClientError();
             let hasError = false;
             let firstErrorField = null;
 
-            // Validate name
             const name = nameInput.value.trim();
-            if (!name) {
-                showFieldError('username-wrapper', 'username-error', 'Full name is required');
-                hasError = true;
-                firstErrorField = firstErrorField || nameInput;
-            } else if (name.length < 2) {
-                showFieldError('username-wrapper', 'username-error', 'Name must be at least 2 characters');
-                hasError = true;
-                firstErrorField = firstErrorField || nameInput;
-            }
+            if (!name) { showFieldError('username-wrapper', 'username-error', 'Full name is required'); hasError = true; firstErrorField = firstErrorField || nameInput; }
+            else if (name.length < 2) { showFieldError('username-wrapper', 'username-error', 'Name must be at least 2 characters'); hasError = true; firstErrorField = firstErrorField || nameInput; }
 
-            // Validate email
             const email = emailInput.value.trim();
-            if (!email) {
-                showFieldError('email-wrapper', 'email-error', 'Email is required');
-                hasError = true;
-                firstErrorField = firstErrorField || emailInput;
-            } else if (!isValidEmail(email)) {
-                showFieldError('email-wrapper', 'email-error', 'Please enter a valid email address');
-                hasError = true;
-                firstErrorField = firstErrorField || emailInput;
-            }
+            if (!email) { showFieldError('email-wrapper', 'email-error', 'Email is required'); hasError = true; firstErrorField = firstErrorField || emailInput; }
+            else if (!isValidEmail(email)) { showFieldError('email-wrapper', 'email-error', 'Please enter a valid email address'); hasError = true; firstErrorField = firstErrorField || emailInput; }
 
-            // Validate password
             const password = pwInput.value;
-            if (!password) {
-                showFieldError('password-wrapper', 'password-error', 'Password is required');
-                hasError = true;
-                firstErrorField = firstErrorField || pwInput;
-            } else if (getPasswordStrength(password) < 3) {
-                showFieldError('password-wrapper', 'password-error', 'Password is too weak — see requirements above');
-                hasError = true;
-                firstErrorField = firstErrorField || pwInput;
-            }
+            if (!password) { showFieldError('password-wrapper', 'password-error', 'Password is required'); hasError = true; firstErrorField = firstErrorField || pwInput; }
+            else if (getPasswordStrength(password) < 3) { showFieldError('password-wrapper', 'password-error', 'Password is too weak'); hasError = true; firstErrorField = firstErrorField || pwInput; }
 
-            // Validate confirm
             const confirm = cpwInput.value;
-            if (!confirm) {
-                showFieldError('confirm-wrapper', 'confirm-error', 'Please confirm your password');
-                hasError = true;
-                firstErrorField = firstErrorField || cpwInput;
-            } else if (confirm !== password) {
-                showFieldError('confirm-wrapper', 'confirm-error', 'Passwords do not match');
-                hasError = true;
-                firstErrorField = firstErrorField || cpwInput;
-            }
+            if (!confirm) { showFieldError('confirm-wrapper', 'confirm-error', 'Please confirm your password'); hasError = true; firstErrorField = firstErrorField || cpwInput; }
+            else if (confirm !== password) { showFieldError('confirm-wrapper', 'confirm-error', 'Passwords do not match'); hasError = true; firstErrorField = firstErrorField || cpwInput; }
 
-            // Validate terms
             const termsCheck = document.getElementById('terms');
             const termsError = document.getElementById('terms-error');
-            if (!termsCheck.checked) {
-                termsError.textContent = 'You must agree to the terms to continue';
-                termsError.style.display = 'block';
-                hasError = true;
-            } else {
-                termsError.textContent = '';
-                termsError.style.display = 'none';
-            }
+            if (!termsCheck.checked) { termsError.textContent = 'You must agree to the terms to continue'; termsError.style.display = 'block'; hasError = true; }
+            else { termsError.textContent = ''; termsError.style.display = 'none'; }
 
             if (hasError) {
                 e.preventDefault();
@@ -460,7 +438,6 @@
                 return;
             }
 
-            // Show loading state
             submitBtn.disabled = true;
             submitBtn.querySelector('.btn-text').style.display = 'none';
             submitBtn.querySelector('.btn-arrow').style.display = 'none';
@@ -474,9 +451,30 @@
             if (this.checked) { termsError.textContent = ''; termsError.style.display = 'none'; }
         });
 
-        // ─── Auto-dismiss flash messages after 5s ───
+        // ─── Auto-dismiss flash messages ───
         document.querySelectorAll('#flash-messages .alert-banner').forEach(el => {
             setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(-8px)'; setTimeout(() => el.remove(), 300); }, 5000);
+        });
+
+        // ─── Staggered entrance animations ───
+        document.querySelectorAll('.brand-feature').forEach((el, i) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(-20px)';
+            setTimeout(() => {
+                el.style.transition = 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+                el.style.opacity = '1';
+                el.style.transform = 'translateX(0)';
+            }, 300 + i * 120);
+        });
+
+        document.querySelectorAll('.input-group').forEach((el, i) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(12px)';
+            setTimeout(() => {
+                el.style.transition = 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, 500 + i * 100);
         });
     </script>
 </body>

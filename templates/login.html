@@ -17,6 +17,7 @@
         <div class="orb orb-3"></div>
         <div class="orb orb-4"></div>
     </div>
+    <div class="noise-overlay"></div>
     <div class="grid-overlay"></div>
     <div class="particles-container" id="particles"></div>
 
@@ -45,7 +46,7 @@
                         </div>
                         <div>
                             <div class="feature-name">Instant Risk Scoring</div>
-                            <div class="feature-desc">Get actionable verdicts in under 2 seconds</div>
+                            <div class="feature-desc">Fast analysis of uploaded content</div>
                         </div>
                     </div>
                     <div class="brand-feature">
@@ -54,7 +55,7 @@
                         </div>
                         <div>
                             <div class="feature-name">Multi-Model Verification</div>
-                            <div class="feature-desc">6+ neural models cross-check every scan</div>
+                            <div class="feature-desc">Multiple AI models for thorough analysis</div>
                         </div>
                     </div>
                     <div class="brand-feature">
@@ -68,13 +69,7 @@
                     </div>
                 </div>
 
-                <div class="brand-stats">
-                    <div class="stat-item"><div class="stat-value">99.2%</div><div class="stat-label">Accuracy</div></div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item"><div class="stat-value">14K+</div><div class="stat-label">Scans</div></div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item"><div class="stat-value">&lt;2s</div><div class="stat-label">Response</div></div>
-                </div>
+
             </div>
         </div>
 
@@ -179,18 +174,21 @@
     </div>
 
     <script>
-        // ─── Particles ───
+        // ─── Particles (more dynamic) ───
         const container = document.getElementById('particles');
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 40; i++) {
             const p = document.createElement('div');
             p.className = 'particle';
             p.style.left = Math.random() * 100 + '%';
-            p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
-            p.style.background = ['#8b5cf6','#06b6d4','#f43f5e','#10b981'][Math.floor(Math.random()*4)];
-            p.style.opacity = Math.random() * 0.4 + 0.1;
-            p.style.animationDelay = Math.random() * 15 + 's';
-            p.style.animationDuration = (Math.random() * 10 + 15) + 's';
-            p.style.boxShadow = '0 0 ' + (Math.random()*6+2) + 'px ' + p.style.background;
+            const size = (Math.random() * 3 + 1);
+            p.style.width = p.style.height = size + 'px';
+            const colors = ['#8b5cf6','#06b6d4','#f43f5e','#10b981','#f59e0b'];
+            const color = colors[Math.floor(Math.random()*colors.length)];
+            p.style.background = color;
+            p.style.opacity = Math.random() * 0.35 + 0.08;
+            p.style.animationDelay = Math.random() * 20 + 's';
+            p.style.animationDuration = (Math.random() * 12 + 18) + 's';
+            p.style.boxShadow = '0 0 ' + (Math.random()*8+3) + 'px ' + color;
             container.appendChild(p);
         }
 
@@ -279,7 +277,6 @@
             hideClientError();
             let hasError = false;
 
-            // Validate email
             const email = emailInput.value.trim();
             if (!email) {
                 showFieldError('email-wrapper', 'email-error', 'Email is required');
@@ -289,7 +286,6 @@
                 hasError = true;
             }
 
-            // Validate password
             const password = pwInput.value;
             if (!password) {
                 showFieldError('password-wrapper', 'password-error', 'Password is required');
@@ -302,7 +298,6 @@
                 return;
             }
 
-            // Show loading state
             submitBtn.disabled = true;
             submitBtn.querySelector('.btn-text').style.display = 'none';
             submitBtn.querySelector('.btn-arrow').style.display = 'none';
@@ -310,9 +305,30 @@
             submitBtn.classList.add('loading');
         });
 
-        // ─── Auto-dismiss flash messages after 5s ───
+        // ─── Auto-dismiss flash messages ───
         document.querySelectorAll('#flash-messages .alert-banner').forEach(el => {
             setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(-8px)'; setTimeout(() => el.remove(), 300); }, 5000);
+        });
+
+        // ─── Staggered entrance animations ───
+        document.querySelectorAll('.brand-feature').forEach((el, i) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(-20px)';
+            setTimeout(() => {
+                el.style.transition = 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+                el.style.opacity = '1';
+                el.style.transform = 'translateX(0)';
+            }, 300 + i * 120);
+        });
+
+        document.querySelectorAll('.input-group').forEach((el, i) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(12px)';
+            setTimeout(() => {
+                el.style.transition = 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, 500 + i * 100);
         });
     </script>
 </body>
