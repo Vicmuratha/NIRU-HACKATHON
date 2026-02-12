@@ -36,6 +36,17 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 import exifread
 
+# Kenya-specific modules
+import sys
+if os.path.dirname(os.path.dirname(os.path.abspath(__file__))) not in sys.path:
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.election_shield import analyze_election_context
+from backend.whatsapp_checker import analyze_forward
+from backend.kenya_documents import analyze_kenya_document, detect_document_type
+from backend.audio_context import get_audio_kenya_context
+from backend.fake_screenshot import detect_news_screenshot, run_ela as screenshot_ela
+
 warnings.filterwarnings('ignore')
 
 # --- FIX: Correctly get the project root directory (Current Folder) ---
@@ -353,9 +364,11 @@ class UltraImageDetector:
         
         kenya_warnings = []
         if final_risk > 70 and face_result['faces_detected'] > 0:
-            kenya_warnings.append({'type': 'ELECTION_MANIPULATION', 'severity': 'CRITICAL', 'warning': 'Political deepfake risk', 'action': 'Verify source'})
+            kenya_warnings.append({'type': 'ELECTION_MANIPULATION', 'severity': 'CRITICAL', 'warning': 'This image may be a deepfake of a public figure. Manipulated images of politicians circulate on WhatsApp ahead of elections. Verify with official sources before sharing.', 'action': 'Report to NCIC: complaints@cohesion.or.ke | DCI: reportcrime@dci.go.ke'})
+        if final_risk > 50:
+            kenya_warnings.append({'type': 'MEDIA_MANIPULATION', 'severity': 'HIGH', 'warning': 'This image shows signs of manipulation. In Kenya, doctored news screenshots and fake campaign posters are common misinformation vectors.', 'action': 'Verify at the original news outlet website. Check PesaCheck.org for fact-checks.'})
 
-        return {'risk_score': round(final_risk, 1), 'verdict': verdict, 'confidence': round(max(0.6, confidence_sum), 2), 'findings': findings, 'kenya_warnings': kenya_warnings, 'details': {'ai_confidence': round(ai_result['fake_confidence']*100, 1) if ai_result['available'] else 0}}
+        return {'risk_score': round(final_risk, 1), 'verdict': verdict, 'confidence': round(max(0.6, confidence_sum), 2), 'findings': findings, 'kenya_warnings': kenya_warnings, 'details': {'ai_confidence': round(ai_result['fake_confidence']*100, 1) if ai_result['available'] else 0, 'ela_score': round(ela_result.get('ela_score', 0), 1)}}
 
 # ============== ULTRA-ACCURATE AUDIO DETECTOR ==============
 class UltraAudioDetector:
@@ -385,10 +398,35 @@ class UltraAudioDetector:
             
             risk = min(risk, 98)
             kenya_warnings = []
+            
+            # Kenya-specific audio context (honest about the real threat)
+            language = 'english'  # default; Swahili AI audio is still poor quality
+            kenya_audio_ctx = get_audio_kenya_context(language, risk)
+            
             if risk > 65:
-                kenya_warnings.append({'type': 'MPESA_FRAUD', 'severity': 'HIGH', 'warning': 'Voice cloning risk', 'action': 'Do not authorize transactions via voice'})
+                kenya_warnings.append({
+                    'type': 'AUDIO_MANIPULATION',
+                    'severity': 'HIGH',
+                    'warning': 'This audio shows signs of manipulation. In Kenya, "leaked audio" of politicians is a common tactic — verify with official channels before sharing.',
+                    'action': 'Report to DCI Cybercrime: reportcrime@dci.go.ke | Verify with at least 2 news outlets'
+                })
+            elif risk > 40:
+                kenya_warnings.append({
+                    'type': 'AUDIO_SUSPICIOUS',
+                    'severity': 'MEDIUM',
+                    'warning': 'This audio has some manipulation indicators. The most common audio manipulation in Kenya is splicing real recordings, not AI generation.',
+                    'action': 'Verify the full context of this recording before sharing'
+                })
 
-            return {'risk_score': risk, 'is_authentic': risk < 50, 'confidence': 0.88, 'findings': findings, 'kenya_warnings': kenya_warnings}
+            return {
+                'risk_score': risk,
+                'is_authentic': risk < 50,
+                'confidence': 0.88,
+                'findings': findings,
+                'kenya_warnings': kenya_warnings,
+                'kenya_audio_context': kenya_audio_ctx,
+                'detection_note': kenya_audio_ctx.get('detection_note', '')
+            }
         except Exception as e:
             return {'risk_score': 0, 'is_authentic': True, 'error': str(e)}
 
@@ -457,9 +495,184 @@ def analyze_text():
     result = text_detector.analyze_text(data.get('text', ''))
     return jsonify(result)
 
+# ============== WHATSAPP FORWARD CHECKER ==============
+@app.route('/api/analyze/forward', methods=['POST'])
+def analyze_whatsapp_forward():
+    """Analyse a WhatsApp forward for misinformation patterns."""
+    data = request.get_json()
+    text = (data or {}).get('text', '')
+
+    if not text or len(text.strip()) < 10:
+        return jsonify({'error': 'Text too short to analyse (min 10 characters)'}), 400
+
+    # Run forward pattern analysis
+    forward_result = analyze_forward(text)
+
+    # Also run AI text detection
+    ai_result = text_detector.analyze_text(text)
+
+    # Combine scores: forward patterns (40%) + AI detection (60%)
+    combined_score = min(100, (
+        forward_result['forward_risk_score'] * 0.4
+        + ai_result.get('risk_score', 0) * 0.6
+    ))
+
+    # Build Kenya warnings
+    kenya_warnings = []
+    if combined_score > 65:
+        kenya_warnings.append({
+            'type': 'MISINFORMATION',
+            'severity': 'HIGH',
+            'warning': 'This message has strong misinformation indicators. 67% of Kenyans get news via WhatsApp — do not forward unverified content.',
+            'action': 'Verify with PesaCheck.org or Africa Check before sharing'
+        })
+    if forward_result['hoax_matches']:
+        for hoax in forward_result['hoax_matches']:
+            kenya_warnings.append({
+                'type': hoax['category'].upper().replace(' ', '_'),
+                'severity': 'HIGH',
+                'warning': hoax['debunk'],
+                'action': 'Do not forward this message'
+            })
+
+    # Election context
+    election_ctx = analyze_election_context(text, 'text', combined_score)
+    if election_ctx.get('election_relevant'):
+        for w in election_ctx.get('warnings', []):
+            kenya_warnings.append({
+                'type': 'ELECTION_MISINFORMATION',
+                'severity': election_ctx['risk_level'],
+                'warning': w.get('en', ''),
+                'action': '; '.join(election_ctx.get('recommendations', [])[:2])
+            })
+
+    return jsonify({
+        'risk_score': round(combined_score, 1),
+        'verdict': (
+            'LIKELY_MISINFORMATION' if combined_score > 65
+            else 'SUSPICIOUS' if combined_score > 40
+            else 'APPEARS_GENUINE'
+        ),
+        'confidence': round(max(ai_result.get('confidence', 0.5), 0.6), 2),
+        'findings': [
+            f'Forward pattern score: {forward_result["forward_risk_score"]}%',
+            f'AI text analysis: {ai_result.get("risk_score", 0)}%',
+            f'Hoax templates matched: {len(forward_result["hoax_matches"])}',
+            f'Swahili clickbait keywords: {len(forward_result.get("swahili_clickbait", []))}',
+        ] + [f'🔍 Matched hoax: {h["category"]}' for h in forward_result['hoax_matches']],
+        'kenya_warnings': kenya_warnings,
+        'forward_analysis': forward_result,
+        'is_authentic': combined_score < 40,
+        'details': {
+            'forward_score': forward_result['forward_risk_score'],
+            'ai_score': ai_result.get('risk_score', 0),
+            'hoax_count': len(forward_result['hoax_matches']),
+        }
+    })
+
+# ============== DOCUMENT FORGERY CHECKER ==============
+@app.route('/api/analyze/document', methods=['POST'])
+def analyze_document():
+    """Analyse an uploaded image for Kenyan document forgery."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'Image file required'}), 400
+
+    file = request.files['file']
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_{secure_filename(file.filename)}")
+    file.save(filepath)
+
+    try:
+        # Run standard image analysis
+        image_result = image_detector.analyze_image(filepath)
+
+        # OCR the image for document text
+        ocr_text = ''
+        try:
+            import pytesseract
+            ocr_text = pytesseract.image_to_string(Image.open(filepath))
+        except ImportError:
+            logger.warning('pytesseract not installed — document OCR unavailable')
+        except Exception as e:
+            logger.warning(f'OCR failed: {e}')
+
+        # Run Kenya document analysis
+        ela_score = image_result.get('details', {}).get('ela_score', 0)
+        doc_result = analyze_kenya_document(
+            text=ocr_text,
+            image_risk_score=image_result.get('risk_score', 0),
+            ela_score=ela_score,
+        )
+
+        # Also check for news screenshot
+        screenshot_result = detect_news_screenshot(
+            ocr_text=ocr_text,
+            ela_score=ela_score,
+            ai_deepfake_score=image_result.get('risk_score', 0),
+        )
+
+        # Build combined result
+        kenya_warnings = image_result.get('kenya_warnings', [])
+
+        if doc_result.get('is_document') and doc_result.get('verdict') != 'APPEARS_GENUINE':
+            kenya_warnings.append({
+                'type': 'DOCUMENT_FORGERY',
+                'severity': 'CRITICAL' if doc_result.get('verdict') == 'LIKELY_FORGED' else 'HIGH',
+                'warning': f"{doc_result['document_name']}: {doc_result.get('kenya_context', {}).get('message_en', 'Possible forgery detected')}",
+                'action': f"Verify at: {doc_result.get('kenya_context', {}).get('verify_at', 'N/A')} | {doc_result.get('kenya_context', {}).get('report_to', '')}"
+            })
+
+        if screenshot_result.get('is_news_screenshot') and screenshot_result.get('verdict') != 'APPEARS_GENUINE':
+            outlet = screenshot_result.get('detected_outlet', {})
+            kenya_warnings.append({
+                'type': 'FAKE_NEWS_SCREENSHOT',
+                'severity': 'CRITICAL' if screenshot_result['verdict'] == 'LIKELY_MANIPULATED' else 'HIGH',
+                'warning': f"This appears to be a manipulated {outlet.get('name', 'news')} screenshot. Edited news screenshots are the #1 misinformation format on Kenyan WhatsApp.",
+                'action': screenshot_result.get('action', {}).get('en', f"Verify at {outlet.get('verify_url', '')}")
+            })
+
+        # Use the higher risk score
+        risk_score = image_result.get('risk_score', 0)
+        if doc_result.get('is_document'):
+            risk_score = max(risk_score, doc_result.get('risk_score', 0))
+
+        return jsonify({
+            'risk_score': round(risk_score, 1),
+            'verdict': doc_result.get('verdict', image_result.get('verdict', 'REVIEW_REQUIRED')),
+            'confidence': image_result.get('confidence', 0.6),
+            'findings': image_result.get('findings', []) + [
+                f"📄 Document type: {doc_result.get('document_name', 'Unknown')}" if doc_result.get('is_document') else '📄 No recognised Kenyan document detected',
+                f"🗞️ News outlet: {screenshot_result.get('detected_outlet', {}).get('name', 'None')}" if screenshot_result.get('is_news_screenshot') else '',
+            ],
+            'kenya_warnings': kenya_warnings,
+            'document_analysis': doc_result,
+            'screenshot_analysis': screenshot_result,
+            'ocr_text_preview': ocr_text[:300] if ocr_text else None,
+            'is_authentic': risk_score < 40,
+            'details': image_result.get('details', {}),
+        })
+    except Exception as e:
+        logger.error(f'Document analysis error: {e}')
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+# ============== HEALTH CHECK ==============
 @app.route('/api/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'healthy', 'models_loaded': image_detector.ai_model is not None})
+    return jsonify({
+        'status': 'healthy',
+        'models_loaded': image_detector.ai_model is not None,
+        'platform': 'SafEye Kenya',
+        'version': '2.0.0',
+        'kenya_modules': {
+            'election_shield': True,
+            'whatsapp_checker': True,
+            'document_verifier': True,
+            'news_screenshot_detector': True,
+            'audio_context': True,
+        }
+    })
 
 if __name__ == '__main__':
     print("🚀 Starting SafEye Server...")

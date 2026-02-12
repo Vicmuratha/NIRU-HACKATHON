@@ -1,4 +1,6 @@
 flask
+flask-cors
+flask-jwt-extended
 authlib
 requests
 python-dotenv
@@ -10,3 +12,7 @@ pillow
 librosa
 soundfile
 gunicorn
+numpy
+scipy
+exifread
+pytesseract

@@ -4,12 +4,13 @@ import {
   Shield, ShieldCheck, ShieldAlert,
   Upload, Image, Mic, Zap, Eye,
   ChevronRight, X, AlertTriangle,
-  BarChart3, Lock, Cpu, Sparkles,
+  BarChart3, Lock, Cpu,
   ArrowRight, Activity,
   Volume2, Type, Camera, Search,
   BrainCircuit,
-  Scan, Fingerprint, AudioLines,
-  CircleCheck, CircleX, CircleDot, Loader2
+  Scan, AudioLines,
+  CircleCheck, CircleX, CircleDot, Loader2,
+  MessageSquare, FileCheck, Flag, Scale
 } from 'lucide-react';
 
 // ─── TYPES ───
@@ -21,6 +22,11 @@ interface AnalysisResult {
   kenya_warnings?: { type: string; severity: string; warning: string; action: string }[];
   details?: Record<string, any>;
   is_authentic?: boolean;
+  forward_analysis?: any;
+  document_analysis?: any;
+  screenshot_analysis?: any;
+  kenya_audio_context?: any;
+  detection_note?: string;
 }
 
 interface UserInfo {
@@ -29,7 +35,7 @@ interface UserInfo {
   picture?: string | null;
 }
 
-type AnalysisTab = 'image' | 'audio' | 'text';
+type AnalysisTab = 'image' | 'audio' | 'text' | 'forward' | 'document';
 type AppView = 'home' | 'analyze';
 
 // ─── API URL ───
@@ -276,9 +282,9 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
 // ─── HERO SECTION ───
 const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
   const stats = [
-    { label: 'Detection Accuracy', value: 99.2, suffix: '%', icon: <Zap size={14} /> },
-    { label: 'Scans Performed', value: 14820, suffix: '+', icon: <BarChart3 size={14} /> },
-    { label: 'Threats Blocked', value: 3650, suffix: '+', icon: <ShieldCheck size={14} /> },
+    { label: 'Kenyans at Risk', value: 54, suffix: 'M+', icon: <Flag size={14} /> },
+    { label: 'Detection Modes', value: 5, suffix: '', icon: <Zap size={14} /> },
+    { label: 'Election Countdown', value: Math.max(0, Math.ceil((new Date('2027-08-10').getTime() - Date.now()) / (1000 * 60 * 60 * 24))), suffix: 'd', icon: <ShieldCheck size={14} /> },
     { label: 'Response Time', value: 1.2, suffix: 's', icon: <Activity size={14} /> },
   ];
 
@@ -296,8 +302,8 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
           transition={{ duration: 0.6 }}
           className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full bg-violet-500/[0.08] border border-violet-500/20 text-violet-300 text-sm"
         >
-          <Sparkles size={14} className="text-violet-400" />
-          AI-Powered Deepfake Detection Platform
+          <span className="text-base">🇰🇪</span>
+          Kenya's AI-Powered Election & Media Integrity Shield
           <ChevronRight size={14} />
         </motion.div>
 
@@ -308,7 +314,7 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
           transition={{ duration: 0.8, delay: 0.15 }}
           className="text-5xl md:text-7xl font-extrabold leading-tight mb-6"
         >
-          Defend Against{' '}
+          Protect Kenya From{' '}
           <span className="text-aurora">Digital</span>
           <br />
           <span className="text-aurora">Deception</span>
@@ -319,10 +325,20 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed"
+          className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-4 leading-relaxed"
         >
-          Instantly detect deepfake images, cloned voices, and AI-generated text
-          with military-grade neural analysis. Protect truth in the age of synthetic media.
+          Detect deepfake images, manipulated audio, fake news screenshots,
+          and WhatsApp misinformation — built for Kenya's unique threat landscape.
+        </motion.p>
+
+        {/* Kenya tagline */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="text-sm text-slate-500 italic mb-10"
+        >
+          Kulinda Ukweli wa Kidijitali — Protecting Digital Truth
         </motion.p>
 
         {/* CTA Buttons */}
@@ -380,43 +396,43 @@ const FeaturesSection: React.FC = () => {
   const features = [
     {
       icon: <Camera size={24} />,
-      title: 'Image Forensics',
-      desc: 'Multi-layered analysis: AI classification, Error Level Analysis, metadata verification, face texture mapping, and noise spectrum analysis.',
+      title: 'Deepfake Detector',
+      desc: 'EfficientNet-B4 + ELA + metadata analysis. Detects manipulated images of politicians and fake campaign material.',
       gradient: 'from-violet-500 to-purple-600',
       glow: 'rgba(139, 92, 246, 0.2)',
     },
     {
       icon: <AudioLines size={24} />,
-      title: 'Voice Authentication',
-      desc: 'MFCC analysis, silence pattern detection, spectral analysis to identify cloned or synthesized voices with high precision.',
+      title: 'Audio Analyser',
+      desc: 'Detects audio splicing and manipulation — the real threat in Kenya. Flags fabricated "leaked audio" recordings of political figures.',
       gradient: 'from-cyan-500 to-blue-600',
       glow: 'rgba(6, 182, 212, 0.2)',
     },
     {
       icon: <Type size={24} />,
-      title: 'Text Verification',
-      desc: 'RoBERTa-based fake news classification with clickbait detection, source credibility scoring, and semantic consistency checks.',
+      title: 'Fake News Classifier',
+      desc: 'RoBERTa NLP with clickbait detection. Identifies AI-generated fake articles targeting Kenyan audiences.',
       gradient: 'from-rose-500 to-pink-600',
       glow: 'rgba(244, 63, 94, 0.2)',
     },
     {
-      icon: <BrainCircuit size={24} />,
-      title: 'Neural Architecture',
-      desc: 'State-of-the-art transformer models fine-tuned on millions of deepfake samples for unmatched accuracy.',
+      icon: <MessageSquare size={24} />,
+      title: 'WhatsApp Forward Checker',
+      desc: '67% of Kenyans get news via WhatsApp. Detects misinformation patterns in forwards — in English and Swahili.',
       gradient: 'from-emerald-500 to-teal-600',
       glow: 'rgba(16, 185, 129, 0.2)',
     },
     {
-      icon: <Fingerprint size={24} />,
-      title: 'Digital Forensics',
-      desc: 'Deep pixel-level analysis examining compression artifacts, EXIF metadata, and generation fingerprints.',
+      icon: <FileCheck size={24} />,
+      title: 'Document & Screenshot Verifier',
+      desc: 'Catches forged KRA PINs, HELB letters, fake M-Pesa confirmations, and edited Citizen TV / NTV news screenshots.',
       gradient: 'from-amber-500 to-orange-600',
       glow: 'rgba(245, 158, 11, 0.2)',
     },
     {
-      icon: <Lock size={24} />,
-      title: 'Privacy First',
-      desc: 'All analysis runs on-device. Your uploads are processed and immediately deleted. Zero data retention.',
+      icon: <Scale size={24} />,
+      title: 'Kenya Legal Framework',
+      desc: 'All results reference CMCA 2018, NCIC Act, Elections Act. Direct reporting links to DCI, NCIC, and Communications Authority.',
       gradient: 'from-indigo-500 to-violet-600',
       glow: 'rgba(99, 102, 241, 0.2)',
     },
@@ -439,7 +455,7 @@ const FeaturesSection: React.FC = () => {
             Multi-Modal <span className="text-aurora">Detection Engine</span>
           </h2>
           <p className="text-slate-400 max-w-xl mx-auto">
-            Six specialized AI modules working in concert to deliver forensic-grade authenticity verification.
+            Five specialised AI modules purpose-built for Kenya's threat landscape — from election deepfakes to WhatsApp misinformation.
           </p>
         </motion.div>
 
@@ -489,8 +505,10 @@ const AnalysisPanel: React.FC = () => {
 
   const tabs: { key: AnalysisTab; label: string; icon: React.ReactNode; desc: string }[] = [
     { key: 'image', label: 'Image', icon: <Camera size={18} />, desc: 'Upload an image to check for deepfake manipulation' },
-    { key: 'audio', label: 'Audio', icon: <Volume2 size={18} />, desc: 'Upload an audio clip to detect voice cloning' },
+    { key: 'audio', label: 'Audio', icon: <Volume2 size={18} />, desc: 'Upload audio to detect splicing or manipulation' },
     { key: 'text', label: 'Text', icon: <Type size={18} />, desc: 'Paste text content to verify authenticity' },
+    { key: 'forward', label: 'WhatsApp', icon: <MessageSquare size={18} />, desc: 'Paste a WhatsApp forward to check for misinformation' },
+    { key: 'document', label: 'Document', icon: <FileCheck size={18} />, desc: 'Upload a document image or news screenshot to verify' },
   ];
 
   const resetState = useCallback(() => {
@@ -511,7 +529,7 @@ const AnalysisPanel: React.FC = () => {
     setFile(f);
     setResult(null);
     setError(null);
-    if (tab === 'image' && f.type.startsWith('image/')) {
+    if ((tab === 'image' || tab === 'document') && f.type.startsWith('image/')) {
       setPreviewUrl(URL.createObjectURL(f));
     } else {
       setPreviewUrl(null);
@@ -546,6 +564,16 @@ const AnalysisPanel: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: textInput }),
         });
+      } else if (tab === 'forward') {
+        res = await fetch(`${API_BASE}/analyze/forward`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: textInput }),
+        });
+      } else if (tab === 'document') {
+        const fd = new FormData();
+        fd.append('file', file!);
+        res = await fetch(`${API_BASE}/analyze/document`, { method: 'POST', body: fd });
       } else {
         const fd = new FormData();
         fd.append('file', file!);
@@ -565,7 +593,7 @@ const AnalysisPanel: React.FC = () => {
     }
   }, [tab, file, textInput]);
 
-  const canAnalyze = tab === 'text' ? textInput.trim().length > 10 : !!file;
+  const canAnalyze = (tab === 'text' || tab === 'forward') ? textInput.trim().length > 10 : !!file;
 
   const tabConfig = tabs.find(t => t.key === tab)!;
 
@@ -639,12 +667,12 @@ const AnalysisPanel: React.FC = () => {
                 </div>
 
                 {/* Upload or Text Input */}
-                {tab !== 'text' ? (
+                {tab !== 'text' && tab !== 'forward' ? (
                   <>
                     <input
                       ref={fileRef}
                       type="file"
-                      accept={tab === 'image' ? 'image/*' : 'audio/*'}
+                      accept={tab === 'image' ? 'image/*' : tab === 'document' ? 'image/*' : 'audio/*'}
                       className="hidden"
                       onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
                     />
@@ -658,7 +686,7 @@ const AnalysisPanel: React.FC = () => {
                       {/* Scan line animation when loading */}
                       {loading && <div className="scan-line" />}
 
-                      {previewUrl && tab === 'image' ? (
+                      {previewUrl && (tab === 'image' || tab === 'document') ? (
                         <div className="relative max-w-sm mx-auto">
                           <img
                             src={previewUrl}
@@ -674,7 +702,7 @@ const AnalysisPanel: React.FC = () => {
                       ) : file ? (
                         <div className="flex flex-col items-center gap-3 py-4">
                           <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-                            {tab === 'image' ? <Image size={28} className="text-violet-400" /> : <Mic size={28} className="text-cyan-400" />}
+                            {tab === 'image' ? <Image size={28} className="text-violet-400" /> : tab === 'document' ? <FileCheck size={28} className="text-amber-400" /> : <Mic size={28} className="text-cyan-400" />}
                           </div>
                           <div>
                             <div className="font-medium text-white">{file.name}</div>
@@ -694,7 +722,7 @@ const AnalysisPanel: React.FC = () => {
                           </div>
                           <div>
                             <p className="text-white font-medium mb-1">
-                              Drop your {tab === 'image' ? 'image' : 'audio file'} here
+                              Drop your {tab === 'image' ? 'image' : tab === 'document' ? 'document image or news screenshot' : 'audio file'} here
                             </p>
                             <p className="text-sm text-slate-500">
                               or click to browse &middot; Max 50 MB
@@ -703,6 +731,10 @@ const AnalysisPanel: React.FC = () => {
                           <div className="flex gap-2 text-xs text-slate-500">
                             {tab === 'image'
                               ? ['PNG', 'JPG', 'WEBP', 'BMP'].map(f => (
+                                  <span key={f} className="px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.06]">{f}</span>
+                                ))
+                              : tab === 'document'
+                              ? ['PNG', 'JPG', 'WEBP', 'Screenshot'].map(f => (
                                   <span key={f} className="px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.06]">{f}</span>
                                 ))
                               : ['WAV', 'MP3', 'FLAC', 'OGG'].map(f => (
@@ -719,7 +751,10 @@ const AnalysisPanel: React.FC = () => {
                     <textarea
                       value={textInput}
                       onChange={e => setTextInput(e.target.value)}
-                      placeholder="Paste the text content you want to verify for authenticity..."
+                      placeholder={tab === 'forward'
+                        ? 'Paste the WhatsApp forward message you want to check for misinformation... (works with English and Swahili)'
+                        : 'Paste the text content you want to verify for authenticity...'
+                      }
                       rows={8}
                       className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5 text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/40 focus:ring-2 focus:ring-violet-500/10 resize-none transition-all duration-300 text-sm leading-relaxed"
                     />
@@ -931,6 +966,70 @@ const AnalysisPanel: React.FC = () => {
   );
 };
 
+// ─── KENYA IMPACT STATS ───
+const KenyaImpactStats: React.FC = () => (
+  <section className="relative py-16 px-6">
+    <div className="max-w-4xl mx-auto relative z-10">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="text-center mb-8"
+      >
+        <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs text-slate-400 uppercase tracking-wider">
+          <Flag size={12} /> Why Kenya Needs This
+        </div>
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          The <span className="text-aurora">Threat</span> Is Real
+        </h2>
+      </motion.div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0 }}
+          className="glass-card p-4 text-center border-l-2 border-l-red-500/50"
+        >
+          <div className="text-2xl font-bold text-red-400">1,500+</div>
+          <div className="text-xs text-slate-400 mt-1">Kenyans killed in 2007/08 PEV — incitement spread via media</div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="glass-card p-4 text-center border-l-2 border-l-emerald-500/50"
+        >
+          <div className="text-2xl font-bold text-emerald-400">67%</div>
+          <div className="text-xs text-slate-400 mt-1">Of Kenyans get news via WhatsApp (Reuters 2024)</div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="glass-card p-4 text-center border-l-2 border-l-amber-500/50"
+        >
+          <div className="text-2xl font-bold text-amber-400">2027</div>
+          <div className="text-xs text-slate-400 mt-1">Next general election — deepfake risk is rising fast</div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="glass-card p-4 text-center border-l-2 border-l-violet-500/50"
+        >
+          <div className="text-2xl font-bold text-violet-400">Zero</div>
+          <div className="text-xs text-slate-400 mt-1">Existing tools built for Kenya's specific threat landscape</div>
+        </motion.div>
+      </div>
+    </div>
+  </section>
+);
+
 // ─── HOW IT WORKS SECTION ───
 const HowItWorks: React.FC = () => {
   const steps = [
@@ -1001,9 +1100,9 @@ const Footer: React.FC = () => (
           </span>
         </div>
         <div className="flex items-center gap-6 text-sm text-slate-500">
-          <span>AI-Powered Deepfake Detection</span>
+          <span>🇰🇪 Kenya's AI-Powered Media Integrity Shield</span>
           <span className="hidden sm:inline">&middot;</span>
-          <span className="hidden sm:inline">Built for Jaseci Hackathon 2026</span>
+          <span className="hidden sm:inline">NIRU AI Hackathon 2026</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-600">
           <Lock size={12} />
@@ -1047,6 +1146,7 @@ const App: React.FC = () => {
             transition={{ duration: 0.4 }}
           >
             <HeroSection onAnalyze={() => setView('analyze')} />
+            <KenyaImpactStats />
             <HowItWorks />
             <FeaturesSection />
             <Footer />
