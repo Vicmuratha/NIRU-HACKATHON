@@ -28,7 +28,8 @@ export default defineConfig({
       },
       '/auth': {
         target: 'http://localhost:7860',
-        changeOrigin: true
+        changeOrigin: true,
+        cookieDomainRewrite: 'localhost'
       },
       '/uploads': {
         target: 'http://localhost:7860',

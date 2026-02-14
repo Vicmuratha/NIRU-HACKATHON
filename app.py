@@ -82,6 +82,9 @@ app = Flask(
 )
 app.secret_key = os.getenv("FLASK_SECRET_KEY") or os.getenv("SECRET_KEY", "super_secret_hackathon_key")
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'safeye-hackathon-secret-2026')
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_PATH'] = '/'
 
 CORS(app, supports_credentials=True, origins=[
     'http://localhost:3000',
@@ -204,7 +207,7 @@ def init_db():
         'role': "TEXT DEFAULT 'user'",
         'profile_picture': "TEXT DEFAULT ''",
         'auth_provider': "TEXT DEFAULT 'local'",
-        'updated_at': "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        'updated_at': "TIMESTAMP DEFAULT NULL",
         'last_login': "TIMESTAMP DEFAULT NULL",
     }
     for col_name, col_def in new_columns.items():
@@ -213,6 +216,9 @@ def init_db():
                 db.execute(f'ALTER TABLE users ADD COLUMN {col_name} {col_def}')
             except Exception:
                 pass
+
+    # Backfill updated_at for existing rows
+    db.execute('UPDATE users SET updated_at = created_at WHERE updated_at IS NULL')
 
     db.commit()
     db.close()
@@ -795,7 +801,7 @@ if HAS_OAUTH:
             'email': user_info['email'],
             'picture': user_info.get('picture')
         }
-        return redirect(url_for('home'))
+        return redirect(FRONTEND_URL)
 
     @app.route('/auth/github')
     def login_github():
@@ -831,7 +837,7 @@ if HAS_OAUTH:
             'email': email,
             'picture': picture
         }
-        return redirect(url_for('home'))
+        return redirect(FRONTEND_URL)
 
 
 # ══════════════════════════════════════════════════════════════
