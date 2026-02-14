@@ -13,6 +13,26 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:7860',
         changeOrigin: true
+      },
+      '/login': {
+        target: 'http://localhost:7860',
+        changeOrigin: true
+      },
+      '/signup': {
+        target: 'http://localhost:7860',
+        changeOrigin: true
+      },
+      '/logout': {
+        target: 'http://localhost:7860',
+        changeOrigin: true
+      },
+      '/auth': {
+        target: 'http://localhost:7860',
+        changeOrigin: true
+      },
+      '/uploads': {
+        target: 'http://localhost:7860',
+        changeOrigin: true
       }
     }
   }

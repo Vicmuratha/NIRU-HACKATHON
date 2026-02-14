@@ -5,14 +5,15 @@ import {
   Upload, Image, Mic, Zap, Eye,
   ChevronRight, X, AlertTriangle,
   BarChart3, Lock, Cpu,
-  ArrowRight, Activity,
+  ArrowRight,
   Volume2, Type, Camera, Search,
   BrainCircuit,
   Scan, AudioLines,
   CircleCheck, CircleX, CircleDot, Loader2,
   MessageSquare, FileCheck, Flag, Scale,
-  Sparkles, Globe, Users, ChevronDown, ExternalLink,
-  CheckCircle2, Clock, TrendingUp, Menu, XIcon
+  Sparkles, Globe, Users, ChevronDown,
+  CheckCircle2, Clock, TrendingUp, Menu, XIcon,
+  User, MapPin, Building2, Phone, Mail, Edit3, Save, Trash2, History
 } from 'lucide-react';
 
 // ─── TYPES ───
@@ -37,8 +38,64 @@ interface UserInfo {
   picture?: string | null;
 }
 
+interface ProfileData {
+  id: number;
+  name: string;
+  email: string;
+  bio: string;
+  phone: string;
+  location: string;
+  organization: string;
+  role: string;
+  profile_picture: string;
+  auth_provider: string;
+  created_at: string;
+  updated_at: string;
+  last_login: string;
+}
+
+interface ProfileStats {
+  total_scans: number;
+  threats_detected: number;
+  authentic_count: number;
+  image_scans: number;
+  audio_scans: number;
+  text_scans: number;
+  forward_scans: number;
+  document_scans: number;
+  avg_risk_score: number;
+}
+
+interface HistoryItem {
+  id: number;
+  detection_type: string;
+  filename: string;
+  risk_score: number;
+  verdict: string;
+  confidence: number;
+  findings: string[];
+  kenya_warnings: any[];
+  details: Record<string, any>;
+  created_at: string;
+}
+
+interface AllUser {
+  id: number;
+  name: string;
+  email: string;
+  bio: string;
+  location: string;
+  organization: string;
+  role: string;
+  profile_picture: string;
+  auth_provider: string;
+  created_at: string;
+  last_login: string;
+  total_scans: number;
+}
+
 type AnalysisTab = 'image' | 'audio' | 'text' | 'forward' | 'document';
-type AppView = 'home' | 'analyze';
+type AppView = 'home' | 'analyze' | 'profile';
 
 // ─── API URL ───
 const API_BASE = '/api';
@@ -223,13 +280,13 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
         </div>
 
         <div className="hidden md:flex items-center gap-1 nav-pill absolute left-1/2 -translate-x-1/2">
-          {(['home', 'analyze'] as AppView[]).map(v => (
+          {(['home', 'analyze', 'profile'] as AppView[]).map(v => (
             <button
               key={v}
               onClick={() => setView(v)}
               className={`nav-pill-item ${view === v ? 'nav-pill-active' : ''}`}
             >
-              {v === 'home' ? 'Home' : 'Analyze'}
+              {v === 'home' ? 'Home' : v === 'analyze' ? 'Analyze' : 'Profile'}
               {view === v && (
                 <motion.div layoutId="navIndicator" className="nav-pill-indicator" transition={{ type: 'spring', stiffness: 300, damping: 30 }} />
               )}
@@ -281,6 +338,13 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
                     </div>
                     <div className="p-2">
                       <button
+                        onClick={() => { setView('profile'); setMenuOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/[0.06] transition-all duration-200"
+                      >
+                        <User size={15} />
+                        My Profile
+                      </button>
+                      <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-rose-400 hover:bg-rose-500/10 transition-all duration-200"
                       >
@@ -315,7 +379,7 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
             className="md:hidden overflow-hidden border-t border-white/[0.06] bg-[#050816]/95 backdrop-blur-2xl"
           >
             <div className="p-4 flex flex-col gap-2">
-              {(['home', 'analyze'] as AppView[]).map(v => (
+              {(['home', 'analyze', 'profile'] as AppView[]).map(v => (
                 <button
                   key={v}
                   onClick={() => { setView(v); setMobileMenuOpen(false); }}
@@ -323,7 +387,7 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
                     view === v ? 'bg-violet-500/15 text-violet-300' : 'text-slate-400 hover:bg-white/[0.04]'
                   }`}
                 >
-                  {v === 'home' ? 'Home' : 'Analyze Content'}
+                  {v === 'home' ? 'Home' : v === 'analyze' ? 'Analyze Content' : 'Profile'}
                 </button>
               ))}
               {user && (
@@ -1204,6 +1268,665 @@ const Footer: React.FC = () => (
   </footer>
 );
 
+// ─── PROFILE PAGE ───
+const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [stats, setStats] = useState<ProfileStats | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [allUsers, setAllUsers] = useState<AllUser[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', bio: '', phone: '', location: '', organization: '' });
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'users' | 'security'>('overview');
+  const [historyFilter, setHistoryFilter] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
+  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    loadProfile();
+    loadHistory();
+    loadAllUsers();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const res = await fetch('/api/profile', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(data.profile);
+        setStats(data.stats);
+        setEditForm({
+          name: data.profile.name || '',
+          bio: data.profile.bio || '',
+          phone: data.profile.phone || '',
+          location: data.profile.location || '',
+          organization: data.profile.organization || '',
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadHistory = async () => {
+    try {
+      const url = historyFilter ? `/api/history?type=${historyFilter}` : '/api/history';
+      const res = await fetch(url, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data.history);
+      }
+    } catch (err) {
+      console.error('Failed to load history:', err);
+    }
+  };
+
+  const loadAllUsers = async () => {
+    try {
+      const res = await fetch('/api/users', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setAllUsers(data.users);
+      }
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    }
+  };
+
+  useEffect(() => { loadHistory(); }, [historyFilter]);
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(editForm),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage({ text: 'Profile updated successfully!', type: 'success' });
+        setEditing(false);
+        loadProfile();
+      } else {
+        setMessage({ text: data.error || 'Failed to update profile', type: 'error' });
+      }
+    } catch {
+      setMessage({ text: 'Network error', type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setMessage(null);
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      setMessage({ text: 'Passwords do not match', type: 'error' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/profile/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          current_password: passwordForm.current_password,
+          new_password: passwordForm.new_password,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage({ text: 'Password changed successfully!', type: 'success' });
+        setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+      } else {
+        setMessage({ text: data.error || 'Failed to change password', type: 'error' });
+      }
+    } catch {
+      setMessage({ text: 'Network error', type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUploadPicture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/profile/picture', { method: 'POST', credentials: 'include', body: fd });
+      if (res.ok) {
+        setMessage({ text: 'Profile picture updated!', type: 'success' });
+        loadProfile();
+      }
+    } catch {
+      setMessage({ text: 'Failed to upload picture', type: 'error' });
+    }
+  };
+
+  const handleDeleteHistory = async (id: number) => {
+    try {
+      await fetch(`/api/history/${id}`, { method: 'DELETE', credentials: 'include' });
+      setHistory(prev => prev.filter(h => h.id !== id));
+    } catch {}
+  };
+
+  const getVerdictColor = (verdict: string) => {
+    if (verdict === 'AUTHENTIC' || verdict === 'APPEARS_GENUINE') return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+    if (verdict === 'LIKELY_DEEPFAKE' || verdict === 'LIKELY_MISINFORMATION') return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+    return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'image': return <Camera size={14} />;
+      case 'audio': return <Volume2 size={14} />;
+      case 'text': return <Type size={14} />;
+      case 'forward': return <MessageSquare size={14} />;
+      case 'document': return <FileCheck size={14} />;
+      default: return <Scan size={14} />;
+    }
+  };
+
+  const formatDate = (d: string | null) => {
+    if (!d) return 'Never';
+    try {
+      return new Date(d).toLocaleDateString('en-KE', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch { return d; }
+  };
+
+  if (loading) {
+    return (
+      <section className="relative min-h-screen pt-24 pb-20 px-4 sm:px-6 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 size={40} className="animate-spin text-violet-400" />
+          <span className="text-slate-400">Loading profile...</span>
+        </div>
+      </section>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <section className="relative min-h-screen pt-24 pb-20 px-4 sm:px-6 flex items-center justify-center">
+        <div className="text-center">
+          <ShieldAlert size={48} className="text-rose-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Not Signed In</h2>
+          <p className="text-slate-400 mb-6">Please sign in to view your profile.</p>
+          <a href="/login" className="btn-glow text-sm !px-8 !py-3 inline-flex items-center gap-2">
+            <Lock size={16} /> Sign In
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  const getInitials = (name: string) => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+  const profileTabs = [
+    { key: 'overview' as const, label: 'Overview', icon: <User size={16} /> },
+    { key: 'history' as const, label: 'History', icon: <History size={16} /> },
+    { key: 'users' as const, label: 'Users', icon: <Users size={16} /> },
+    { key: 'security' as const, label: 'Security', icon: <Lock size={16} /> },
+  ];
+
+  return (
+    <section className="relative min-h-screen pt-24 pb-20 px-4 sm:px-6">
+      <div className="absolute top-20 right-1/4 w-[500px] h-[500px] rounded-full bg-violet-500/[0.04] blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-20 left-1/4 w-[400px] h-[400px] rounded-full bg-cyan-500/[0.03] blur-[100px] pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto relative z-10">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="section-badge"><User size={12} /> My Profile</div>
+
+          {/* Profile Card */}
+          <div className="analysis-card !p-0 overflow-hidden">
+            <div className="h-32 bg-gradient-to-r from-violet-600/30 via-cyan-600/20 to-rose-600/20 relative">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/%3E%3C/svg%3E')] opacity-[0.03]" />
+            </div>
+            <div className="px-6 sm:px-8 pb-6 -mt-16 relative">
+              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                <div className="relative group">
+                  {profile.profile_picture ? (
+                    <img src={profile.profile_picture} alt={profile.name}
+                      className="w-28 h-28 rounded-2xl border-4 border-[#0a0f1e] shadow-2xl object-cover" />
+                  ) : (
+                    <div className="w-28 h-28 rounded-2xl border-4 border-[#0a0f1e] shadow-2xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-3xl font-black text-white">
+                      {getInitials(profile.name)}
+                    </div>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUploadPicture} />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-1 right-1 w-8 h-8 rounded-lg bg-violet-500 hover:bg-violet-400 text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
+                  >
+                    <Camera size={14} />
+                  </button>
+                </div>
+                <div className="flex-1 pb-1">
+                  <h1 className="text-2xl font-black text-white">{profile.name}</h1>
+                  <p className="text-sm text-slate-400 flex items-center gap-2 mt-1">
+                    <Mail size={14} /> {profile.email}
+                  </p>
+                  {profile.organization && (
+                    <p className="text-sm text-slate-500 flex items-center gap-2 mt-0.5">
+                      <Building2 size={14} /> {profile.organization}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] px-3 py-1.5 rounded-full font-semibold uppercase tracking-wider bg-violet-500/15 text-violet-300 border border-violet-500/20">
+                    {profile.auth_provider === 'local' ? 'Email' : profile.auth_provider}
+                  </span>
+                  <span className="text-[10px] px-3 py-1.5 rounded-full font-semibold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">
+                    {profile.role}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Stats Grid */}
+        {stats && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8"
+          >
+            {[
+              { label: 'Total Scans', value: stats.total_scans, icon: <Scan size={18} />, color: 'text-violet-400', gradient: 'from-violet-500/20 to-purple-500/10' },
+              { label: 'Threats Found', value: stats.threats_detected, icon: <ShieldAlert size={18} />, color: 'text-rose-400', gradient: 'from-rose-500/20 to-red-500/10' },
+              { label: 'Authentic', value: stats.authentic_count, icon: <ShieldCheck size={18} />, color: 'text-emerald-400', gradient: 'from-emerald-500/20 to-teal-500/10' },
+              { label: 'Avg Risk', value: stats.avg_risk_score, icon: <TrendingUp size={18} />, color: 'text-amber-400', gradient: 'from-amber-500/20 to-orange-500/10' },
+            ].map((s, i) => (
+              <motion.div key={s.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 + i * 0.05 }}
+                className={`stat-card bg-gradient-to-br ${s.gradient} !border-white/[0.06]`}
+              >
+                <div className={`flex items-center gap-2 mb-1 ${s.color}`}>
+                  {s.icon}
+                </div>
+                <div className="text-2xl font-black text-white tracking-tight">{typeof s.value === 'number' && s.value % 1 !== 0 ? s.value.toFixed(1) : s.value}</div>
+                <div className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-medium">{s.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Message */}
+        <AnimatePresence>
+          {message && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className={`mb-6 flex items-center gap-3 p-4 rounded-2xl text-sm border ${
+                message.type === 'success'
+                  ? 'bg-emerald-500/[0.08] border-emerald-500/20 text-emerald-300'
+                  : 'bg-rose-500/[0.08] border-rose-500/20 text-rose-300'
+              }`}
+            >
+              {message.type === 'success' ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+              <span>{message.text}</span>
+              <button className="ml-auto text-slate-500 hover:text-white" onClick={() => setMessage(null)}>
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Tabs */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="flex justify-center mb-8"
+        >
+          <div className="analysis-tabs">
+            {profileTabs.map(t => (
+              <button key={t.key} onClick={() => setActiveTab(t.key)}
+                className={`analysis-tab ${activeTab === t.key ? 'analysis-tab-active' : ''}`}
+              >
+                {t.icon}
+                <span className="hidden sm:inline">{t.label}</span>
+                {activeTab === t.key && (
+                  <motion.div layoutId="profileTabIndicator" className="analysis-tab-indicator"
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }} />
+                )}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Tab Content */}
+        <AnimatePresence mode="wait">
+          {/* --- OVERVIEW TAB --- */}
+          {activeTab === 'overview' && (
+            <motion.div key="overview" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+              className="analysis-card"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <User size={20} className="text-violet-400" /> Profile Details
+                </h3>
+                <button
+                  onClick={() => editing ? handleSaveProfile() : setEditing(true)}
+                  disabled={saving}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    editing
+                      ? 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/20'
+                      : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] border border-white/[0.08]'
+                  }`}
+                >
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : editing ? <Save size={14} /> : <Edit3 size={14} />}
+                  {editing ? (saving ? 'Saving...' : 'Save Changes') : 'Edit Profile'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {[
+                  { key: 'name', label: 'Full Name', icon: <User size={16} />, placeholder: 'Your full name' },
+                  { key: 'phone', label: 'Phone Number', icon: <Phone size={16} />, placeholder: '+254 700 000 000' },
+                  { key: 'location', label: 'Location', icon: <MapPin size={16} />, placeholder: 'Nairobi, Kenya' },
+                  { key: 'organization', label: 'Organization', icon: <Building2 size={16} />, placeholder: 'Your organization' },
+                ].map(field => (
+                  <div key={field.key}>
+                    <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 flex items-center gap-2">
+                      {field.icon} {field.label}
+                    </label>
+                    {editing ? (
+                      <input
+                        type="text"
+                        value={(editForm as any)[field.key]}
+                        onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                        placeholder={field.placeholder}
+                        className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-violet-500/40 focus:bg-white/[0.06] outline-none transition-all duration-300"
+                      />
+                    ) : (
+                      <div className="px-4 py-3 bg-white/[0.02] border border-white/[0.04] rounded-xl text-sm text-slate-300">
+                        {(profile as any)[field.key] || <span className="text-slate-600 italic">Not set</span>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div className="md:col-span-2">
+                  <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 flex items-center gap-2">
+                    <Edit3 size={16} /> Bio
+                  </label>
+                  {editing ? (
+                    <textarea
+                      value={editForm.bio}
+                      onChange={e => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
+                      placeholder="Tell us about yourself..."
+                      rows={3}
+                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-violet-500/40 focus:bg-white/[0.06] outline-none transition-all duration-300 resize-none"
+                    />
+                  ) : (
+                    <div className="px-4 py-3 bg-white/[0.02] border border-white/[0.04] rounded-xl text-sm text-slate-300">
+                      {profile.bio || <span className="text-slate-600 italic">No bio yet</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {editing && (
+                <div className="flex justify-end mt-4">
+                  <button onClick={() => setEditing(false)}
+                    className="px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-white/[0.06] transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-8 pt-6 border-t border-white/[0.06]">
+                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4">Account Details</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                  <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
+                    <div className="text-slate-500 text-xs mb-1">Member Since</div>
+                    <div className="text-white font-medium">{formatDate(profile.created_at)}</div>
+                  </div>
+                  <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
+                    <div className="text-slate-500 text-xs mb-1">Last Login</div>
+                    <div className="text-white font-medium">{formatDate(profile.last_login)}</div>
+                  </div>
+                  <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
+                    <div className="text-slate-500 text-xs mb-1">Auth Method</div>
+                    <div className="text-white font-medium capitalize">{profile.auth_provider}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Scan Breakdown */}
+              {stats && stats.total_scans > 0 && (
+                <div className="mt-8 pt-6 border-t border-white/[0.06]">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4">Scan Breakdown</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {[
+                      { label: 'Image', count: stats.image_scans, icon: <Camera size={14} />, color: 'text-violet-400' },
+                      { label: 'Audio', count: stats.audio_scans, icon: <Volume2 size={14} />, color: 'text-cyan-400' },
+                      { label: 'Text', count: stats.text_scans, icon: <Type size={14} />, color: 'text-rose-400' },
+                      { label: 'WhatsApp', count: stats.forward_scans, icon: <MessageSquare size={14} />, color: 'text-emerald-400' },
+                      { label: 'Document', count: stats.document_scans, icon: <FileCheck size={14} />, color: 'text-amber-400' },
+                    ].map(s => (
+                      <div key={s.label} className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3 text-center">
+                        <div className={`flex justify-center mb-1 ${s.color}`}>{s.icon}</div>
+                        <div className="text-lg font-bold text-white">{s.count}</div>
+                        <div className="text-[10px] text-slate-500 uppercase tracking-wider">{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* --- HISTORY TAB --- */}
+          {activeTab === 'history' && (
+            <motion.div key="history" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+              className="analysis-card"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <History size={20} className="text-violet-400" /> Detection History
+                </h3>
+                <select
+                  value={historyFilter}
+                  onChange={e => setHistoryFilter(e.target.value)}
+                  className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-slate-300 outline-none focus:border-violet-500/40"
+                >
+                  <option value="">All Types</option>
+                  <option value="image">Image</option>
+                  <option value="audio">Audio</option>
+                  <option value="text">Text</option>
+                  <option value="forward">WhatsApp</option>
+                  <option value="document">Document</option>
+                </select>
+              </div>
+
+              {history.length === 0 ? (
+                <div className="text-center py-16">
+                  <Scan size={48} className="text-slate-700 mx-auto mb-4" />
+                  <h4 className="text-lg font-bold text-slate-400 mb-2">No Scans Yet</h4>
+                  <p className="text-sm text-slate-600">Your detection history will appear here after you analyze content.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {history.map((item, i) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl hover:bg-white/[0.04] transition-all duration-300 group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-400">
+                        {getTypeIcon(item.detection_type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-semibold text-white truncate">{item.filename}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase border ${getVerdictColor(item.verdict)}`}>
+                            {item.verdict.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-slate-500">
+                          <span className="capitalize">{item.detection_type}</span>
+                          <span>Risk: {item.risk_score?.toFixed(1)}%</span>
+                          <span>{formatDate(item.created_at)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`text-lg font-bold ${
+                          item.risk_score > 65 ? 'text-rose-400' : item.risk_score > 40 ? 'text-amber-400' : 'text-emerald-400'
+                        }`}>
+                          {item.risk_score?.toFixed(0)}
+                        </div>
+                        <button onClick={() => handleDeleteHistory(item.id)}
+                          className="p-1.5 rounded-lg text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* --- USERS TAB --- */}
+          {activeTab === 'users' && (
+            <motion.div key="users" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+              className="analysis-card"
+            >
+              <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-6">
+                <Users size={20} className="text-violet-400" /> Registered Users
+                <span className="ml-auto text-xs text-slate-500 font-normal">{allUsers.length} total</span>
+              </h3>
+
+              {allUsers.length === 0 ? (
+                <div className="text-center py-16">
+                  <Users size={48} className="text-slate-700 mx-auto mb-4" />
+                  <h4 className="text-lg font-bold text-slate-400 mb-2">No Users Yet</h4>
+                  <p className="text-sm text-slate-600">Users who sign up will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {allUsers.map((u, i) => (
+                    <motion.div
+                      key={u.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl hover:bg-white/[0.04] transition-all duration-300"
+                    >
+                      {u.profile_picture ? (
+                        <img src={u.profile_picture} alt={u.name} className="w-11 h-11 rounded-xl object-cover ring-2 ring-white/[0.06]" />
+                      ) : (
+                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-sm font-bold text-white ring-2 ring-white/[0.06]">
+                          {u.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-white">{u.name}</span>
+                          {u.email === profile?.email && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 font-semibold">YOU</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-3">
+                          <span>{u.email}</span>
+                          {u.location && <span className="flex items-center gap-1"><MapPin size={10} />{u.location}</span>}
+                        </div>
+                        {u.bio && <p className="text-xs text-slate-600 mt-1 truncate">{u.bio}</p>}
+                      </div>
+                      <div className="hidden sm:flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase border bg-white/[0.03] border-white/[0.06] text-slate-400">
+                            {u.auth_provider}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500 flex items-center gap-1">
+                          <Scan size={10} /> {u.total_scans} scans
+                        </div>
+                        <div className="text-[10px] text-slate-600">
+                          Joined {formatDate(u.created_at)}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* --- SECURITY TAB --- */}
+          {activeTab === 'security' && (
+            <motion.div key="security" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+              className="analysis-card"
+            >
+              <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-6">
+                <Lock size={20} className="text-violet-400" /> Security Settings
+              </h3>
+
+              {profile.auth_provider !== 'local' ? (
+                <div className="text-center py-12">
+                  <ShieldCheck size={48} className="text-emerald-400 mx-auto mb-4" />
+                  <h4 className="text-lg font-bold text-white mb-2">OAuth Account</h4>
+                  <p className="text-sm text-slate-400">
+                    Your account uses <span className="text-violet-300 font-medium capitalize">{profile.auth_provider}</span> for authentication.
+                    Password management is handled by your OAuth provider.
+                  </p>
+                </div>
+              ) : (
+                <div className="max-w-md">
+                  <h4 className="text-sm font-semibold text-slate-300 mb-4">Change Password</h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Current Password</label>
+                      <input type="password" value={passwordForm.current_password}
+                        onChange={e => setPasswordForm(prev => ({ ...prev, current_password: e.target.value }))}
+                        className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-violet-500/40 outline-none transition-all"
+                        placeholder="Enter current password"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">New Password</label>
+                      <input type="password" value={passwordForm.new_password}
+                        onChange={e => setPasswordForm(prev => ({ ...prev, new_password: e.target.value }))}
+                        className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-violet-500/40 outline-none transition-all"
+                        placeholder="Min 8 characters"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Confirm New Password</label>
+                      <input type="password" value={passwordForm.confirm_password}
+                        onChange={e => setPasswordForm(prev => ({ ...prev, confirm_password: e.target.value }))}
+                        className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-violet-500/40 outline-none transition-all"
+                        placeholder="Re-enter new password"
+                      />
+                    </div>
+                    <button
+                      onClick={handleChangePassword}
+                      disabled={saving || !passwordForm.current_password || !passwordForm.new_password}
+                      className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium bg-violet-500/15 text-violet-300 hover:bg-violet-500/25 border border-violet-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {saving ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
+                      {saving ? 'Changing...' : 'Change Password'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+};
+
 // ─── MAIN APP ───
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('home');
@@ -1235,6 +1958,11 @@ const App: React.FC = () => {
             <HowItWorks />
             <FeaturesSection />
             <CTASection onAnalyze={() => setView('analyze')} />
+            <Footer />
+          </motion.div>
+        ) : view === 'profile' ? (
+          <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+            <ProfilePage user={user} />
             <Footer />
           </motion.div>
         ) : (
