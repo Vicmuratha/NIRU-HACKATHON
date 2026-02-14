@@ -768,7 +768,7 @@ def logout():
 if HAS_OAUTH:
     @app.route('/auth/google')
     def login_google():
-        redirect_uri = url_for('google_callback', _external=True)
+        redirect_uri = FRONTEND_URL + '/auth/google/callback'
         return google.authorize_redirect(redirect_uri)
 
     @app.route('/auth/google/callback')
@@ -799,7 +799,7 @@ if HAS_OAUTH:
 
     @app.route('/auth/github')
     def login_github():
-        redirect_uri = url_for('github_callback', _external=True)
+        redirect_uri = FRONTEND_URL + '/auth/github/callback'
         return github.authorize_redirect(redirect_uri)
 
     @app.route('/auth/github/callback')
