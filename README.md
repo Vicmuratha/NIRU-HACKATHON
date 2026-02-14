@@ -49,6 +49,7 @@ All results include:
 - [Prerequisites](#prerequisites)
 - [Project Structure](#project-structure)
 - [Quick Start](#quick-start)
+- [Mobile Access](#mobile-access)
 - [Environment Variables](#environment-variables)
 - [API Reference](#api-reference)
 - [Docker & Deployment](#docker--deployment)
@@ -72,7 +73,9 @@ All results include:
 | **Document & Screenshot Verifier** | OCR-powered detection of forged KRA PINs, HELB letters, fake M-Pesa confirmations, and manipulated Citizen TV / NTV / Nation breaking news screenshots. Combines OCR text validation with ELA and AI deepfake scoring. |
 | **Election Shield** | Political context engine detecting mentions of politicians, ethnic incitement keywords, and media outlet impersonation. Provides bilingual (EN/SW) warnings, applicable Kenyan law references, and direct NCIC/DCI reporting links. |
 | **React UI** | Single-page app built with React 18, Vite 7, Tailwind CSS 3, Framer Motion, and Lucide icons. Five analysis tabs with drag-and-drop upload, animated risk scores, and Kenya-specific threat warnings. |
-| **OAuth Authentication** | Standalone Flask server with Google and GitHub OAuth (via Authlib), SQLite user store, session management, and login/signup HTML templates. |
+| **OAuth Authentication** | Unified Flask server with Google and GitHub OAuth (via Authlib), SQLite user store, session management, user profiles, scan history, and login/signup HTML templates. |
+| **User Profiles** | Full profile management — edit name, bio, phone, location, organization, profile picture upload. Per-user scan statistics and history. |
+| **Scan History** | Every analysis is saved to SQLite and linked to the authenticated user. Filterable by type (image, audio, text, forward, document). Deletable. |
 | **Kenya Legal Framework** | All detection results reference applicable Kenyan law (CMCA 2018, NCIC Act, Elections Act, Penal Code). Direct reporting links to DCI Cybercrime, NCIC, Communications Authority, and IEBC. |
 | **Docker** | CPU-optimised Dockerfile with pre-installed `torch` (CPU wheel) and `tensorflow-cpu`, Gunicorn, health check, and 600 s model-load timeout. |
 
@@ -82,22 +85,24 @@ All results include:
 
 ```
 ┌─────────────────────┐        /api proxy         ┌──────────────────────────┐
-│   React + Vite UI   │ ──────────────────────────▶│  Detection API (Flask)   │
+│   React + Vite UI   │ ──────────────────────────▶│  Unified Backend (Flask) │
 │   localhost:3000     │                            │  localhost:7860           │
-└─────────────────────┘                            │                          │
-                                                   │  /api/analyze/image      │
-┌─────────────────────┐                            │  /api/analyze/audio      │
-│  Auth Server (Flask) │                            │  /api/analyze/text       │
-│  localhost:5000      │                            │  /api/health             │
-│                      │                            └──────────┬───────────────┘
-│  /login  /signup     │                                       │
-│  /auth/google        │                              ┌────────▼────────┐
-│  /auth/github        │                              │  models/         │
-│  /api/me             │                              │  ~1.1 GB total   │
-└─────────────────────┘                              └─────────────────┘
+│   (or tunnel URL)    │                            │                          │
+└─────────────────────┘                            │  Auth (Google/GitHub)    │
+                                                   │  /api/analyze/*          │
+┌─────────────────────┐                            │  /api/profile            │
+│   📱 Phone Access    │  ─── localtunnel ────────▶│  /api/history            │
+│   https://xxx.loca.lt│                            │  /api/users              │
+└─────────────────────┘                            └──────────┬───────────────┘
+                                                              │
+                                                     ┌────────▼────────┐
+                                                     │  models/         │
+                                                     │  ~1.1 GB total   │
+                                                     │  SQLite (users.db)│
+                                                     └─────────────────┘
 ```
 
-The Vite dev server proxies all `/api` requests to **port 7860** (the detection API) as configured in `vite.config.ts`.
+**Unified backend** — `app.py` runs everything on port 7860: authentication (local + OAuth), detection APIs, user profiles, scan history, and admin features. The Vite dev server proxies all `/api`, `/auth`, `/login`, `/logout`, and `/uploads` requests to port 7860.
 
 ---
 
@@ -127,9 +132,10 @@ brew install ffmpeg
 
 ```
 NIRU-HACKATHON/
-├── app.py                     # OAuth authentication server (Flask, SQLite, Authlib)
+├── app.py                     # Unified backend (Auth + Detection + Profiles + History)
+├── start-tunnel.sh            # 🌍 Public tunnel script (access from phone, any network)
 ├── backend/
-│   ├── app.py                 # Main detection API (Flask, port 7860)
+│   ├── app.py                 # Legacy detection API (port 7860)
 │   ├── simple_app.py          # Lightweight detection API (uses logic.py)
 │   ├── election_shield.py     # 🇰🇪 Election context analysis & incitement detection
 │   ├── whatsapp_checker.py    # 🇰🇪 WhatsApp forward misinformation detector
@@ -144,7 +150,7 @@ NIRU-HACKATHON/
 │   ├── bestdeepfake/          # Alternate .pth checkpoint
 │   └── text_model/            # RoBERTa fake-news weights + tokenizer (~704 MB)
 ├── src/
-│   ├── App.tsx                # Main React component (hero, analysis panel)
+│   ├── App.tsx                # Main React component (hero, analysis panel, profile, history)
 │   ├── main.tsx               # Vite entry point
 │   └── styles.css             # Tailwind + custom animations
 ├── static/css/                # CSS for auth templates
@@ -166,7 +172,7 @@ NIRU-HACKATHON/
 ├── Dockerfile                 # Dev/CI Docker build (Gunicorn on port 8000)
 ├── requirements.txt           # Python dependencies
 ├── package.json               # Node.js dependencies
-├── vite.config.ts             # Vite config (proxy /api → :7860)
+├── vite.config.ts             # Vite config (host: 0.0.0.0, proxy /api → :7860)
 ├── tailwind.config.js
 ├── postcss.config.js
 ├── tsconfig.json
@@ -199,29 +205,84 @@ python models/download_models.py
 
 > Models are **not** included in the repo. The script downloads from Azure Blob Storage (if configured) or prints placeholder instructions. See [Environment Variables](#environment-variables) for Azure setup.
 
-### 4. Start the detection API
-
-```bash
-python backend/app.py
-```
-
-Runs on **http://localhost:7860**. On first request the AI models are lazy-loaded into memory.
-
-### 5. (Optional) Start the auth server
+### 4. Start the unified backend
 
 ```bash
 python app.py
 ```
 
-Runs on **http://localhost:5000**. Requires Google/GitHub OAuth keys in `.env` for social login.
+Runs on **http://localhost:7860**. Handles everything: authentication, detection APIs, user profiles, scan history, and admin features. Models are downloaded on startup if not already present.
 
-### 6. Start the frontend
+### 5. Start the frontend
 
 ```bash
 npm run dev
 ```
 
-Runs on **http://localhost:3000**. All `/api` calls are proxied to `localhost:7860`.
+Runs on **http://localhost:3000**. All `/api`, `/auth`, `/login`, `/logout`, and `/uploads` calls are proxied to `localhost:7860`.
+
+### 6. (Optional) Access from your phone — any network
+
+```bash
+# Set the tunnel URL as the frontend URL
+export FRONTEND_URL=https://safeye-$(whoami).loca.lt
+
+# Restart the backend with the tunnel URL
+python app.py &
+
+# Start the tunnel
+./start-tunnel.sh
+```
+
+Open the printed URL on your phone. See [Mobile Access](#mobile-access) for full details.
+
+---
+
+## Mobile Access
+
+SafEye can be accessed from your phone on **any network** using a free tunnel.
+
+### Same Wi-Fi (no tunnel needed)
+
+If your phone and computer are on the same Wi-Fi, just open `http://<your-ip>:3000` on your phone. Your IP is printed when the backend starts (e.g. `192.168.0.100`).
+
+On Fedora, open the firewall first:
+
+```bash
+sudo firewall-cmd --add-port=3000/tcp --add-port=7860/tcp --permanent
+sudo firewall-cmd --reload
+```
+
+### Any Network (tunnel)
+
+Uses [localtunnel](https://theboroer.github.io/localtunnel-www/) — free, no signup required.
+
+**Terminal 1** — Backend:
+```bash
+export FRONTEND_URL=https://safeye-$(whoami).loca.lt
+python app.py
+```
+
+**Terminal 2** — Frontend:
+```bash
+npm run dev
+```
+
+**Terminal 3** — Tunnel:
+```bash
+./start-tunnel.sh
+```
+
+On your phone, open the printed URL (e.g. `https://safeye-blackhole.loca.lt`).
+
+> **Note:** On first visit, localtunnel shows a splash page — click **"Click to Continue"**.
+
+### Google OAuth on phone
+
+For Google sign-in to work via the tunnel, add the tunnel URL to your [Google Cloud Console](https://console.cloud.google.com/) credentials:
+
+1. **Authorized JavaScript origins:** `https://safeye-blackhole.loca.lt`
+2. **Authorized redirect URIs:** `https://safeye-blackhole.loca.lt/auth/google/callback`
 
 ---
 
@@ -230,9 +291,10 @@ Runs on **http://localhost:3000**. All `/api` calls are proxied to `localhost:78
 Create a `.env` file in the project root:
 
 ```bash
-# ── Auth server ──
+# ── Unified Backend (app.py) ──
 FLASK_SECRET_KEY=your-secret-key
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3000       # or your tunnel URL (e.g. https://safeye-user.loca.lt)
+EXTRA_CORS_ORIGINS=                      # comma-separated extra allowed origins
 
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
@@ -241,7 +303,6 @@ GITHUB_CLIENT_SECRET=...
 
 # ── Detection API ──
 JWT_SECRET_KEY=your-jwt-secret
-FLASK_SECRET_KEY=super_secret_key
 
 # ── Azure Blob model download ──
 AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...
@@ -415,7 +476,9 @@ Body: { "username": "admin", "password": "password" }
 
 Returns `{ "access_token": "..." }`.
 
-### Auth Server (`app.py` — port 5000)
+### Auth Server (`app.py` — port 7860)
+
+All auth and profile routes are served from the **unified backend** on port 7860.
 
 | Route | Method | Description |
 |---|---|---|
@@ -427,6 +490,12 @@ Returns `{ "access_token": "..." }`.
 | `/auth/github/callback` | GET | GitHub OAuth callback |
 | `/logout` | GET | Clear session |
 | `/api/me` | GET | Return current user JSON |
+| `/api/profile` | GET, PUT | Get or update user profile |
+| `/api/profile/password` | PUT | Change password |
+| `/api/profile/picture` | POST | Upload profile picture |
+| `/api/history` | GET | Get user's scan history (filterable by type) |
+| `/api/history/:id` | DELETE | Delete a history entry |
+| `/api/users` | GET | List all registered users |
 
 ---
 
@@ -492,12 +561,17 @@ Test files: `tests/test_image.py`, `tests/test_audio.py`, `tests/test_text.py`.
 
 | Problem | Solution |
 |---|---|
+| **OAuth callback to localhost on phone** | Set `FRONTEND_URL` to your tunnel URL and update Google Cloud Console redirect URIs |
 | **Models not downloading** | Ensure Azure env vars are set, or update URLs in `models/download_models.py`. Try `pip install transformers --no-cache-dir`. |
 | **ffmpeg not found** | `sudo apt-get install ffmpeg` (Ubuntu) or `brew install ffmpeg` (macOS). |
 | **CUDA errors on CPU machine** | `export CUDA_VISIBLE_DEVICES=""` before running. |
 | **Port 7860 already in use** | Kill the existing process or change the port in `backend/app.py`. |
 | **Large model files missing after clone** | Run `python models/download_models.py` — models (~1.1 GB) are not committed to git. |
 | **Import errors in tests** | Ensure all Python deps are installed: `pip install -r requirements.txt`. |
+| **`sqlite3.OperationalError: no such column`** | The DB migration runs on startup. Delete `users.db` and restart, or run `python app.py` which auto-migrates. |
+| **Phone can't connect on local network** | Open firewall: `sudo firewall-cmd --add-port=3000/tcp --add-port=7860/tcp --permanent && sudo firewall-cmd --reload` |
+| **Phone on different network** | Use the tunnel: `./start-tunnel.sh` — see [Mobile Access](#mobile-access) |
+| **CORS errors from tunnel URL** | Set `EXTRA_CORS_ORIGINS=https://your-tunnel.loca.lt` or set `FRONTEND_URL` to the tunnel URL |
 
 ---
 
