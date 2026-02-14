@@ -86,12 +86,21 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_PATH'] = '/'
 
-CORS(app, supports_credentials=True, origins=[
+# Build allowed origins: local + any tunnel URL from env
+_cors_origins = [
     'http://localhost:3000',
     'http://localhost:7860',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:7860',
-])
+]
+if FRONTEND_URL not in _cors_origins:
+    _cors_origins.append(FRONTEND_URL)
+# Also allow any loca.lt / ngrok URLs from env
+_extra_origins = os.getenv('EXTRA_CORS_ORIGINS', '')
+if _extra_origins:
+    _cors_origins.extend([o.strip() for o in _extra_origins.split(',') if o.strip()])
+
+CORS(app, supports_credentials=True, origins=_cors_origins)
 jwt = JWTManager(app)
 
 # Allow OAuth over HTTP for local testing

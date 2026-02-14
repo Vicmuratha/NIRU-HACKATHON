@@ -280,13 +280,13 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
         </div>
 
         <div className="hidden md:flex items-center gap-1 nav-pill absolute left-1/2 -translate-x-1/2">
-          {(['home', 'analyze', 'profile'] as AppView[]).map(v => (
+          {(['home', 'analyze'] as AppView[]).map(v => (
             <button
               key={v}
               onClick={() => setView(v)}
               className={`nav-pill-item ${view === v ? 'nav-pill-active' : ''}`}
             >
-              {v === 'home' ? 'Home' : v === 'analyze' ? 'Analyze' : 'Profile'}
+              {v === 'home' ? 'Home' : 'Analyze'}
               {view === v && (
                 <motion.div layoutId="navIndicator" className="nav-pill-indicator" transition={{ type: 'spring', stiffness: 300, damping: 30 }} />
               )}
@@ -321,6 +321,7 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
                   </div>
                 )}
                 <span className="hidden sm:block text-sm font-medium text-slate-300 max-w-[100px] truncate">{user.name.split(' ')[0]}</span>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
@@ -344,6 +345,14 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
                         <User size={15} />
                         My Profile
                       </button>
+                      <button
+                        onClick={() => { setView('analyze'); setMenuOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/[0.06] transition-all duration-200"
+                      >
+                        <History size={15} />
+                        Scan History
+                      </button>
+                      <div className="h-px bg-white/[0.06] my-1" />
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-rose-400 hover:bg-rose-500/10 transition-all duration-200"
@@ -378,25 +387,66 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden overflow-hidden border-t border-white/[0.06] bg-[#050816]/95 backdrop-blur-2xl"
           >
-            <div className="p-4 flex flex-col gap-2">
-              {(['home', 'analyze', 'profile'] as AppView[]).map(v => (
+            <div className="p-4 flex flex-col gap-1">
+              {user && (
+                <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+                  {user.picture ? (
+                    <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full ring-2 ring-violet-500/30" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-xs font-bold text-white ring-2 ring-violet-500/30">
+                      {getInitials(user.name)}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-200 truncate">{user.name}</div>
+                    <div className="text-xs text-slate-500 truncate">{user.email}</div>
+                  </div>
+                </div>
+              )}
+
+              {([{ key: 'home' as AppView, label: 'Home', icon: <Shield size={16} /> }, { key: 'analyze' as AppView, label: 'Analyze Content', icon: <Scan size={16} /> }]).map(v => (
                 <button
-                  key={v}
-                  onClick={() => { setView(v); setMobileMenuOpen(false); }}
-                  className={`px-4 py-3 rounded-xl text-sm font-medium text-left transition-all ${
-                    view === v ? 'bg-violet-500/15 text-violet-300' : 'text-slate-400 hover:bg-white/[0.04]'
+                  key={v.key}
+                  onClick={() => { setView(v.key); setMobileMenuOpen(false); }}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left transition-all ${
+                    view === v.key ? 'bg-violet-500/15 text-violet-300' : 'text-slate-400 hover:bg-white/[0.04]'
                   }`}
                 >
-                  {v === 'home' ? 'Home' : v === 'analyze' ? 'Analyze Content' : 'Profile'}
+                  <span className={view === v.key ? 'text-violet-400' : 'text-slate-500'}>{v.icon}</span>
+                  {v.label}
                 </button>
               ))}
+
               {user && (
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-3 rounded-xl text-sm font-medium text-left text-rose-400 hover:bg-rose-500/10 transition-all mt-2 border-t border-white/[0.06] pt-4"
+                <>
+                  <button
+                    onClick={() => { setView('profile'); setMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left transition-all ${
+                      view === 'profile' ? 'bg-violet-500/15 text-violet-300' : 'text-slate-400 hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <span className={view === 'profile' ? 'text-violet-400' : 'text-slate-500'}><User size={16} /></span>
+                    My Profile
+                  </button>
+                  <div className="h-px bg-white/[0.06] my-1 mx-2" />
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left text-rose-400 hover:bg-rose-500/10 transition-all"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Sign out
+                  </button>
+                </>
+              )}
+
+              {!user && (
+                <a
+                  href="/login"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 transition-all mt-1"
                 >
-                  Sign out
-                </button>
+                  <Lock size={16} />
+                  Sign In
+                </a>
               )}
             </div>
           </motion.div>
