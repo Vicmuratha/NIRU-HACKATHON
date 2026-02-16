@@ -2,6 +2,8 @@
 
 > *Kulinda Ukweli wa Kidijitali* — Protecting Digital Truth
 
+SafEye detects deepfakes, manipulated screenshots, WhatsApp misinformation, forged documents, and AI-generated audio — built specifically for Kenya's threat landscape, legal framework, and languages.
+
 [![Made in Kenya](https://img.shields.io/badge/Made_in-Kenya_🇰🇪-black?labelColor=BE0027&color=006600)](https://github.com/Vicmuratha/NIRU-HACKATHON)
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![React](https://img.shields.io/badge/React-18.3-61DAFB.svg?logo=react)](https://reactjs.org/)
@@ -11,28 +13,28 @@
 
 ## The Problem
 
-Kenya faces a growing AI manipulation crisis with **zero defence infrastructure**:
+Kenya faces a growing AI manipulation crisis with **zero dedicated defence infrastructure**:
 
 | Threat | Reality | Impact |
 |---|---|---|
 | **Election deepfakes** | Manipulated "leaked audio" and doctored images of politicians circulate before every election since 2013. By 2027, AI-generated video will be indistinguishable from real footage. | 2007/08 PEV: 1,500+ killed, 600,000+ displaced — incitement spread via SMS and radio |
-| **Fake news screenshots** | Edited Citizen TV / NTV / Nation breaking news screenshots are the #1 misinformation format on Kenyan WhatsApp | Millions exposed to fabricated "breaking news" daily |
-| **WhatsApp forwards** | 67% of Kenyans receive news primarily through WhatsApp, where false health scares, political fabrications, and scam messages spread unchecked | Reuters Institute 2024 |
-| **Document forgery** | Counterfeit KRA PINs, HELB clearance letters, and edited M-Pesa screenshots used for fraud daily | DCI Cybercrime Unit reports |
+| **Fake news screenshots** | Edited Citizen TV / NTV / Nation breaking news screenshots are the #1 misinformation format on Kenyan WhatsApp. | Millions exposed to fabricated "breaking news" daily |
+| **WhatsApp forwards** | 67% of Kenyans receive news primarily through WhatsApp, where false health scares, political fabrications, and scam messages spread unchecked. | Reuters Institute 2024 |
+| **Document forgery** | Counterfeit KRA PINs, HELB clearance letters, and edited M-Pesa screenshots used for fraud daily. | DCI Cybercrime Unit reports |
 
-**No existing tool is built for Kenya's specific threat landscape.** Western deepfake detectors don't understand Kenyan news outlets, Swahili misinformation patterns, or our regulatory framework.
+**No existing tool addresses Kenya's specific threat landscape.** Western deepfake detectors don't understand Kenyan news outlets, Swahili misinformation patterns, or our regulatory framework.
 
 ## What SafEye Does
 
-SafEye is a **Kenya-built, Kenya-focused** AI platform with 5 detection modes:
+SafEye is a **Kenya-built, Kenya-focused** AI platform with five detection modes:
 
 | Mode | How It Works | Kenya Use Case |
 |---|---|---|
-| 📸 **Deepfake Detector** | EfficientNet-B4 + ELA + metadata analysis | Detect manipulated images of politicians, fake campaign material |
-| 🎙️ **Audio Analyser** | MFCC analysis + spectral pattern detection | Flag manipulated "leaked audio" recordings — the real threat is splicing, not AI voice cloning (yet) |
+| 📸 **Deepfake Detector** | EfficientNet-B4 + ELA + metadata analysis | Detect manipulated images of politicians and fake campaign material |
+| 🎙️ **Audio Analyser** | MFCC analysis + spectral pattern detection | Flag manipulated "leaked audio" recordings — the primary threat is splicing, not AI voice cloning (yet) |
 | 📝 **Fake News Classifier** | RoBERTa NLP + clickbait detection | Identify AI-generated and fabricated articles |
-| 💬 **WhatsApp Forward Checker** | Pattern matching + Swahili hoax detection | Analyse forwarded messages for Safaricom hoaxes, political misinformation, health scares |
-| 📄 **Document & Screenshot Verifier** | OCR + ELA + format validation | Detect forged KRA PINs, HELB letters, fake M-Pesa confirmations, edited news screenshots |
+| 💬 **WhatsApp Forward Checker** | Pattern matching + Swahili hoax detection | Analyse forwarded messages for Safaricom hoaxes, political misinformation, and health scares |
+| 📄 **Document & Screenshot Verifier** | OCR + ELA + format validation | Detect forged KRA PINs, HELB letters, fake M-Pesa confirmations, and edited news screenshots |
 
 All results include:
 - **Kenya legal context** (Computer Misuse & Cybercrimes Act 2018, NCIC Act, Elections Act)
@@ -67,17 +69,17 @@ All results include:
 | Capability | Details |
 |---|---|
 | **Image Detection** | EfficientNet-B4 fine-tuned checkpoint (`.pth`) **or** HuggingFace `dima806/deepfake_vs_real_image_detection`, combined with Error Level Analysis, EXIF metadata checks, face texture analysis (via DeepFace), and spectral noise analysis. Weighted scoring: AI 60 %, metadata 15 %, ELA 15 %, face 7 %, noise 3 %. |
-| **Audio Detection** | MFCC variance and silence-ratio heuristics via librosa. Honest about Kenya context: the real audio threat is **splicing** (editing real recordings), not AI voice cloning. Swahili AI audio is still detectable by ear (2026). |
+| **Audio Detection** | MFCC variance and silence-ratio heuristics via librosa. Honest about Kenya's context: the primary audio threat is **splicing** (editing real recordings), not AI voice cloning. Swahili AI audio is still detectable by ear as of 2026. |
 | **Text Detection** | HuggingFace `hamzab/roberta-fake-news-classification` pipeline with clickbait keyword boosting. Local model files used when present. |
-| **WhatsApp Forward Checker** | Pattern-matching engine detecting misinformation indicators in English and Swahili — Safaricom hoaxes, political fabrications, health scares, fake job listings, and M-Pesa fee rumours. Cross-referenced with AI text classification. |
+| **WhatsApp Forward Checker** | Pattern-matching engine detecting misinformation indicators in English and Swahili: Safaricom hoaxes, political fabrications, health scares, fake job listings, and M-Pesa fee rumours. Cross-referenced with AI text classification. |
 | **Document & Screenshot Verifier** | OCR-powered detection of forged KRA PINs, HELB letters, fake M-Pesa confirmations, and manipulated Citizen TV / NTV / Nation breaking news screenshots. Combines OCR text validation with ELA and AI deepfake scoring. |
 | **Election Shield** | Political context engine detecting mentions of politicians, ethnic incitement keywords, and media outlet impersonation. Provides bilingual (EN/SW) warnings, applicable Kenyan law references, and direct NCIC/DCI reporting links. |
 | **React UI** | Single-page app built with React 18, Vite 7, Tailwind CSS 3, Framer Motion, and Lucide icons. Five analysis tabs with drag-and-drop upload, animated risk scores, and Kenya-specific threat warnings. |
-| **OAuth Authentication** | Unified Flask server with Google and GitHub OAuth (via Authlib), SQLite user store, session management, user profiles, scan history, and login/signup HTML templates. |
+| **OAuth Authentication** | Unified Flask server with Google and GitHub OAuth via Authlib, SQLite user store, session management, user profiles, scan history, and login/signup HTML templates. |
 | **User Profiles** | Full profile management — edit name, bio, phone, location, organization, profile picture upload. Per-user scan statistics and history. |
 | **Scan History** | Every analysis is saved to SQLite and linked to the authenticated user. Filterable by type (image, audio, text, forward, document). Deletable. |
 | **Kenya Legal Framework** | All detection results reference applicable Kenyan law (CMCA 2018, NCIC Act, Elections Act, Penal Code). Direct reporting links to DCI Cybercrime, NCIC, Communications Authority, and IEBC. |
-| **Docker** | CPU-optimised Dockerfile with pre-installed `torch` (CPU wheel) and `tensorflow-cpu`, Gunicorn, health check, and 600 s model-load timeout. |
+| **Docker** | CPU-optimised Dockerfile with pre-installed `torch` (CPU wheel) and `tensorflow-cpu`, Gunicorn, health check, and 600-second model-load timeout. |
 
 ---
 
@@ -102,7 +104,7 @@ All results include:
                                                      └─────────────────┘
 ```
 
-**Unified backend** — `app.py` runs everything on port 7860: authentication (local + OAuth), detection APIs, user profiles, scan history, and admin features. The Vite dev server proxies all `/api`, `/auth`, `/login`, `/logout`, and `/uploads` requests to port 7860.
+**Unified backend** — `app.py` runs everything on port 7860: authentication (local + OAuth), detection APIs, user profiles, scan history, and admin features. The Vite dev server proxies `/api`, `/auth`, `/login`, `/logout`, and `/uploads` requests to port 7860.
 
 ---
 
@@ -211,7 +213,7 @@ python models/download_models.py
 python app.py
 ```
 
-Runs on **http://localhost:7860**. Handles everything: authentication, detection APIs, user profiles, scan history, and admin features. Models are downloaded on startup if not already present.
+Runs on **http://localhost:7860**. Handles authentication, detection APIs, user profiles, scan history, and admin features. Models are downloaded on startup if not already present.
 
 ### 5. Start the frontend
 
@@ -219,7 +221,7 @@ Runs on **http://localhost:7860**. Handles everything: authentication, detection
 npm run dev
 ```
 
-Runs on **http://localhost:3000**. All `/api`, `/auth`, `/login`, `/logout`, and `/uploads` calls are proxied to `localhost:7860`.
+Runs on **http://localhost:3000**. API and auth calls are proxied to `localhost:7860`.
 
 ### 6. (Optional) Access from your phone — any network
 
@@ -607,9 +609,9 @@ ISC — see [LICENSE](LICENSE).
 
 ---
 
-## Acknowledgments
+## Acknowledgements
 
-- **Team NIRU** — Hackathon project
+- **Team NIRU** — Built at the NIRU AI Hackathon 2026
 - [Hugging Face](https://huggingface.co/) — Pre-trained AI models
 - [PyTorch](https://pytorch.org/) & [EfficientNet](https://arxiv.org/abs/1905.11946) — Image detection backbone
 - [DeepFace](https://github.com/serengil/deepface) — Face extraction and texture analysis

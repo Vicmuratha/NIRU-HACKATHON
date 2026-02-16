@@ -1,14 +1,16 @@
 SafEye - AI-Powered Deepfake Detection Platform
 STILL IN DEVELOPMENT
 
-SafEye is a comprehensive AI-powered platform for detecting deepfakes, manipulated media, and misinformation across images, audio, and text content. This platform provides real-time analysis with 99.2% accuracy.
+> **Full documentation**: See the [main README](../README.md) in the project root for architecture, API reference, environment variables, deployment, and troubleshooting.
+
+SafEye is a comprehensive AI-powered platform for detecting deepfakes, manipulated media, and misinformation across images, audio, and text content — built specifically for Kenya's threat landscape.
 
 🚀 Quick Start
 Clone and Setup
-git clone https://github.com/yourusername/NIRU-HACKATHON.git
+git clone https://github.com/Vicmuratha/NIRU-HACKATHON.git
 cd NIRU-HACKATHON
 
-# Download AI models (required)
+# Download AI models (required, ~1.1 GB)
 python models/download_models.py
 
 # Azure Blob Storage (optional)
@@ -35,29 +37,40 @@ pip install -r requirements.txt
 npm install
 
 # Start the application
-python app.py              # Backend on http://localhost:5000
+python app.py              # Unified backend on http://localhost:7860
 npm run dev               # Frontend on http://localhost:3000
 📁 Project Structure
 NIRU-HACKATHON/
 │
-├── backend/               # Python Flask backend
-│   └── app.py            # Main API server
-├── models/               # AI models (download required)
+├── app.py                 # Unified backend (Auth + Detection + Profiles + History)
+├── logic.py               # Shared HuggingFace pipeline wrappers
+├── backend/               # Detection modules & Kenya-specific analysers
+│   ├── app.py             # Legacy detection API
+│   ├── election_shield.py # Election context analysis & incitement detection
+│   ├── whatsapp_checker.py# WhatsApp forward misinformation detector
+│   ├── kenya_documents.py # Kenyan document forgery detector
+│   └── fake_screenshot.py # Fake news screenshot detector
+├── models/                # AI models (download required, ~1.1 GB)
 │   ├── download_models.py # Model downloader script
-│   ├── audio_model/      # Audio detection models
-│   ├── text_model/       # Text detection models
-│   └── best_deepfake_detector.pth
-├── data/                 # Runtime data (ignored by git)
-│   └── detection_log.json
-├── docs/                 # Documentation
-│   └── README.md
-├── src/                  # React frontend source
-├── tests/                # Unit tests
-├── uploads/              # Temporary uploads (ignored)
-├── index.html           # Vite entry point
-├── package.json         # Frontend dependencies
-├── requirements.txt     # Backend dependencies
-└── .gitignore          # Git ignore rules
+│   ├── audio_model/       # Wav2Vec2 (~361 MB)
+│   ├── image_model/       # EfficientNet-B4 (~47 MB)
+│   └── text_model/        # RoBERTa (~704 MB)
+├── src/                   # React frontend source
+│   ├── App.tsx            # Main React component
+│   ├── main.tsx           # Vite entry point
+│   └── styles.css         # Tailwind + custom animations
+├── templates/             # login.html, signup.html (Jinja2)
+├── tests/                 # Unit tests
+├── data/                  # Runtime data (ignored by git)
+├── uploads/               # Temporary uploads (ignored)
+├── deploy_package/        # Production Docker build
+├── docs/                  # Documentation
+│   ├── README.md          # This file
+│   └── ROADMAP.md
+├── index.html             # Vite entry point
+├── package.json           # Frontend dependencies
+├── requirements.txt       # Backend dependencies
+└── Dockerfile             # Docker build
 🧪 Features
 Multimodal Detection: Analyze images, audio, and text content
 Real-time Analysis: Instant results with confidence scores
@@ -77,7 +90,8 @@ Model Setup Required
 After cloning, run the model downloader:
 
 python models/download_models.py
-Note: You'll need to update the download URLs in download_models.py with actual model hosting locations (GitHub releases, cloud storage, etc.).
+
+See the [main README](../README.md#environment-variables) for Azure Blob Storage configuration if hosting models remotely.
 
 📋 System Requirements
 Python Dependencies
@@ -177,7 +191,7 @@ Backend Server
 # Start Flask backend
 python app.py
 
-# Server will run on http://localhost:5000
+# Server will run on http://localhost:7860
 Frontend (HTML/JS Version)
 # Serve frontend files
 cd frontend
@@ -187,30 +201,30 @@ python -m http.server 3000
 🧪 Testing the API
 Using cURL
 # Test health endpoint
-curl http://localhost:5000/api/health
+curl http://localhost:7860/api/health
 
 # Test image analysis
-curl -X POST -F "file=@test_image.jpg" http://localhost:5000/api/analyze/image
+curl -X POST -F "file=@test_image.jpg" http://localhost:7860/api/analyze/image
 
 # Test audio analysis
-curl -X POST -F "file=@test_audio.mp3" http://localhost:5000/api/analyze/audio
+curl -X POST -F "file=@test_audio.mp3" http://localhost:7860/api/analyze/audio
 
 # Test text analysis
 curl -X POST -H "Content-Type: application/json" \
   -d '{"text":"Breaking news! You wont believe what happened!"}' \
-  http://localhost:5000/api/analyze/text
+  http://localhost:7860/api/analyze/text
 Using Python
 import requests
 
 # Test image
 with open('test_image.jpg', 'rb') as f:
     files = {'file': f}
-    response = requests.post('http://localhost:5000/api/analyze/image', files=files)
+    response = requests.post('http://localhost:7860/api/analyze/image', files=files)
     print(response.json())
 
 # Test text
 data = {'text': 'This is a test message'}
-response = requests.post('http://localhost:5000/api/analyze/text', json=data)
+response = requests.post('http://localhost:7860/api/analyze/text', json=data)
 print(response.json())
 ⚙️ Configuration Options
 Environment Variables
@@ -250,7 +264,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose port
-EXPOSE 5000
+EXPOSE 7860
 
 # Run application
 CMD ["python", "app.py"]
@@ -260,7 +274,7 @@ services:
   safeye-api:
     build: .
     ports:
-      - "5000:5000"
+      - "7860:7860"
     volumes:
       - ./uploads:/app/uploads
     environment:
