@@ -283,15 +283,15 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
         scrolled ? 'nav-glass shadow-2xl shadow-black/20' : 'bg-transparent'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between relative">
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView('home')}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[60px] sm:h-[72px] flex items-center justify-between relative">
+        <div className="flex items-center gap-2 sm:gap-3 cursor-pointer group" onClick={() => setView('home')}>
           <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-all duration-500 group-hover:scale-105">
-              <Shield size={20} className="text-white" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-all duration-500 group-hover:scale-105">
+              <Shield size={18} className="text-white sm:w-5 sm:h-5" />
             </div>
-            <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#050816] pulse-dot" />
+            <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-400 border-2 border-[#050816] pulse-dot" />
           </div>
-          <span className="text-xl font-extrabold tracking-tight">
+          <span className="text-lg sm:text-xl font-extrabold tracking-tight">
             Safe<span className="text-aurora">Eye</span>
           </span>
         </div>
@@ -513,7 +513,7 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
           initial={{ opacity: 0, y: 50, filter: 'blur(12px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 1.3, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.95] mb-8 tracking-tight"
+          className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] mb-6 sm:mb-8 tracking-tight"
         >
           Protect Kenya
           <br />
@@ -526,7 +526,7 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
           initial={{ opacity: 0, y: 25, filter: 'blur(10px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-4 leading-relaxed"
+          className="text-sm sm:text-base md:text-xl text-slate-400 max-w-2xl mx-auto mb-4 leading-relaxed px-2 sm:px-0"
         >
           Detect deepfake images, manipulated audio, fake news screenshots,
           and WhatsApp misinformation — built for Kenya's unique threat landscape.
@@ -536,7 +536,7 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
           initial={{ opacity: 0, filter: 'blur(6px)' }}
           animate={{ opacity: 1, filter: 'blur(0px)' }}
           transition={{ duration: 1, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
-          className="text-sm text-slate-500/80 italic mb-12 font-light"
+          className="text-xs sm:text-sm text-slate-500/80 italic mb-8 sm:mb-12 font-light"
         >
           Kulinda Ukweli wa Kidijitali — Protecting Digital Truth
         </motion.p>
@@ -545,17 +545,17 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
           initial={{ opacity: 0, y: 25, filter: 'blur(8px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 1, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20"
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-20 px-4 sm:px-0"
         >
-          <button onClick={onAnalyze} className="btn-glow text-base !px-10 !py-4 group">
-            <span className="flex items-center gap-3">
-              <Scan size={20} />
+          <button onClick={onAnalyze} className="btn-glow text-sm sm:text-base !px-8 sm:!px-10 !py-3.5 sm:!py-4 group w-full sm:w-auto">
+            <span className="flex items-center justify-center gap-2 sm:gap-3">
+              <Scan size={18} />
               Start Analyzing
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-300" />
             </span>
           </button>
-          <button className="btn-outline-glow text-base !px-10 !py-4 flex items-center gap-3">
-            <Eye size={20} />
+          <button className="btn-outline-glow text-sm sm:text-base !px-8 sm:!px-10 !py-3.5 sm:!py-4 flex items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <Eye size={18} />
             Watch Demo
           </button>
         </motion.div>
@@ -564,7 +564,7 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
           initial={{ opacity: 0, y: 50, filter: 'blur(8px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 1.2, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto"
+          className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 max-w-3xl mx-auto px-2 sm:px-0"
         >
           {stats.map((stat, i) => (
             <motion.div
@@ -574,9 +574,9 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
               transition={{ delay: 0.9 + i * 0.12, type: 'spring', stiffness: 80, damping: 18 }}
               className="stat-card group"
             >
-              <div className={`flex items-center justify-center gap-2 mb-2 ${stat.color}`}>
+              <div className={`flex items-center justify-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 ${stat.color}`}>
                 {stat.icon}
-                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                <span className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} decimals={stat.value % 1 !== 0 ? 1 : 0} />
                 </span>
               </div>
@@ -593,7 +593,7 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
 
 // ─── TRUSTED BY ───
 const TrustedBySection: React.FC = () => (
-  <section className="relative py-12 px-6 border-y border-white/[0.03]">
+  <section className="relative py-12 sm:py-12 px-3 sm:px-6 border-y border-white/[0.03]">
     <div className="max-w-5xl mx-auto">
       <motion.div
         initial="hidden"
@@ -638,14 +638,14 @@ const KenyaImpactStats: React.FC = () => {
   const bgOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
 
   const impactData = [
-    { value: '1,500+', label: 'Kenyans killed in 2007/08 PEV — incitement spread via media', color: 'from-rose-500 to-red-600', borderColor: 'border-rose-500/30', icon: <AlertTriangle size={20} /> },
-    { value: '67%', label: 'Of Kenyans get news via WhatsApp (Reuters 2024)', color: 'from-emerald-500 to-teal-600', borderColor: 'border-emerald-500/30', icon: <MessageSquare size={20} /> },
-    { value: '2027', label: 'Next general election — deepfake risk is rising fast', color: 'from-amber-500 to-orange-600', borderColor: 'border-amber-500/30', icon: <Clock size={20} /> },
-    { value: 'Zero', label: "Existing tools built for Kenya's specific threat landscape", color: 'from-violet-500 to-purple-600', borderColor: 'border-violet-500/30', icon: <Globe size={20} /> },
+    { value: '1,500+', label: 'Kenyans killed in 2007/08 PEV — incitement spread via media', color: 'from-rose-500 to-red-600', borderColor: 'border-rose-500/30', icon: <AlertTriangle size={18} /> },
+    { value: '67%', label: 'Of Kenyans get news via WhatsApp (Reuters 2024)', color: 'from-emerald-500 to-teal-600', borderColor: 'border-emerald-500/30', icon: <MessageSquare size={18} /> },
+    { value: '2027', label: 'Next general election — deepfake risk is rising fast', color: 'from-amber-500 to-orange-600', borderColor: 'border-amber-500/30', icon: <Clock size={18} /> },
+    { value: 'Zero', label: "Existing tools built for Kenya's specific threat landscape", color: 'from-violet-500 to-purple-600', borderColor: 'border-violet-500/30', icon: <Globe size={18} /> },
   ];
 
   return (
-    <section ref={ref} className="relative py-24 sm:py-32 px-6 overflow-hidden">
+    <section ref={ref} className="relative py-16 sm:py-24 md:py-32 px-4 sm:px-6 overflow-hidden">
       <motion.div
         style={{ y: bgY, opacity: bgOpacity }}
         className="absolute inset-0 bg-gradient-to-b from-transparent via-rose-500/[0.02] to-transparent pointer-events-none parallax-layer"
@@ -657,20 +657,20 @@ const KenyaImpactStats: React.FC = () => {
           viewport={viewportSettings}
           variants={smoothReveal}
           transition={smoothEaseSlow}
-          className="text-center mb-14"
+          className="text-center mb-10 sm:mb-14"
         >
           <div className="section-badge">
             <Flag size={12} /> Why Kenya Needs This
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 tracking-tight px-2">
             The <span className="text-aurora">Threat</span> Is Real
           </h2>
-          <p className="text-slate-400 max-w-lg mx-auto text-sm sm:text-base">
+          <p className="text-slate-400 max-w-lg mx-auto text-xs sm:text-sm md:text-base px-2">
             Misinformation has real consequences in Kenya. Here's what's at stake.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {impactData.map((item, i) => (
             <motion.div
               key={i}
@@ -681,10 +681,10 @@ const KenyaImpactStats: React.FC = () => {
               transition={{ ...smoothEase, delay: 0.15 + i * 0.12 }}
               className={`impact-card ${item.borderColor}`}
             >
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 shadow-lg text-white`}>
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-3 sm:mb-4 shadow-lg text-white`}>
                 {item.icon}
               </div>
-              <div className="text-3xl font-black text-white mb-2 tracking-tight">{item.value}</div>
+              <div className="text-2xl sm:text-3xl font-black text-white mb-1.5 sm:mb-2 tracking-tight">{item.value}</div>
               <div className="text-xs sm:text-sm text-slate-400 leading-relaxed">{item.label}</div>
             </motion.div>
           ))}
@@ -752,8 +752,8 @@ const FeaturesSection: React.FC = () => {
   ];
 
   return (
-    <section ref={ref} className="relative py-24 sm:py-32 px-6 overflow-hidden">
-      <motion.div style={{ y: bgY }} className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-violet-600/[0.03] blur-[150px] pointer-events-none parallax-layer" />
+    <section ref={ref} className="relative py-16 sm:py-24 md:py-32 px-4 sm:px-6 overflow-hidden">
+      <motion.div style={{ y: bgY }} className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] rounded-full bg-violet-600/[0.03] blur-[150px] pointer-events-none parallax-layer" />
       <div className="max-w-6xl mx-auto relative z-10">
         <motion.div
           initial="hidden"
@@ -761,20 +761,20 @@ const FeaturesSection: React.FC = () => {
           viewport={viewportSettings}
           variants={smoothReveal}
           transition={smoothEaseSlow}
-          className="text-center mb-14"
+          className="text-center mb-10 sm:mb-14"
         >
           <div className="section-badge">
             <Cpu size={12} /> Capabilities
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 tracking-tight px-2">
             Multi-Modal <span className="text-aurora">Detection Engine</span>
           </h2>
-          <p className="text-slate-400 max-w-xl mx-auto text-sm sm:text-base">
+          <p className="text-slate-400 max-w-xl mx-auto text-xs sm:text-sm md:text-base px-2">
             Six specialised AI modules purpose-built for Kenya's threat landscape.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
           {features.map((f, i) => (
             <motion.div
               key={f.title}
@@ -790,17 +790,17 @@ const FeaturesSection: React.FC = () => {
                 e.currentTarget.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
               }}
             >
-              <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-semibold mb-4">{f.tag}</div>
-              <div className="flex items-start gap-4">
+              <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-semibold mb-3 sm:mb-4">{f.tag}</div>
+              <div className="flex items-start gap-3 sm:gap-4">
                 <div
-                  className={`w-12 h-12 min-w-[48px] rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-700 ease-out text-white`}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 min-w-[40px] sm:min-w-[48px] rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-700 ease-out text-white`}
                   style={{ boxShadow: `0 8px 32px ${f.glow}` }}
                 >
                   {f.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-bold mb-1.5 text-white group-hover:text-violet-200 transition-colors duration-500">{f.title}</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+                  <h3 className="text-sm sm:text-base md:text-lg font-bold mb-1 sm:mb-1.5 text-white group-hover:text-violet-200 transition-colors duration-500">{f.title}</h3>
+                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{f.desc}</p>
                 </div>
               </div>
             </motion.div>
@@ -821,7 +821,7 @@ const HowItWorks: React.FC = () => {
   ];
 
   return (
-    <section className="relative py-24 sm:py-32 px-6">
+    <section className="relative py-16 sm:py-24 md:py-32 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto relative z-10">
         <motion.div
           initial="hidden"
@@ -829,20 +829,20 @@ const HowItWorks: React.FC = () => {
           viewport={viewportSettings}
           variants={smoothReveal}
           transition={smoothEaseSlow}
-          className="text-center mb-14"
+          className="text-center mb-10 sm:mb-14"
         >
           <div className="section-badge">
             <Zap size={12} /> Workflow
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 tracking-tight px-2">
             How It <span className="text-aurora">Works</span>
           </h2>
-          <p className="text-slate-400 max-w-lg mx-auto text-sm sm:text-base">
+          <p className="text-slate-400 max-w-lg mx-auto text-xs sm:text-sm md:text-base px-2">
             Four simple steps from upload to actionable intelligence.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
           {steps.map((s, i) => (
             <motion.div
               key={s.num}
@@ -859,12 +859,12 @@ const HowItWorks: React.FC = () => {
                 </div>
               )}
               <div className="how-it-works-card text-center relative z-10">
-                <div className="text-4xl font-black text-white/[0.04] mb-3 select-none">{s.num}</div>
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${s.color} flex items-center justify-center mx-auto mb-5 shadow-lg text-white`}>
+                <div className="text-2xl sm:text-4xl font-black text-white/[0.04] mb-2 sm:mb-3 select-none">{s.num}</div>
+                <div className={`w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br ${s.color} flex items-center justify-center mx-auto mb-3 sm:mb-5 shadow-lg text-white`}>
                   {s.icon}
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">{s.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{s.desc}</p>
+                <h3 className="text-sm sm:text-lg font-bold text-white mb-1 sm:mb-2">{s.title}</h3>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{s.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -891,22 +891,22 @@ const CTASection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => (
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-violet-500/30">
             <ShieldCheck size={30} className="text-white" />
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black mb-4 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-4 tracking-tight">
             Ready to Protect <span className="text-aurora">Truth</span>?
           </h2>
-          <p className="text-slate-400 max-w-lg mx-auto mb-8 text-sm sm:text-base leading-relaxed">
+          <p className="text-slate-400 max-w-lg mx-auto mb-6 sm:mb-8 text-xs sm:text-sm md:text-base leading-relaxed px-2 sm:px-0">
             Upload any suspicious content and get instant AI-powered forensic analysis. Zero data retention, privacy-first.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button onClick={onAnalyze} className="btn-glow text-base !px-10 !py-4 group">
-              <span className="flex items-center gap-3">
-                <Scan size={20} />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4 sm:px-0">
+            <button onClick={onAnalyze} className="btn-glow text-sm sm:text-base !px-8 sm:!px-10 !py-3.5 sm:!py-4 group w-full sm:w-auto">
+              <span className="flex items-center justify-center gap-2 sm:gap-3">
+                <Scan size={18} />
                 Start Free Analysis
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-300" />
               </span>
             </button>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-8">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-6 sm:mt-8 px-2">
             {[
               { icon: <Lock size={14} />, text: 'End-to-end encrypted' },
               { icon: <Zap size={14} />, text: 'Results in seconds' },
@@ -1043,10 +1043,10 @@ const AnalysisPanel: React.FC = () => {
           <div className="section-badge">
             <Scan size={12} /> Detection Console
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-black mb-3 tracking-tight">
             Analyze <span className="text-aurora">Content</span>
           </h2>
-          <p className="text-slate-400 max-w-lg mx-auto text-sm sm:text-base">
+          <p className="text-slate-400 max-w-lg mx-auto text-xs sm:text-sm md:text-base px-2 sm:px-0">
             Upload media or paste text to run multi-model forensic analysis.
           </p>
         </motion.div>
@@ -1057,7 +1057,7 @@ const AnalysisPanel: React.FC = () => {
           transition={{ delay: 0.1 }}
           className="flex justify-center mb-8"
         >
-          <div className="analysis-tabs">
+          <div className="analysis-tabs w-full sm:w-auto">
             {tabs.map(t => (
               <button
                 key={t.key}
@@ -1065,7 +1065,7 @@ const AnalysisPanel: React.FC = () => {
                 className={`analysis-tab ${tab === t.key ? 'analysis-tab-active' : ''}`}
               >
                 {t.icon}
-                <span className="hidden sm:inline">{t.label}</span>
+                <span className="hidden xs:inline sm:inline text-xs sm:text-sm">{t.label}</span>
                 {tab === t.key && (
                   <motion.div layoutId="tabIndicator" className="analysis-tab-indicator" transition={{ type: 'spring', stiffness: 300, damping: 30 }} />
                 )}
@@ -1084,13 +1084,13 @@ const AnalysisPanel: React.FC = () => {
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 border border-violet-500/20 flex items-center justify-center text-violet-400">
+                <div className="flex items-center gap-3 mb-5 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 border border-violet-500/20 flex items-center justify-center text-violet-400 flex-shrink-0">
                     {tabConfig.icon}
                   </div>
-                  <div>
-                    <h3 className="font-bold text-white text-base">{tabConfig.label} Analysis</h3>
-                    <p className="text-sm text-slate-500">{tabConfig.desc}</p>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-white text-sm sm:text-base">{tabConfig.label} Analysis</h3>
+                    <p className="text-xs sm:text-sm text-slate-500 truncate">{tabConfig.desc}</p>
                   </div>
                 </div>
 
@@ -1113,7 +1113,7 @@ const AnalysisPanel: React.FC = () => {
                       {loading && <div className="scan-line" />}
                       {previewUrl && (tab === 'image' || tab === 'document') ? (
                         <div className="relative max-w-sm mx-auto">
-                          <img src={previewUrl} alt="Preview" className="rounded-2xl max-h-64 mx-auto object-contain shadow-2xl shadow-black/30" />
+                          <img src={previewUrl} alt="Preview" className="rounded-2xl max-h-48 sm:max-h-64 mx-auto object-contain shadow-2xl shadow-black/30" />
                           {loading && (
                             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-2xl flex items-center justify-center">
                               <div className="spinner" />
@@ -1121,8 +1121,8 @@ const AnalysisPanel: React.FC = () => {
                           )}
                         </div>
                       ) : file ? (
-                        <div className="flex flex-col items-center gap-4 py-6">
-                          <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-3 sm:gap-4 py-4 sm:py-6">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
                             {tab === 'image' ? <Image size={28} className="text-violet-400" /> : tab === 'document' ? <FileCheck size={28} className="text-amber-400" /> : <Mic size={28} className="text-cyan-400" />}
                           </div>
                           <div className="text-center">
@@ -1137,15 +1137,15 @@ const AnalysisPanel: React.FC = () => {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center gap-5 py-8 relative z-10">
+                        <div className="flex flex-col items-center gap-4 sm:gap-5 py-6 sm:py-8 relative z-10">
                           <div className="upload-icon-wrapper">
-                            <Upload size={28} className="text-violet-400" />
+                            <Upload size={24} className="text-violet-400 sm:w-7 sm:h-7" />
                           </div>
-                          <div className="text-center">
-                            <p className="text-white font-semibold mb-1.5">
+                          <div className="text-center px-4">
+                            <p className="text-white font-semibold text-sm sm:text-base mb-1.5">
                               Drop your {tab === 'image' ? 'image' : tab === 'document' ? 'document screenshot' : 'audio file'} here
                             </p>
-                            <p className="text-sm text-slate-500">or click to browse &middot; Max 50 MB</p>
+                            <p className="text-xs sm:text-sm text-slate-500">or click to browse &middot; Max 50 MB</p>
                           </div>
                           <div className="flex gap-2 text-[11px] text-slate-500">
                             {(tab === 'image' ? ['PNG', 'JPG', 'WEBP', 'BMP'] : tab === 'document' ? ['PNG', 'JPG', 'WEBP', 'Screenshots'] : ['WAV', 'MP3', 'FLAC', 'OGG']).map(f => (
@@ -1234,7 +1234,7 @@ const AnalysisPanel: React.FC = () => {
                   New Analysis
                 </button>
 
-                <div className="flex flex-col md:flex-row items-center gap-8 mb-10 pb-10 border-b border-white/[0.06]">
+                <div className="flex flex-col items-center gap-6 sm:gap-8 mb-8 sm:mb-10 pb-8 sm:pb-10 border-b border-white/[0.06] md:flex-row">
                   <motion.div
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -1243,13 +1243,13 @@ const AnalysisPanel: React.FC = () => {
                     <RiskGauge score={result.risk_score} />
                   </motion.div>
 
-                  <div className="flex-1 text-center md:text-left">
+                  <div className="flex-1 text-center md:text-left w-full">
                     <VerdictBadge verdict={result.verdict || (result.is_authentic ? 'AUTHENTIC' : 'LIKELY_DEEPFAKE')} />
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mt-5">
                       <div className="text-xs text-slate-500 mb-2 uppercase tracking-wider font-semibold">Confidence Level</div>
                       <div className="flex items-center gap-3">
-                        <div className="flex-1 h-2.5 bg-white/[0.04] rounded-full overflow-hidden max-w-xs">
+                        <div className="flex-1 h-2 sm:h-2.5 bg-white/[0.04] rounded-full overflow-hidden max-w-xs">
                           <motion.div
                             className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400"
                             initial={{ width: 0 }}
@@ -1257,14 +1257,14 @@ const AnalysisPanel: React.FC = () => {
                             transition={{ duration: 1.2, delay: 0.6, ease: [0.4, 0, 0.2, 1] }}
                           />
                         </div>
-                        <span className="text-sm font-bold text-white min-w-[40px]">
+                        <span className="text-xs sm:text-sm font-bold text-white min-w-[40px]">
                           {((result.confidence || 0) * 100).toFixed(0)}%
                         </span>
                       </div>
                     </motion.div>
 
                     {result.details && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="flex flex-wrap gap-2 mt-5">
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="flex flex-wrap gap-1.5 sm:gap-2 mt-4 sm:mt-5">
                         {Object.entries(result.details).map(([key, val]) => (
                           <div key={key} className="detail-tag">
                             <span className="text-slate-500">{key.replace(/_/g, ' ')}</span>
@@ -1333,35 +1333,35 @@ const Footer: React.FC = () => (
     viewport={viewportSettings}
     variants={smoothFade}
     transition={smoothEaseSlow}
-    className="relative py-16 sm:py-20 px-6 footer-glow"
+    className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-6 footer-glow"
   >
     <div className="max-w-6xl mx-auto relative z-10">
-      <div className="flex flex-col gap-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="flex flex-col gap-6 sm:gap-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-violet-500/20">
-              <Shield size={20} className="text-white" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-violet-500/20">
+              <Shield size={18} className="text-white sm:w-5 sm:h-5" />
             </div>
             <div>
-              <span className="text-xl font-extrabold tracking-tight">
+              <span className="text-lg sm:text-xl font-extrabold tracking-tight">
                 Safe<span className="text-aurora">Eye</span>
               </span>
-              <p className="text-xs text-slate-600 mt-0.5">AI-Powered Media Integrity</p>
+              <p className="text-[10px] sm:text-xs text-slate-600 mt-0.5">AI-Powered Media Integrity</p>
             </div>
           </div>
-          <div className="flex items-center gap-6 text-sm text-slate-500">
+          <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-slate-500">
             <span className="flex items-center gap-2">🇰🇪 Built for Kenya</span>
             <span className="hidden sm:inline text-slate-700">&middot;</span>
             <span className="hidden sm:inline">NIRU AI Hackathon 2026</span>
           </div>
         </div>
         <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <Lock size={12} />
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-slate-600">
+            <Lock size={11} />
             Privacy-First &middot; Zero Data Retention &middot; Open Source
           </div>
-          <div className="text-xs text-slate-700">
+          <div className="text-[10px] sm:text-xs text-slate-700">
             &copy; 2026 SafEye &middot; Kulinda Ukweli wa Kidijitali
           </div>
         </div>
@@ -1591,44 +1591,44 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
 
           {/* Profile Card */}
           <div className="analysis-card !p-0 overflow-hidden">
-            <div className="h-32 bg-gradient-to-r from-violet-600/30 via-cyan-600/20 to-rose-600/20 relative">
+            <div className="h-24 sm:h-32 bg-gradient-to-r from-violet-600/30 via-cyan-600/20 to-rose-600/20 relative">
               <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/%3E%3C/svg%3E')] opacity-[0.03]" />
             </div>
-            <div className="px-6 sm:px-8 pb-6 -mt-16 relative">
-              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+            <div className="px-4 sm:px-6 md:px-8 pb-5 sm:pb-6 -mt-12 sm:-mt-16 relative">
+              <div className="flex flex-col items-center sm:flex-row sm:items-end gap-3 sm:gap-4">
                 <div className="relative group">
                   {profile.profile_picture ? (
                     <img src={profile.profile_picture} alt={profile.name}
-                      className="w-28 h-28 rounded-2xl border-4 border-[#0a0f1e] shadow-2xl object-cover" />
+                      className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl border-4 border-[#0a0f1e] shadow-2xl object-cover" />
                   ) : (
-                    <div className="w-28 h-28 rounded-2xl border-4 border-[#0a0f1e] shadow-2xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-3xl font-black text-white">
+                    <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl border-4 border-[#0a0f1e] shadow-2xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-2xl sm:text-3xl font-black text-white">
                       {getInitials(profile.name)}
                     </div>
                   )}
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUploadPicture} />
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-1 right-1 w-8 h-8 rounded-lg bg-violet-500 hover:bg-violet-400 text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300"
+                    className="absolute bottom-1 right-1 w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-violet-500 hover:bg-violet-400 text-white flex items-center justify-center shadow-lg sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300"
                   >
-                    <Camera size={14} />
+                    <Camera size={12} className="sm:w-3.5 sm:h-3.5" />
                   </button>
                 </div>
-                <div className="flex-1 pb-1">
-                  <h1 className="text-2xl font-black text-white">{profile.name}</h1>
-                  <p className="text-sm text-slate-400 flex items-center gap-2 mt-1">
-                    <Mail size={14} /> {profile.email}
+                <div className="flex-1 pb-1 text-center sm:text-left min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-black text-white">{profile.name}</h1>
+                  <p className="text-xs sm:text-sm text-slate-400 flex items-center justify-center sm:justify-start gap-2 mt-1">
+                    <Mail size={12} className="sm:w-3.5 sm:h-3.5" /> <span className="truncate">{profile.email}</span>
                   </p>
                   {profile.organization && (
-                    <p className="text-sm text-slate-500 flex items-center gap-2 mt-0.5">
-                      <Building2 size={14} /> {profile.organization}
+                    <p className="text-xs sm:text-sm text-slate-500 flex items-center justify-center sm:justify-start gap-2 mt-0.5">
+                      <Building2 size={12} className="sm:w-3.5 sm:h-3.5" /> {profile.organization}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] px-3 py-1.5 rounded-full font-semibold uppercase tracking-wider bg-violet-500/15 text-violet-300 border border-violet-500/20">
+                <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
+                  <span className="text-[9px] sm:text-[10px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold uppercase tracking-wider bg-violet-500/15 text-violet-300 border border-violet-500/20">
                     {profile.auth_provider === 'local' ? 'Email' : profile.auth_provider}
                   </span>
-                  <span className="text-[10px] px-3 py-1.5 rounded-full font-semibold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">
+                  <span className="text-[9px] sm:text-[10px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">
                     {profile.role}
                   </span>
                 </div>
@@ -1640,13 +1640,13 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
         {/* Stats Grid */}
         {stats && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8"
+            className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8 px-1 sm:px-0"
           >
             {[
-              { label: 'Total Scans', value: stats.total_scans, icon: <Scan size={18} />, color: 'text-violet-400', gradient: 'from-violet-500/20 to-purple-500/10' },
-              { label: 'Threats Found', value: stats.threats_detected, icon: <ShieldAlert size={18} />, color: 'text-rose-400', gradient: 'from-rose-500/20 to-red-500/10' },
-              { label: 'Authentic', value: stats.authentic_count, icon: <ShieldCheck size={18} />, color: 'text-emerald-400', gradient: 'from-emerald-500/20 to-teal-500/10' },
-              { label: 'Avg Risk', value: stats.avg_risk_score, icon: <TrendingUp size={18} />, color: 'text-amber-400', gradient: 'from-amber-500/20 to-orange-500/10' },
+              { label: 'Total Scans', value: stats.total_scans, icon: <Scan size={16} />, color: 'text-violet-400', gradient: 'from-violet-500/20 to-purple-500/10' },
+              { label: 'Threats Found', value: stats.threats_detected, icon: <ShieldAlert size={16} />, color: 'text-rose-400', gradient: 'from-rose-500/20 to-red-500/10' },
+              { label: 'Authentic', value: stats.authentic_count, icon: <ShieldCheck size={16} />, color: 'text-emerald-400', gradient: 'from-emerald-500/20 to-teal-500/10' },
+              { label: 'Avg Risk', value: stats.avg_risk_score, icon: <TrendingUp size={16} />, color: 'text-amber-400', gradient: 'from-amber-500/20 to-orange-500/10' },
             ].map((s, i) => (
               <motion.div key={s.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 + i * 0.05 }}
@@ -1655,8 +1655,8 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
                 <div className={`flex items-center gap-2 mb-1 ${s.color}`}>
                   {s.icon}
                 </div>
-                <div className="text-2xl font-black text-white tracking-tight">{typeof s.value === 'number' && s.value % 1 !== 0 ? s.value.toFixed(1) : s.value}</div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-[0.15em] font-medium">{s.label}</div>
+                <div className="text-lg sm:text-2xl font-black text-white tracking-tight">{typeof s.value === 'number' && s.value % 1 !== 0 ? s.value.toFixed(1) : s.value}</div>
+                <div className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-[0.15em] font-medium">{s.label}</div>
               </motion.div>
             ))}
           </motion.div>
@@ -1685,13 +1685,13 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           className="flex justify-center mb-8"
         >
-          <div className="analysis-tabs">
+          <div className="analysis-tabs overflow-x-auto">
             {profileTabs.map(t => (
               <button key={t.key} onClick={() => setActiveTab(t.key)}
-                className={`analysis-tab ${activeTab === t.key ? 'analysis-tab-active' : ''}`}
+                className={`analysis-tab w-full sm:w-auto ${activeTab === t.key ? 'analysis-tab-active' : ''}`}
               >
                 {t.icon}
-                <span className="hidden sm:inline">{t.label}</span>
+                <span className="text-xs sm:text-sm">{t.label}</span>
                 {activeTab === t.key && (
                   <motion.div layoutId="profileTabIndicator" className="analysis-tab-indicator"
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }} />
@@ -1708,14 +1708,14 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
             <motion.div key="overview" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
               className="analysis-card"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <User size={20} className="text-violet-400" /> Profile Details
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <User size={18} className="text-violet-400 sm:w-5 sm:h-5" /> Profile Details
                 </h3>
                 <button
                   onClick={() => editing ? handleSaveProfile() : setEditing(true)}
                   disabled={saving}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 w-full sm:w-auto justify-center sm:justify-start ${
                     editing
                       ? 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/20'
                       : 'bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] border border-white/[0.08]'
@@ -1861,32 +1861,33 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl hover:bg-white/[0.04] transition-all duration-300 group"
+                      className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 sm:gap-4 p-3 sm:p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl hover:bg-white/[0.04] transition-all duration-300 group"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-400">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-400 flex-shrink-0">
                         {getTypeIcon(item.detection_type)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-semibold text-white truncate">{item.filename}</span>
+                      <div className="flex-1 min-w-0 w-full">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-xs sm:text-sm font-semibold text-white truncate max-w-[150px] sm:max-w-none">{item.filename}</span>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase border ${getVerdictColor(item.verdict)}`}>
                             {item.verdict.replace(/_/g, ' ')}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 text-xs text-slate-500">
+                        <div className="flex items-center flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-slate-500">
                           <span className="capitalize">{item.detection_type}</span>
                           <span>Risk: {item.risk_score?.toFixed(1)}%</span>
-                          <span>{formatDate(item.created_at)}</span>
+                          <span className="hidden sm:inline">{formatDate(item.created_at)}</span>
                         </div>
+                        <div className="sm:hidden text-[10px] text-slate-600 mt-1">{formatDate(item.created_at)}</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className={`text-lg font-bold ${
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        <div className={`text-base sm:text-lg font-bold ${
                           item.risk_score > 65 ? 'text-rose-400' : item.risk_score > 40 ? 'text-amber-400' : 'text-emerald-400'
                         }`}>
                           {item.risk_score?.toFixed(0)}
                         </div>
                         <button onClick={() => handleDeleteHistory(item.id)}
-                          className="p-1.5 rounded-lg text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
+                          className="p-1.5 rounded-lg text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all sm:opacity-0 sm:group-hover:opacity-100"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -1922,7 +1923,7 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="flex items-center gap-4 p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl hover:bg-white/[0.04] transition-all duration-300"
+                      className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl hover:bg-white/[0.04] transition-all duration-300"
                     >
                       {u.profile_picture ? (
                         <img src={u.profile_picture} alt={u.name} className="w-11 h-11 rounded-xl object-cover ring-2 ring-white/[0.06]" />
@@ -1931,15 +1932,15 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
                           {u.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0 w-full">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-semibold text-white">{u.name}</span>
                           {u.email === profile?.email && (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 font-semibold">YOU</span>
                           )}
                         </div>
-                        <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-3">
-                          <span>{u.email}</span>
+                        <div className="text-xs text-slate-500 mt-0.5 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                          <span className="truncate max-w-[180px] sm:max-w-none">{u.email}</span>
                           {u.location && <span className="flex items-center gap-1"><MapPin size={10} />{u.location}</span>}
                         </div>
                         {u.bio && <p className="text-xs text-slate-600 mt-1 truncate">{u.bio}</p>}
@@ -1956,6 +1957,16 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
                         <div className="text-[10px] text-slate-600">
                           Joined {formatDate(u.created_at)}
                         </div>
+                      </div>
+                      {/* Mobile-only info row */}
+                      <div className="flex sm:hidden items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold uppercase border bg-white/[0.03] border-white/[0.06] text-slate-500">
+                          {u.auth_provider}
+                        </span>
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                          <Scan size={9} /> {u.total_scans} scans
+                        </span>
+                        <span className="text-[10px] text-slate-600">Joined {formatDate(u.created_at)}</span>
                       </div>
                     </motion.div>
                   ))}
@@ -1983,7 +1994,7 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
                   </p>
                 </div>
               ) : (
-                <div className="max-w-md">
+                <div className="max-w-md w-full">
                   <h4 className="text-sm font-semibold text-slate-300 mb-4">Change Password</h4>
                   <div className="space-y-4">
                     <div>

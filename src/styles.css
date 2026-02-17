@@ -832,50 +832,204 @@ body {
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
+
+/* --- Tablet and below (768px) --- */
 @media (max-width: 768px) {
   .risk-gauge {
     width: 150px !important;
     height: 150px !important;
   }
   .analysis-card {
-    padding: 24px 20px;
-    border-radius: 20px;
+    padding: 20px 16px;
+    border-radius: 18px;
   }
   .analysis-tabs {
     gap: 2px;
     padding: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+    justify-content: flex-start;
   }
+  .analysis-tabs::-webkit-scrollbar { display: none; }
   .analysis-tab {
-    padding: 8px 14px;
+    padding: 10px 14px;
     font-size: 0.8rem;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .cta-card {
-    padding: 40px 24px;
-    border-radius: 24px;
+    padding: 36px 20px;
+    border-radius: 22px;
   }
   .feature-card {
-    padding: 22px;
+    padding: 20px;
     border-radius: 16px;
   }
   .how-it-works-card {
-    padding: 22px 18px;
+    padding: 20px 16px;
     border-radius: 16px;
   }
   .upload-zone {
     padding: 24px 16px;
     border-radius: 16px;
   }
-}
-
-@media (max-width: 480px) {
+  .impact-card {
+    padding: 20px;
+    border-radius: 14px;
+  }
+  .stat-card {
+    padding: 16px 12px;
+    border-radius: 14px;
+  }
+  .verdict-badge {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+  }
+  .finding-item {
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+  }
+  .warning-card {
+    padding: 14px 16px;
+    border-radius: 14px;
+  }
+  .text-area-input {
+    padding: 16px 18px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+  }
+  .section-badge {
+    font-size: 0.65rem;
+    padding: 5px 12px;
+  }
   .hero-badge {
     font-size: 0.7rem;
     padding: 6px 14px;
+    gap: 6px;
+  }
+  .detail-tag {
+    font-size: 0.7rem;
+    padding: 5px 10px;
+  }
+  .format-badge {
+    padding: 2px 8px;
+    font-size: 0.65rem;
+  }
+  .nav-glass {
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+  }
+}
+
+/* --- Mobile (480px) --- */
+@media (max-width: 480px) {
+  .hero-badge {
+    font-size: 0.65rem;
+    padding: 6px 12px;
+    gap: 4px;
   }
   .btn-glow, .btn-outline-glow {
     padding: 12px 24px !important;
     font-size: 0.9rem !important;
     width: 100%;
     justify-content: center;
+  }
+  .analysis-card {
+    padding: 16px 14px;
+    border-radius: 16px;
+  }
+  .analysis-tab {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+  .cta-card {
+    padding: 32px 16px;
+    border-radius: 20px;
+  }
+  .stat-card {
+    padding: 14px 10px;
+    border-radius: 12px;
+  }
+  .impact-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  .feature-card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+  .upload-zone {
+    padding: 20px 14px;
+    border-radius: 14px;
+  }
+  .risk-gauge {
+    width: 130px !important;
+    height: 130px !important;
+  }
+  .footer-glow::before {
+    width: 80%;
+  }
+}
+
+/* --- Small phones (360px) --- */
+@media (max-width: 360px) {
+  .hero-badge {
+    font-size: 0.6rem;
+    padding: 5px 10px;
+  }
+  .analysis-tab {
+    padding: 7px 10px;
+    font-size: 0.7rem;
+  }
+  .btn-glow, .btn-outline-glow {
+    padding: 10px 16px !important;
+    font-size: 0.85rem !important;
+  }
+  .stat-card {
+    padding: 12px 8px;
+  }
+}
+
+/* --- Touch device enhancements --- */
+@media (hover: none) and (pointer: coarse) {
+  .feature-card:hover,
+  .impact-card:hover,
+  .how-it-works-card:hover,
+  .stat-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .feature-card:active {
+    transform: scale(0.98);
+    transition-duration: 0.15s;
+  }
+  .impact-card:active,
+  .how-it-works-card:active {
+    transform: scale(0.98);
+    transition-duration: 0.15s;
+  }
+  .btn-glow:active {
+    transform: scale(0.97);
+  }
+  .btn-outline-glow:active {
+    transform: scale(0.97);
+  }
+  /* Minimum touch target size */
+  .analysis-tab {
+    min-height: 44px;
+  }
+  .nav-pill-item {
+    min-height: 44px;
+  }
+}
+
+/* --- Safe area for notched phones --- */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .footer-glow {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
   }
 }
