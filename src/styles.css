@@ -31,6 +31,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 80px;
 }
 
 body {
@@ -40,6 +41,54 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── ULTRA-SMOOTH SCROLL PERFORMANCE ─── */
+.smooth-section {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* GPU-accelerated parallax layers */
+.parallax-layer {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Smooth reveal animations */
+@keyframes smoothRevealUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 60px, 0);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0px);
+  }
+}
+
+@keyframes smoothRevealScale {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translate3d(0, 30px, 0);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
+    filter: blur(0px);
+  }
+}
+
+@keyframes smoothFadeIn {
+  from { opacity: 0; filter: blur(4px); }
+  to { opacity: 1; filter: blur(0px); }
 }
 
 /* ─── SCROLLBAR ─── */
@@ -233,13 +282,14 @@ body {
   backdrop-filter: blur(12px);
   border-radius: 16px;
   padding: 20px 16px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
 }
 .stat-card:hover {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(139, 92, 246, 0.15);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.06);
+  transform: translate3d(0, -4px, 0);
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.08);
 }
 .stat-number {
   font-variant-numeric: tabular-nums;
@@ -256,12 +306,13 @@ body {
   border-radius: 16px;
   padding: 24px;
   backdrop-filter: blur(12px);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
 }
 .impact-card:hover {
   background: rgba(255, 255, 255, 0.04);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  transform: translate3d(0, -6px, 0);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25), 0 0 30px rgba(139, 92, 246, 0.06);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -275,8 +326,9 @@ body {
   border-radius: 20px;
   padding: 28px;
   backdrop-filter: blur(12px);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: default;
+  will-change: transform, box-shadow;
 }
 .feature-card::after {
   content: '';
@@ -295,8 +347,8 @@ body {
 .feature-card:hover {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(139, 92, 246, 0.15);
-  transform: translateY(-4px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 0 40px rgba(139, 92, 246, 0.04);
+  transform: translate3d(0, -8px, 0);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25), 0 0 50px rgba(139, 92, 246, 0.06);
 }
 .feature-card:hover::after {
   opacity: 1;
@@ -311,13 +363,14 @@ body {
   border-radius: 20px;
   padding: 28px 24px;
   backdrop-filter: blur(12px);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
 }
 .how-it-works-card:hover {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(139, 92, 246, 0.15);
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  transform: translate3d(0, -8px, 0);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25), 0 0 40px rgba(139, 92, 246, 0.05);
 }
 
 /* ═══════════════════════════════════════════════════════════

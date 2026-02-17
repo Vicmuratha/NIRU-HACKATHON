@@ -100,6 +100,23 @@ type AppView = 'home' | 'analyze' | 'profile';
 // ─── API URL ───
 const API_BASE = '/api';
 
+// ─── SMOOTH SCROLL TRANSITION PRESETS ───
+const smoothReveal = {
+  hidden: { opacity: 0, y: 60, filter: 'blur(8px)' },
+  visible: { opacity: 1, y: 0, filter: 'blur(0px)' },
+};
+const smoothScale = {
+  hidden: { opacity: 0, scale: 0.92, y: 30, filter: 'blur(6px)' },
+  visible: { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' },
+};
+const smoothFade = {
+  hidden: { opacity: 0, filter: 'blur(4px)' },
+  visible: { opacity: 1, filter: 'blur(0px)' },
+};
+const smoothEase = { duration: 1, ease: [0.16, 1, 0.3, 1] as const };
+const smoothEaseSlow = { duration: 1.2, ease: [0.16, 1, 0.3, 1] as const };
+const viewportSettings = { once: true, margin: '-80px' as any };
+
 // ─── FLOATING PARTICLES ───
 const Particles: React.FC = () => {
   const particles = useMemo(() =>
@@ -459,8 +476,10 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
 // ─── HERO SECTION ───
 const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
   const { scrollY } = useScroll();
-  const heroY = useTransform(scrollY, [0, 500], [0, 150]);
-  const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+  const heroY = useTransform(scrollY, [0, 600], [0, 180]);
+  const heroOpacity = useTransform(scrollY, [0, 500], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 600], [1, 0.95]);
+  const heroBgY = useTransform(scrollY, [0, 600], [0, -60]);
 
   const stats = [
     { label: 'Kenyans at Risk', value: 54, suffix: 'M+', icon: <Users size={16} />, color: 'text-rose-400' },
@@ -471,18 +490,18 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-violet-600/[0.06] blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-cyan-500/[0.05] blur-[120px] pointer-events-none" />
-      <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] rounded-full bg-rose-500/[0.03] blur-[100px] pointer-events-none" />
+      <motion.div style={{ y: heroBgY }} className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-violet-600/[0.06] blur-[150px] pointer-events-none parallax-layer" />
+      <motion.div style={{ y: heroBgY }} className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-cyan-500/[0.05] blur-[120px] pointer-events-none parallax-layer" />
+      <motion.div style={{ y: heroBgY }} className="absolute top-1/3 left-1/4 w-[300px] h-[300px] rounded-full bg-rose-500/[0.03] blur-[100px] pointer-events-none parallax-layer" />
 
       <motion.div
-        style={{ y: heroY, opacity: heroOpacity }}
+        style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}
         className="relative z-10 max-w-6xl mx-auto px-6 text-center pt-24"
       >
         <motion.div
-          initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+          initial={{ opacity: 0, y: 30, filter: 'blur(12px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           className="hero-badge"
         >
           <span className="text-base">🇰🇪</span>
@@ -491,9 +510,9 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }}
+          initial={{ opacity: 0, y: 50, filter: 'blur(12px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 1, delay: 0.15 }}
+          transition={{ duration: 1.3, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.95] mb-8 tracking-tight"
         >
           Protect Kenya
@@ -504,9 +523,9 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+          initial={{ opacity: 0, y: 25, filter: 'blur(10px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.8, delay: 0.35 }}
+          transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-4 leading-relaxed"
         >
           Detect deepfake images, manipulated audio, fake news screenshots,
@@ -514,18 +533,18 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
         </motion.p>
 
         <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
+          initial={{ opacity: 0, filter: 'blur(6px)' }}
+          animate={{ opacity: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 1, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
           className="text-sm text-slate-500/80 italic mb-12 font-light"
         >
           Kulinda Ukweli wa Kidijitali — Protecting Digital Truth
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.55 }}
+          initial={{ opacity: 0, y: 25, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 1, delay: 0.65, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20"
         >
           <button onClick={onAnalyze} className="btn-glow text-base !px-10 !py-4 group">
@@ -542,17 +561,17 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.7 }}
+          initial={{ opacity: 0, y: 50, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 1.2, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto"
         >
           {stats.map((stat, i) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: 0.8 + i * 0.1, type: 'spring', stiffness: 200 }}
+              initial={{ opacity: 0, scale: 0.85, y: 25, filter: 'blur(6px)' }}
+              animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ delay: 0.9 + i * 0.12, type: 'spring', stiffness: 80, damping: 18 }}
               className="stat-card group"
             >
               <div className={`flex items-center justify-center gap-2 mb-2 ${stat.color}`}>
@@ -577,9 +596,11 @@ const TrustedBySection: React.FC = () => (
   <section className="relative py-12 px-6 border-y border-white/[0.03]">
     <div className="max-w-5xl mx-auto">
       <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewportSettings}
+        variants={smoothFade}
+        transition={smoothEaseSlow}
         className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12"
       >
         <span className="text-xs uppercase tracking-[0.2em] text-slate-600 font-medium whitespace-nowrap">Built for</span>
@@ -592,11 +613,12 @@ const TrustedBySection: React.FC = () => (
           ].map((item, i) => (
             <motion.div
               key={item.name}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="flex items-center gap-2 text-slate-500 hover:text-slate-300 transition-colors duration-300 cursor-default"
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportSettings}
+              variants={smoothReveal}
+              transition={{ ...smoothEase, delay: 0.1 + i * 0.12 }}
+              className="flex items-center gap-2 text-slate-500 hover:text-slate-300 transition-colors duration-500 cursor-default"
             >
               {item.icon}
               <span className="text-sm font-medium">{item.name}</span>
@@ -610,6 +632,11 @@ const TrustedBySection: React.FC = () => (
 
 // ─── KENYA IMPACT STATS ───
 const KenyaImpactStats: React.FC = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+  const bgY = useTransform(scrollYProgress, [0, 1], ['-5%', '5%']);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+
   const impactData = [
     { value: '1,500+', label: 'Kenyans killed in 2007/08 PEV — incitement spread via media', color: 'from-rose-500 to-red-600', borderColor: 'border-rose-500/30', icon: <AlertTriangle size={20} /> },
     { value: '67%', label: 'Of Kenyans get news via WhatsApp (Reuters 2024)', color: 'from-emerald-500 to-teal-600', borderColor: 'border-emerald-500/30', icon: <MessageSquare size={20} /> },
@@ -618,13 +645,18 @@ const KenyaImpactStats: React.FC = () => {
   ];
 
   return (
-    <section className="relative py-24 sm:py-32 px-6">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-rose-500/[0.02] to-transparent pointer-events-none" />
+    <section ref={ref} className="relative py-24 sm:py-32 px-6 overflow-hidden">
+      <motion.div
+        style={{ y: bgY, opacity: bgOpacity }}
+        className="absolute inset-0 bg-gradient-to-b from-transparent via-rose-500/[0.02] to-transparent pointer-events-none parallax-layer"
+      />
       <div className="max-w-5xl mx-auto relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportSettings}
+          variants={smoothReveal}
+          transition={smoothEaseSlow}
           className="text-center mb-14"
         >
           <div className="section-badge">
@@ -642,10 +674,11 @@ const KenyaImpactStats: React.FC = () => {
           {impactData.map((item, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportSettings}
+              variants={smoothScale}
+              transition={{ ...smoothEase, delay: 0.15 + i * 0.12 }}
               className={`impact-card ${item.borderColor}`}
             >
               <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4 shadow-lg text-white`}>
@@ -663,6 +696,10 @@ const KenyaImpactStats: React.FC = () => {
 
 // ─── FEATURES SECTION ───
 const FeaturesSection: React.FC = () => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+  const bgY = useTransform(scrollYProgress, [0, 1], ['-3%', '3%']);
+
   const features = [
     {
       icon: <Camera size={24} />,
@@ -715,13 +752,15 @@ const FeaturesSection: React.FC = () => {
   ];
 
   return (
-    <section className="relative py-24 sm:py-32 px-6">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-violet-600/[0.03] blur-[150px] pointer-events-none" />
+    <section ref={ref} className="relative py-24 sm:py-32 px-6 overflow-hidden">
+      <motion.div style={{ y: bgY }} className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-violet-600/[0.03] blur-[150px] pointer-events-none parallax-layer" />
       <div className="max-w-6xl mx-auto relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportSettings}
+          variants={smoothReveal}
+          transition={smoothEaseSlow}
           className="text-center mb-14"
         >
           <div className="section-badge">
@@ -739,10 +778,11 @@ const FeaturesSection: React.FC = () => {
           {features.map((f, i) => (
             <motion.div
               key={f.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportSettings}
+              variants={smoothScale}
+              transition={{ ...smoothEase, delay: 0.1 + i * 0.1 }}
               className="feature-card group"
               onMouseMove={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -753,13 +793,13 @@ const FeaturesSection: React.FC = () => {
               <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-semibold mb-4">{f.tag}</div>
               <div className="flex items-start gap-4">
                 <div
-                  className={`w-12 h-12 min-w-[48px] rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-500 text-white`}
+                  className={`w-12 h-12 min-w-[48px] rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-700 ease-out text-white`}
                   style={{ boxShadow: `0 8px 32px ${f.glow}` }}
                 >
                   {f.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-bold mb-1.5 text-white group-hover:text-violet-200 transition-colors duration-300">{f.title}</h3>
+                  <h3 className="text-base sm:text-lg font-bold mb-1.5 text-white group-hover:text-violet-200 transition-colors duration-500">{f.title}</h3>
                   <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
                 </div>
               </div>
@@ -784,9 +824,11 @@ const HowItWorks: React.FC = () => {
     <section className="relative py-24 sm:py-32 px-6">
       <div className="max-w-5xl mx-auto relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportSettings}
+          variants={smoothReveal}
+          transition={smoothEaseSlow}
           className="text-center mb-14"
         >
           <div className="section-badge">
@@ -804,10 +846,11 @@ const HowItWorks: React.FC = () => {
           {steps.map((s, i) => (
             <motion.div
               key={s.num}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.12 }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportSettings}
+              variants={smoothScale}
+              transition={{ ...smoothEase, delay: 0.15 + i * 0.15 }}
               className="relative"
             >
               {i < steps.length - 1 && (
@@ -837,9 +880,11 @@ const CTASection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => (
     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-violet-500/[0.03] to-transparent pointer-events-none" />
     <div className="max-w-3xl mx-auto relative z-10">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewportSettings}
+        variants={smoothScale}
+        transition={smoothEaseSlow}
         className="cta-card text-center"
       >
         <div className="relative z-10">
@@ -1282,7 +1327,14 @@ const AnalysisPanel: React.FC = () => {
 
 // ─── FOOTER ───
 const Footer: React.FC = () => (
-  <footer className="relative py-16 sm:py-20 px-6 footer-glow">
+  <motion.footer
+    initial="hidden"
+    whileInView="visible"
+    viewport={viewportSettings}
+    variants={smoothFade}
+    transition={smoothEaseSlow}
+    className="relative py-16 sm:py-20 px-6 footer-glow"
+  >
     <div className="max-w-6xl mx-auto relative z-10">
       <div className="flex flex-col gap-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -1315,7 +1367,7 @@ const Footer: React.FC = () => (
         </div>
       </div>
     </div>
-  </footer>
+  </motion.footer>
 );
 
 // ─── PROFILE PAGE ───
