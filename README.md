@@ -69,7 +69,7 @@ All results include:
 | Capability | Details |
 |---|---|
 | **Image Detection** | EfficientNet-B4 fine-tuned checkpoint (`.pth`) **or** HuggingFace `dima806/deepfake_vs_real_image_detection`, combined with Error Level Analysis, EXIF metadata checks, face texture analysis (via DeepFace), and spectral noise analysis. Weighted scoring: AI 60 %, metadata 15 %, ELA 15 %, face 7 %, noise 3 %. |
-| **Audio Detection** | MFCC variance and silence-ratio heuristics via librosa. Honest about Kenya's context: the primary audio threat is **splicing** (editing real recordings), not AI voice cloning. Swahili AI audio is still detectable by ear as of 2026. |
+| **Audio Detection** | **WavLM AI model** (microsoft/wavlm-base-plus) for deepfake detection (70% weight) combined with MFCC variance and silence-ratio heuristics (30% weight). Graceful fallback to heuristics-only if model unavailable. Honest about Kenya's context: the primary audio threat is **splicing** (editing real recordings), not AI voice cloning. Swahili AI audio is still detectable by ear as of 2026. |
 | **Text Detection** | HuggingFace `hamzab/roberta-fake-news-classification` pipeline with clickbait keyword boosting. Local model files used when present. |
 | **WhatsApp Forward Checker** | Pattern-matching engine detecting misinformation indicators in English and Swahili: Safaricom hoaxes, political fabrications, health scares, fake job listings, and M-Pesa fee rumours. Cross-referenced with AI text classification. |
 | **Document & Screenshot Verifier** | OCR-powered detection of forged KRA PINs, HELB letters, fake M-Pesa confirmations, and manipulated Citizen TV / NTV / Nation breaking news screenshots. Combines OCR text validation with ELA and AI deepfake scoring. |

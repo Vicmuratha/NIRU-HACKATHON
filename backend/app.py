@@ -374,7 +374,96 @@ class UltraImageDetector:
 class UltraAudioDetector:
     def __init__(self):
         self.sample_rate = 16000
+        self.ai_model = None
+        self.ai_processor = None
+        self.lock = threading.Lock()
         logger.info("🔧 Ultra-Accurate Audio Detector initialized")
+
+    def load_ai_model(self):
+        """Lazy-load WavLM model for audio deepfake detection"""
+        with self.lock:
+            if self.ai_model is not None:
+                return
+            
+            try:
+                from transformers import AutoModelForAudioClassification, AutoFeatureExtractor
+                import torch
+                
+                # Try to load local WavLM model first
+                local_model_dir = os.path.join(MODELS_DIR, "audio_model")
+                model_files_exist = os.path.exists(os.path.join(local_model_dir, "config.json"))
+                
+                if model_files_exist:
+                    # Check if model weights exist
+                    has_weights = (
+                        os.path.exists(os.path.join(local_model_dir, "model.safetensors")) or
+                        os.path.exists(os.path.join(local_model_dir, "pytorch_model.bin"))
+                    )
+                    
+                    if has_weights:
+                        logger.info(f"📦 Loading WavLM model from {local_model_dir}...")
+                        self.ai_model = AutoModelForAudioClassification.from_pretrained(local_model_dir)
+                        self.ai_processor = AutoFeatureExtractor.from_pretrained(local_model_dir)
+                        logger.info("✅ WavLM model loaded from local directory")
+                        return
+                    else:
+                        logger.warning(f"⚠️ Config found but model weights missing in {local_model_dir}")
+                
+                # Fall back to HuggingFace pretrained model
+                logger.info("📦 Downloading WavLM model from HuggingFace (microsoft/wavlm-base-plus)...")
+                model_name = "microsoft/wavlm-base-plus"
+                self.ai_processor = AutoFeatureExtractor.from_pretrained(model_name)
+                # Load base model and add classification head for binary classification
+                from transformers import WavLMForSequenceClassification
+                self.ai_model = WavLMForSequenceClassification.from_pretrained(
+                    model_name,
+                    num_labels=2,  # Binary: real (0) vs fake (1)
+                    ignore_mismatched_sizes=True
+                )
+                logger.info("✅ WavLM model downloaded and initialized")
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Could not load WavLM model, will use heuristics only: {e}")
+                self.ai_model = "unavailable"
+
+    def ai_deepfake_check(self, audio_path):
+        """Use WavLM AI model to detect audio deepfakes"""
+        self.load_ai_model()
+        if self.ai_model == "unavailable":
+            return {'available': False, 'fake_confidence': 0}
+        
+        try:
+            import torch
+            import librosa
+            
+            # Load audio
+            y, sr = librosa.load(audio_path, sr=self.sample_rate)
+            
+            # Process with feature extractor
+            inputs = self.ai_processor(
+                y, 
+                sampling_rate=self.sample_rate, 
+                return_tensors="pt",
+                padding=True
+            )
+            
+            # Run inference
+            with torch.no_grad():
+                outputs = self.ai_model(**inputs)
+                probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
+            
+            # probs[0][0] = real, probs[0][1] = fake
+            fake_confidence = float(probs[0][1].item())
+            real_confidence = float(probs[0][0].item())
+            
+            return {
+                'available': True,
+                'fake_confidence': fake_confidence,
+                'real_confidence': real_confidence
+            }
+        except Exception as e:
+            logger.error(f"❌ WavLM inference error: {e}")
+            return {'available': False, 'fake_confidence': 0}
 
     def analyze_audio(self, audio_path):
         import librosa
@@ -382,21 +471,53 @@ class UltraAudioDetector:
             y, sr = librosa.load(audio_path, sr=self.sample_rate)
             if len(y) < 2048: y = np.pad(y, (0, 2048 - len(y)))
             
-            # Simple Features
+            # AI Model Detection (70% weight)
+            ai_result = self.ai_deepfake_check(audio_path)
+            
+            # MFCC Heuristics (30% weight - fallback/supplement)
             mfcc_var = float(np.var(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)))
             rms = librosa.feature.rms(y=y)[0]
             silence_ratio = float(np.sum(rms < (np.mean(rms) * 0.12)) / len(rms))
             
-            risk = 0
+            # Calculate heuristic risk
+            heuristic_risk = 0
             findings = []
             
-            if mfcc_var < 150: risk += 75; findings.append("⚠️ Robotic voice texture")
-            elif mfcc_var < 400: risk += 40; findings.append("⚠️ Smooth voice texture")
-            else: findings.append("✓ Natural voice variation")
+            if ai_result['available']:
+                # AI model available - combine AI (70%) + heuristics (30%)
+                ai_risk = ai_result['fake_confidence'] * 100
+                
+                if mfcc_var < 150: heuristic_risk += 75
+                elif mfcc_var < 400: heuristic_risk += 40
+                
+                if not (0.02 < silence_ratio < 0.15): heuristic_risk += 30
+                heuristic_risk = min(heuristic_risk, 100)
+                
+                # Weighted combination
+                risk = int(ai_risk * 0.70 + heuristic_risk * 0.30)
+                confidence = float(max(ai_result['fake_confidence'], ai_result['real_confidence']))
+                
+                findings.append(f"🤖 WavLM AI: {'FAKE' if ai_result['fake_confidence'] > 0.5 else 'AUTHENTIC'} ({ai_result['fake_confidence']:.1%} fake confidence)")
+                
+                if mfcc_var < 150: findings.append("⚠️ Robotic voice texture (MFCC)")
+                elif mfcc_var < 400: findings.append("⚠️ Smooth voice texture (MFCC)")
+                else: findings.append("✓ Natural voice variation (MFCC)")
+                
+                if not (0.02 < silence_ratio < 0.15): 
+                    findings.append("⚠️ Abnormal breathing pauses")
+            else:
+                # AI model unavailable - use heuristics only
+                risk = 0
+                if mfcc_var < 150: risk += 75; findings.append("⚠️ Robotic voice texture")
+                elif mfcc_var < 400: risk += 40; findings.append("⚠️ Smooth voice texture")
+                else: findings.append("✓ Natural voice variation")
+                
+                if not (0.02 < silence_ratio < 0.15): risk += 30; findings.append("⚠️ Abnormal breathing pauses")
+                
+                risk = min(risk, 98)
+                confidence = 0.75  # Lower confidence when using heuristics only
+                findings.insert(0, "ℹ️ Using heuristic analysis (AI model unavailable)")
             
-            if not (0.02 < silence_ratio < 0.15): risk += 30; findings.append("⚠️ Abnormal breathing pauses")
-            
-            risk = min(risk, 98)
             kenya_warnings = []
             
             # Kenya-specific audio context (honest about the real threat)
@@ -421,13 +542,14 @@ class UltraAudioDetector:
             return {
                 'risk_score': risk,
                 'is_authentic': risk < 50,
-                'confidence': 0.88,
+                'confidence': confidence,
                 'findings': findings,
                 'kenya_warnings': kenya_warnings,
                 'kenya_audio_context': kenya_audio_ctx,
                 'detection_note': kenya_audio_ctx.get('detection_note', '')
             }
         except Exception as e:
+            logger.error(f"❌ Audio analysis error: {e}")
             return {'risk_score': 0, 'is_authentic': True, 'error': str(e)}
 
 # ============== ULTRA-ACCURATE TEXT DETECTOR ==============
