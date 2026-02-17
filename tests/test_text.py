@@ -1,87 +1,83 @@
 #!/usr/bin/env python3
 """
-Test cases for text misinformation detection
+Test suite for UltraTextDetector – validates the real app.py API contract.
 """
 
 import unittest
 import os
 import sys
 
-# Add parent directory to path for imports
+# Ensure project root is on the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from detectors.text_detector import TextMisinformationDetector
+from app import UltraTextDetector
+
 
 class TestTextDetector(unittest.TestCase):
-    def setUp(self):
-        self.detector = TextMisinformationDetector()
 
+    @classmethod
+    def setUpClass(cls):
+        """Instantiate detector once for all tests."""
+        cls.detector = UltraTextDetector()
+
+    # ── tests ────────────────────────────────────────────────
     def test_detector_initialization(self):
-        """Test that detector initializes properly"""
-        self.assertIsInstance(self.detector, TextMisinformationDetector)
+        """Detector should be the correct class."""
+        self.assertIsInstance(self.detector, UltraTextDetector)
 
-    def test_text_feature_extraction(self):
-        """Test text feature extraction"""
-        test_text = "This is a test message with some EXCLAMATION!!! and questions?"
-        features = self.detector.extract_text_features(test_text)
+    def test_analyze_text_returns_expected_keys(self):
+        """analyze_text() must return the documented key set."""
+        result = self.detector.analyze_text(
+            "This is a normal news article about current events.")
+        for key in ('risk_score', 'is_authentic', 'verdict', 'confidence',
+                    'findings', 'kenya_warnings', 'details'):
+            self.assertIn(key, result, f"Missing key: {key}")
 
-        self.assertIn('word_count', features)
-        self.assertIn('char_count', features)
-        self.assertIn('sentence_count', features)
-        self.assertIn('exclamation_ratio', features)
-        self.assertIn('caps_ratio', features)
-        self.assertIn('clickbait_score', features)
+    def test_risk_score_range(self):
+        """Risk score should be between 0 and 100."""
+        result = self.detector.analyze_text("Some text to analyse.")
+        self.assertGreaterEqual(result['risk_score'], 0)
+        self.assertLessEqual(result['risk_score'], 100)
 
-        # Check calculations
-        self.assertEqual(features['word_count'], 11)
-        self.assertGreater(features['char_count'], 0)
-        self.assertGreater(features['exclamation_ratio'], 0)
+    def test_verdict_values(self):
+        """Verdict must be one of the three allowed strings."""
+        result = self.detector.analyze_text("Testing verdict values.")
+        self.assertIn(result['verdict'],
+                      {'LIKELY_DEEPFAKE', 'AUTHENTIC', 'REVIEW_REQUIRED'})
 
-    def test_clickbait_detection(self):
-        """Test clickbait pattern detection"""
-        clickbait_text = "You won't believe what happened! Secret revealed!"
-        features = self.detector.extract_text_features(clickbait_text)
-        self.assertGreater(features['clickbait_score'], 0)
-
-    def test_text_analysis(self):
-        """Test complete text analysis"""
-        test_text = "This is a normal news article about current events."
-        result = self.detector.analyze_text(test_text)
-
-        self.assertIn('risk_score', result)
-        self.assertIn('is_authentic', result)
-        self.assertIn('confidence', result)
-        self.assertIn('findings', result)
-        self.assertIn('text_features', result)
-        self.assertIn('details', result)
+    def test_findings_is_list(self):
+        """Findings should always be a list."""
+        result = self.detector.analyze_text("A quick test string.")
         self.assertIsInstance(result['findings'], list)
 
-    def test_suspicious_text_detection(self):
-        """Test detection of suspicious text patterns"""
-        suspicious_text = "BREAKING NEWS!!! YOU WON'T BELIEVE THIS SHOCKING SECRET!!!"
-        result = self.detector.analyze_text(suspicious_text)
+    def test_details_contains_ai_fields(self):
+        """Details dict must include AI label and score."""
+        result = self.detector.analyze_text("Checking AI details.")
+        self.assertIn('ai_label', result['details'])
+        self.assertIn('ai_score', result['details'])
 
-        self.assertIn('risk_score', result)
-        self.assertIn('is_authentic', result)
-        self.assertIn('findings', result)
-        # High-risk text should have higher risk score
-        self.assertGreaterEqual(result['risk_score'], 0)
+    def test_clickbait_boosts_risk(self):
+        """Text with clickbait keywords ('exposed', 'shocking', 'secret') should
+        receive the +20 clickbait penalty, pushing risk_score above a baseline."""
+        clickbait = self.detector.analyze_text(
+            "SHOCKING secret exposed! You won't believe what was exposed!")
+        # The clickbait penalty adds up to +20 — so the score should be non-trivial
+        self.assertGreaterEqual(clickbait['risk_score'], 20,
+                                "Clickbait text should have a meaningful risk score")
 
-    def test_emotional_language_detection(self):
-        """Test detection of excessive emotional language"""
-        emotional_text = "This is amazing! Fantastic! Incredible! Unbelievable!"
-        result = self.detector.analyze_text(emotional_text)
+    def test_is_authentic_matches_risk(self):
+        """is_authentic should agree with the risk score threshold."""
+        result = self.detector.analyze_text("A neutral factual sentence.")
+        if result['risk_score'] < 50:
+            self.assertTrue(result['is_authentic'])
+        else:
+            self.assertFalse(result['is_authentic'])
 
-        features = result['text_features']
-        self.assertGreater(features['exclamation_ratio'], 0)
+    def test_kenya_warnings_is_list(self):
+        """Kenya warnings must be a (possibly empty) list."""
+        result = self.detector.analyze_text("Test message.")
+        self.assertIsInstance(result['kenya_warnings'], list)
 
-    def test_caps_detection(self):
-        """Test detection of excessive capitalization"""
-        caps_text = "THIS IS ALL CAPS TEXT WHICH IS SUSPICIOUS"
-        result = self.detector.analyze_text(caps_text)
-
-        features = result['text_features']
-        self.assertGreater(features['caps_ratio'], 0.5)  # Should be high due to all caps
 
 if __name__ == '__main__':
     unittest.main()

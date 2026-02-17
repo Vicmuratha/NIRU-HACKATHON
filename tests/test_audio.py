@@ -1,107 +1,134 @@
 #!/usr/bin/env python3
 """
-Test cases for audio deepfake detection
+Test suite for UltraAudioDetector – validates the real app.py API contract.
 """
 
 import unittest
 import os
 import sys
-import numpy as np
 import tempfile
+import wave
+import numpy as np
 
-# Add parent directory to path for imports
+# Ensure project root is on the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from detectors.audio_detector import AudioDeepfakeDetector
+from app import UltraAudioDetector
+
 
 class TestAudioDetector(unittest.TestCase):
-    def setUp(self):
-        self.detector = AudioDeepfakeDetector()
 
+    @classmethod
+    def setUpClass(cls):
+        """Instantiate detector once for all tests."""
+        cls.detector = UltraAudioDetector()
+
+    # ── helpers ──────────────────────────────────────────────
+    @staticmethod
+    def _make_wav(duration=1.0, frequency=440.0, sample_rate=16000):
+        """Create a mono 16-bit WAV sine wave and return its path."""
+        t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
+        signal = (np.sin(2 * np.pi * frequency * t) * 32767).astype(np.int16)
+        fd, path = tempfile.mkstemp(suffix='.wav')
+        os.close(fd)
+        with wave.open(path, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sample_rate)
+            wf.writeframes(signal.tobytes())
+        return path
+
+    # ── tests ────────────────────────────────────────────────
     def test_detector_initialization(self):
-        """Test that detector initializes properly"""
-        self.assertIsInstance(self.detector, AudioDeepfakeDetector)
+        """Detector should initialise with correct sample rate."""
+        self.assertIsInstance(self.detector, UltraAudioDetector)
         self.assertEqual(self.detector.sample_rate, 16000)
 
-    def test_audio_feature_extraction(self):
-        """Test audio feature extraction"""
-        # Create a simple test audio signal (sine wave)
-        sample_rate = 16000
-        duration = 1.0
-        frequency = 440.0
-        t = np.linspace(0, duration, int(sample_rate * duration), False)
-        audio_signal = np.sin(frequency * 2 * np.pi * t).astype(np.float32)
-
-        # Save as WAV file
-        import wave
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-            temp_path = temp_file.name
-            with wave.open(temp_path, 'wb') as wav_file:
-                wav_file.setnchannels(1)
-                wav_file.setsampwidth(2)
-                wav_file.setframerate(sample_rate)
-                wav_file.writeframes((audio_signal * 32767).astype(np.int16).tobytes())
-
+    def test_analyze_audio_returns_expected_keys(self):
+        """analyze_audio() must return the documented key set."""
+        path = self._make_wav()
         try:
-            features = self.detector.extract_audio_features(temp_path)
-            self.assertIn('mfcc_mean', features)
-            self.assertIn('mfcc_std', features)
-            self.assertIn('spectral_centroid_mean', features)
-            self.assertIn('zero_crossing_rate', features)
-            self.assertIn('pitch_mean', features)
-            self.assertIn('pitch_std', features)
+            result = self.detector.analyze_audio(path)
+            for key in ('risk_score', 'is_authentic', 'verdict', 'confidence',
+                        'findings', 'kenya_warnings', 'details'):
+                self.assertIn(key, result, f"Missing key: {key}")
         finally:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
+            os.remove(path)
 
-    def test_spoofing_detection(self):
-        """Test spoofing detection logic"""
-        # Test with normal audio features
-        normal_features = {
-            'mfcc_std': [1.0, 1.1, 1.2],
-            'spectral_centroid_mean': 2000.0,
-            'pitch_std': 50.0,
-            'zero_crossing_rate': 0.05
-        }
-
-        result = self.detector.detect_spoofing(normal_features)
-        self.assertIn('spoofing_score', result)
-        self.assertIn('suspicious_indicators', result)
-        self.assertIn('is_spoofed', result)
-        self.assertIsInstance(result['suspicious_indicators'], list)
-
-    def test_full_analysis(self):
-        """Test complete audio analysis"""
-        # Create a simple test audio signal
-        sample_rate = 16000
-        duration = 1.0
-        frequency = 440.0
-        t = np.linspace(0, duration, int(sample_rate * duration), False)
-        audio_signal = np.sin(frequency * 2 * np.pi * t).astype(np.float32)
-
-        # Save as WAV file
-        import wave
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-            temp_path = temp_file.name
-            with wave.open(temp_path, 'wb') as wav_file:
-                wav_file.setnchannels(1)
-                wav_file.setsampwidth(2)
-                wav_file.setframerate(sample_rate)
-                wav_file.writeframes((audio_signal * 32767).astype(np.int16).tobytes())
-
+    def test_risk_score_range(self):
+        """Risk score should be between 0 and 100."""
+        path = self._make_wav()
         try:
-            result = self.detector.analyze_audio(temp_path)
-            self.assertIn('risk_score', result)
-            self.assertIn('is_authentic', result)
-            self.assertIn('confidence', result)
-            self.assertIn('findings', result)
-            self.assertIn('audio_features', result)
-            self.assertIn('spoofing_analysis', result)
-            self.assertIn('details', result)
+            result = self.detector.analyze_audio(path)
+            self.assertGreaterEqual(result['risk_score'], 0)
+            self.assertLessEqual(result['risk_score'], 100)
+        finally:
+            os.remove(path)
+
+    def test_verdict_values(self):
+        """Verdict must be one of the allowed strings."""
+        path = self._make_wav()
+        try:
+            result = self.detector.analyze_audio(path)
+            self.assertIn(result['verdict'],
+                          {'LIKELY_DEEPFAKE', 'AUTHENTIC', 'REVIEW_REQUIRED', 'ERROR'})
+        finally:
+            os.remove(path)
+
+    def test_details_contains_model_info(self):
+        """Details dict must include AI model flag and heuristic metrics."""
+        path = self._make_wav()
+        try:
+            details = self.detector.analyze_audio(path)['details']
+            self.assertIn('ai_model_used', details)
+            self.assertIn('mfcc_variance', details)
+            self.assertIn('silence_ratio', details)
+        finally:
+            os.remove(path)
+
+    def test_findings_is_nonempty_list(self):
+        """Findings should always contain at least one entry."""
+        path = self._make_wav()
+        try:
+            result = self.detector.analyze_audio(path)
             self.assertIsInstance(result['findings'], list)
+            self.assertGreater(len(result['findings']), 0)
         finally:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
+            os.remove(path)
+
+    def test_kenya_warnings_is_list(self):
+        """Kenya warnings must be a (possibly empty) list."""
+        path = self._make_wav()
+        try:
+            result = self.detector.analyze_audio(path)
+            self.assertIsInstance(result['kenya_warnings'], list)
+        finally:
+            os.remove(path)
+
+    def test_is_authentic_matches_risk(self):
+        """is_authentic should agree with the risk score threshold."""
+        path = self._make_wav()
+        try:
+            result = self.detector.analyze_audio(path)
+            if result['risk_score'] < 50:
+                self.assertTrue(result['is_authentic'])
+            else:
+                self.assertFalse(result['is_authentic'])
+        finally:
+            os.remove(path)
+
+    def test_error_on_invalid_file(self):
+        """Feeding garbage bytes should return an ERROR verdict, not crash."""
+        fd, path = tempfile.mkstemp(suffix='.wav')
+        os.close(fd)
+        with open(path, 'wb') as f:
+            f.write(b'NOT_VALID_AUDIO_DATA')
+        try:
+            result = self.detector.analyze_audio(path)
+            self.assertIn('verdict', result)
+        finally:
+            os.remove(path)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -16,3 +16,6 @@ numpy
 scipy
 exifread
 pytesseract
+sentencepiece
+tiktoken
+pytest
