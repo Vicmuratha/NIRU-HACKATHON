@@ -5,7 +5,6 @@ into a single Flask application.
 """
 
 import os
-import hashlib
 import sqlite3
 import uuid
 import json
@@ -236,8 +235,10 @@ def init_db():
 init_db()
 
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
 def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
+    return generate_password_hash(password)
 
 
 def get_current_user_id():
@@ -780,7 +781,7 @@ def login():
 
         db = get_db()
         user = db.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
-        if not user or user['password'] != hash_password(password):
+        if not user or not check_password_hash(user['password'], password):
             flash('Invalid email or password', 'error')
             return redirect(url_for('login'))
 
@@ -943,7 +944,7 @@ def api_login():
 
     db = get_db()
     user = db.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
-    if not user or user['password'] != hash_password(password):
+    if not user or not check_password_hash(user['password'], password):
         return jsonify({'error': 'Invalid credentials'}), 401
 
     db.execute('UPDATE users SET last_login = ? WHERE id = ?', (datetime.utcnow(), user['id']))
@@ -1106,7 +1107,7 @@ def change_password():
     if row['auth_provider'] != 'local':
         return jsonify({'error': 'Cannot change password for OAuth accounts'}), 400
 
-    if row['password'] != hash_password(current_password):
+    if not check_password_hash(row['password'], current_password):
         return jsonify({'error': 'Current password is incorrect'}), 401
 
     db.execute(
