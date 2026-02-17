@@ -492,7 +492,7 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
 };
 
 // ─── HERO SECTION ───
-const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
+const HeroSection: React.FC<{ onAnalyze: () => void; onDemo: () => void }> = ({ onAnalyze, onDemo }) => {
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 600], [0, 180]);
   const heroOpacity = useTransform(scrollY, [0, 500], [1, 0]);
@@ -572,7 +572,7 @@ const HeroSection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => {
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-300" />
             </span>
           </button>
-          <button className="btn-outline-glow text-sm sm:text-base !px-8 sm:!px-10 !py-3.5 sm:!py-4 flex items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <button onClick={onDemo} className="btn-outline-glow text-sm sm:text-base !px-8 sm:!px-10 !py-3.5 sm:!py-4 flex items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto">
             <Eye size={18} />
             Watch Demo
           </button>
@@ -943,7 +943,9 @@ const CTASection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => (
 );
 
 // ─── ANALYSIS PANEL ───
-const AnalysisPanel: React.FC = () => {
+const DEMO_TEXT = `BREAKING: Leaked audio reveals Governor Mutua planning to rig the 2027 elections! A secret recording obtained exclusively by our investigative team exposes shocking corruption at the highest levels of government. Share before it's deleted!!!`;
+
+const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void }> = ({ demoMode, onDemoConsumed }) => {
   const [tab, setTab] = useState<AnalysisTab>('image');
   const [file, setFile] = useState<File | null>(null);
   const [textInput, setTextInput] = useState('');
@@ -954,6 +956,7 @@ const AnalysisPanel: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [scanProgress, setScanProgress] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const demoTriggered = useRef(false);
 
   const tabs: { key: AnalysisTab; label: string; icon: React.ReactNode; desc: string }[] = [
     { key: 'image', label: 'Image', icon: <Camera size={16} />, desc: 'Upload an image to check for deepfake manipulation' },
@@ -1043,6 +1046,34 @@ const AnalysisPanel: React.FC = () => {
       setLoading(false);
     }
   }, [tab, file, textInput]);
+
+  // ── Demo mode: auto-fill text tab and trigger analysis ──
+  useEffect(() => {
+    if (demoMode && !demoTriggered.current) {
+      demoTriggered.current = true;
+      setTab('text');
+      setResult(null);
+      setError(null);
+
+      // Typewriter effect for demo text
+      let i = 0;
+      const interval = setInterval(() => {
+        i += 3;
+        setTextInput(DEMO_TEXT.slice(0, i));
+        if (i >= DEMO_TEXT.length) {
+          clearInterval(interval);
+          onDemoConsumed?.();
+          // Auto-trigger analysis after typing finishes
+          setTimeout(() => {
+            const btn = document.getElementById('analyze-btn');
+            if (btn) btn.click();
+          }, 400);
+        }
+      }, 18);
+      return () => clearInterval(interval);
+    }
+    if (!demoMode) demoTriggered.current = false;
+  }, [demoMode, onDemoConsumed]);
 
   const canAnalyze = (tab === 'text' || tab === 'forward') ? textInput.trim().length > 10 : !!file;
   const tabConfig = tabs.find(t => t.key === tab)!;
@@ -1219,6 +1250,7 @@ const AnalysisPanel: React.FC = () => {
                 )}
 
                 <motion.button
+                  id="analyze-btn"
                   whileHover={canAnalyze && !loading ? { scale: 1.01 } : {}}
                   whileTap={canAnalyze && !loading ? { scale: 0.99 } : {}}
                   onClick={analyze}
@@ -2062,6 +2094,7 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('home');
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [demoMode, setDemoMode] = useState(false);
 
   useEffect(() => {
     fetch('/api/me', { credentials: 'include' })
@@ -2074,6 +2107,11 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [view]);
 
+  const handleDemo = useCallback(() => {
+    setDemoMode(true);
+    setView('analyze');
+  }, []);
+
   return (
     <div className="relative min-h-screen">
       <div className="mesh-bg" />
@@ -2083,7 +2121,7 @@ const App: React.FC = () => {
       <AnimatePresence mode="wait">
         {view === 'home' ? (
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-            <HeroSection onAnalyze={() => setView('analyze')} />
+            <HeroSection onAnalyze={() => setView('analyze')} onDemo={handleDemo} />
             <TrustedBySection />
             <KenyaImpactStats />
             <HowItWorks />
@@ -2098,7 +2136,7 @@ const App: React.FC = () => {
           </motion.div>
         ) : (
           <motion.div key="analyze" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-            <AnalysisPanel />
+            <AnalysisPanel demoMode={demoMode} onDemoConsumed={() => setDemoMode(false)} />
             <Footer />
           </motion.div>
         )}
