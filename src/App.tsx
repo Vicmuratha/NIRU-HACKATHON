@@ -913,7 +913,7 @@ const CTASection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => (
             Ready to Protect <span className="text-aurora">Truth</span>?
           </h2>
           <p className="text-slate-400 max-w-lg mx-auto mb-6 sm:mb-8 text-xs sm:text-sm md:text-base leading-relaxed px-2 sm:px-0">
-            Upload any suspicious content and get instant AI-powered forensic analysis. Zero data retention, privacy-first.
+            Upload any suspicious content and get instant AI-powered forensic analysis. Privacy-focused, built for Kenya.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4 sm:px-0">
             <button onClick={onAnalyze} className="btn-glow text-sm sm:text-base !px-8 sm:!px-10 !py-3.5 sm:!py-4 group w-full sm:w-auto">
@@ -926,9 +926,9 @@ const CTASection: React.FC<{ onAnalyze: () => void }> = ({ onAnalyze }) => (
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-6 sm:mt-8 px-2">
             {[
-              { icon: <Lock size={14} />, text: 'End-to-end encrypted' },
+              { icon: <Lock size={14} />, text: 'Secure local processing' },
               { icon: <Zap size={14} />, text: 'Results in seconds' },
-              { icon: <CheckCircle2 size={14} />, text: 'No signup needed' },
+              { icon: <CheckCircle2 size={14} />, text: 'Free to use' },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2 text-xs text-slate-500">
                 <span className="text-slate-600">{item.icon}</span>
@@ -1409,7 +1409,7 @@ const Footer: React.FC = () => (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2 text-[10px] sm:text-xs text-slate-600">
             <Lock size={11} />
-            Privacy-First &middot; Zero Data Retention &middot; Open Source
+            Privacy-Focused &middot; Secure Processing &middot; Open Source
           </div>
           <div className="text-[10px] sm:text-xs text-slate-700">
             &copy; 2026 SafEye &middot; Kulinda Ukweli wa Kidijitali
