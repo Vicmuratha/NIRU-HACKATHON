@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import tempfile
 import warnings
+import soundfile as sf
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,7 +41,6 @@ class TestAudioDetector(unittest.TestCase):
         audio_signal = np.sin(frequency * 2 * np.pi * t).astype(np.float32)
 
         # Save as WAV file using soundfile
-        import soundfile as sf
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
             temp_path = temp_file.name
             sf.write(temp_path, audio_signal, sample_rate)
@@ -84,7 +84,6 @@ class TestAudioDetector(unittest.TestCase):
         t = np.linspace(0, duration, int(sample_rate * duration), False)
         audio_signal = np.sin(440 * 2 * np.pi * t).astype(np.float32)
 
-        import soundfile as sf
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
             temp_path = temp_file.name
             sf.write(temp_path, audio_signal, sample_rate)
@@ -105,7 +104,6 @@ class TestAudioDetector(unittest.TestCase):
         t = np.linspace(0, duration, int(sample_rate * duration), False)
         audio_signal = np.sin(440 * 2 * np.pi * t).astype(np.float32)
 
-        import soundfile as sf
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
             temp_path = temp_file.name
             sf.write(temp_path, audio_signal, sample_rate)

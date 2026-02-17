@@ -372,6 +372,11 @@ class UltraImageDetector:
 
 # ============== ULTRA-ACCURATE AUDIO DETECTOR ==============
 class UltraAudioDetector:
+    # Detection weighting constants
+    AI_WEIGHT = 0.70  # AI model confidence weight
+    HEURISTIC_WEIGHT = 0.30  # MFCC heuristic weight
+    FAKE_THRESHOLD = 0.5  # Threshold for classifying as fake
+    
     def __init__(self):
         self.sample_rate = 16000
         self.ai_model = None
@@ -494,10 +499,10 @@ class UltraAudioDetector:
                 heuristic_risk = min(heuristic_risk, 100)
                 
                 # Weighted combination
-                risk = int(ai_risk * 0.70 + heuristic_risk * 0.30)
+                risk = int(ai_risk * self.AI_WEIGHT + heuristic_risk * self.HEURISTIC_WEIGHT)
                 confidence = float(max(ai_result['fake_confidence'], ai_result['real_confidence']))
                 
-                findings.append(f"🤖 WavLM AI: {'FAKE' if ai_result['fake_confidence'] > 0.5 else 'AUTHENTIC'} ({ai_result['fake_confidence']:.1%} fake confidence)")
+                findings.append(f"🤖 WavLM AI: {'FAKE' if ai_result['fake_confidence'] > self.FAKE_THRESHOLD else 'AUTHENTIC'} ({ai_result['fake_confidence']:.1%} fake confidence)")
                 
                 if mfcc_var < 150: findings.append("⚠️ Robotic voice texture (MFCC)")
                 elif mfcc_var < 400: findings.append("⚠️ Smooth voice texture (MFCC)")
