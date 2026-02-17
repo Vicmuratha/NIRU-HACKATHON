@@ -563,11 +563,43 @@ class UltraTextDetector:
         with self.lock:
             if self.pipeline is None:
                 from transformers import pipeline
-                # --- FIX: Check the 'models' subdirectory ---
+                # --- FIX: Check the 'models' subdirectory for both config and weights ---
                 local_model_dir = os.path.join(MODELS_DIR, "text_model")
-                use_local = os.path.exists(os.path.join(local_model_dir, "config.json"))
-                model_source = local_model_dir if use_local else "hamzab/roberta-fake-news-classification"
-                self.pipeline = pipeline("text-classification", model=model_source, tokenizer=model_source)
+                has_config = os.path.exists(os.path.join(local_model_dir, "config.json"))
+                has_weights = (
+                    os.path.exists(os.path.join(local_model_dir, "model.safetensors")) or
+                    os.path.exists(os.path.join(local_model_dir, "pytorch_model.bin"))
+                )
+                
+                # Only use local if both config and weights exist
+                if has_config and has_weights:
+                    logger.info(f"📦 Loading text model from {local_model_dir}...")
+                    model_source = local_model_dir
+                else:
+                    if has_config and not has_weights:
+                        logger.warning(f"⚠️ Config found but model weights missing in {local_model_dir}")
+                    logger.info("📦 Loading text model from HuggingFace (hamzab/roberta-fake-news-classification)...")
+                    model_source = "hamzab/roberta-fake-news-classification"
+                
+                try:
+                    self.pipeline = pipeline("text-classification", model=model_source, tokenizer=model_source)
+                    logger.info("✅ Text model loaded successfully")
+                except Exception as e:
+                    logger.error(f"❌ Failed to load text model: {e}")
+                    # Return a simple heuristic-based result
+                    self.pipeline = "unavailable"
+
+        # If model unavailable, use simple heuristics
+        if self.pipeline == "unavailable":
+            txt_lower = text.lower()
+            clickbait_count = sum(1 for kw in ['exposed', 'shocking', 'secret', 'breaking', 'urgent'] if kw in txt_lower)
+            risk = min(clickbait_count * 25, 75)
+            return {
+                'risk_score': risk,
+                'is_authentic': risk < 50,
+                'confidence': 0.60,
+                'findings': ['ℹ️ Using heuristic analysis (AI model unavailable)', f'Clickbait keywords: {clickbait_count}']
+            }
 
         ai_result = self.pipeline(text[:512])[0]
         is_fake = ai_result['label'] in ['FAKE', 'LABEL_0', '0']
