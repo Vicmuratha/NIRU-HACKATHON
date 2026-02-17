@@ -583,45 +583,111 @@ class UltraImageDetector:
 class UltraAudioDetector:
     def __init__(self):
         self.sample_rate = 16000
+        self.model = None
+        self.feature_extractor = None
+        self.lock = threading.Lock()
         logger.info("Ultra-Accurate Audio Detector initialized")
+
+    def _load_model(self):
+        """Lazy-load the WavLM deepfake detection model on first use."""
+        if self.model is not None:
+            return
+        import torch
+        from transformers import AutoModelForAudioClassification, AutoFeatureExtractor
+        model_dir = os.path.join(MODELS_DIR, "audio_model")
+        if os.path.exists(os.path.join(model_dir, "config.json")):
+            logger.info("Loading WavLM audio deepfake model from local files...")
+            self.feature_extractor = AutoFeatureExtractor.from_pretrained(model_dir)
+            self.model = AutoModelForAudioClassification.from_pretrained(model_dir)
+        else:
+            logger.info("Loading WavLM audio deepfake model from HuggingFace...")
+            model_name = "Hemg/wavlm-base-deepfake-detection"
+            self.feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
+            self.model = AutoModelForAudioClassification.from_pretrained(model_name)
+        self.model.eval()
+        logger.info("WavLM audio model loaded successfully")
 
     def analyze_audio(self, audio_path):
         import librosa
+        import torch
         try:
             y, sr = librosa.load(audio_path, sr=self.sample_rate)
             if len(y) < 2048:
                 y = np.pad(y, (0, 2048 - len(y)))
 
+            # --- AI Model Inference (primary signal — 70% weight) ---
+            ai_risk = 50.0
+            ai_confidence = 0.5
+            ai_available = False
+            try:
+                with self.lock:
+                    self._load_model()
+                # Process audio through WavLM feature extractor
+                inputs = self.feature_extractor(
+                    y, sampling_rate=self.sample_rate, return_tensors="pt", padding=True
+                )
+                with torch.no_grad():
+                    logits = self.model(**inputs).logits
+                probs = torch.nn.functional.softmax(logits, dim=-1)[0]
+                # Model outputs: index 0 = real/bonafide, index 1 = fake/spoof
+                num_labels = probs.shape[0]
+                if num_labels >= 2:
+                    fake_prob = float(probs[1])
+                    real_prob = float(probs[0])
+                else:
+                    fake_prob = float(probs[0])
+                    real_prob = 1.0 - fake_prob
+                ai_risk = fake_prob * 100.0
+                ai_confidence = max(fake_prob, real_prob)
+                ai_available = True
+                logger.info(f"Audio AI model: fake_prob={fake_prob:.3f}, real_prob={real_prob:.3f}")
+            except Exception as e:
+                logger.warning(f"Audio AI model inference failed, falling back to heuristics: {e}")
+
+            # --- Heuristic signals (secondary — 30% weight) ---
             mfcc_var = float(np.var(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)))
             rms = librosa.feature.rms(y=y)[0]
             silence_ratio = float(np.sum(rms < (np.mean(rms) * 0.12)) / len(rms))
 
-            risk = 0
+            heuristic_risk = 0
             findings = []
 
             if mfcc_var < 150:
-                risk += 75; findings.append("Robotic voice texture detected")
+                heuristic_risk += 75; findings.append("Robotic voice texture detected (MFCC analysis)")
             elif mfcc_var < 400:
-                risk += 40; findings.append("Smooth voice texture")
+                heuristic_risk += 40; findings.append("Smooth voice texture (MFCC analysis)")
             else:
-                findings.append("Natural voice variation")
+                findings.append("Natural voice variation detected")
 
             if not (0.02 < silence_ratio < 0.15):
-                risk += 30; findings.append("Abnormal breathing pauses")
+                heuristic_risk += 30; findings.append("Abnormal breathing/pause pattern")
 
-            risk = min(risk, 98)
+            heuristic_risk = min(heuristic_risk, 100)
+
+            # --- Combine signals ---
+            if ai_available:
+                final_risk = (ai_risk * 0.70) + (heuristic_risk * 0.30)
+                findings.insert(0, f"WavLM neural model confidence: {ai_confidence:.1%}")
+            else:
+                final_risk = heuristic_risk
+                findings.insert(0, "Heuristic analysis only (model unavailable)")
+
+            final_risk = min(round(final_risk, 1), 98)
+            confidence = round(ai_confidence if ai_available else max(0.55, min(0.75, heuristic_risk / 100)), 2)
+
+            verdict = 'LIKELY_DEEPFAKE' if final_risk > 65 else 'AUTHENTIC' if final_risk < 40 else 'REVIEW_REQUIRED'
             kenya_warnings = []
 
             language = 'english'
-            kenya_audio_ctx = get_audio_kenya_context(language, risk)
+            kenya_audio_ctx = get_audio_kenya_context(language, final_risk)
 
-            if risk > 65:
+            if final_risk > 65:
                 kenya_warnings.append({
                     'type': 'AUDIO_MANIPULATION', 'severity': 'HIGH',
                     'warning': 'This audio shows signs of manipulation. "Leaked audio" of politicians is a common tactic — verify with official channels.',
                     'action': 'Report to DCI Cybercrime: reportcrime@dci.go.ke | Verify with at least 2 news outlets'
                 })
-            elif risk > 40:
+            elif final_risk > 40:
                 kenya_warnings.append({
                     'type': 'AUDIO_SUSPICIOUS', 'severity': 'MEDIUM',
                     'warning': 'This audio has some manipulation indicators.',
@@ -629,15 +695,20 @@ class UltraAudioDetector:
                 })
 
             return {
-                'risk_score': risk,
-                'is_authentic': risk < 50,
-                'verdict': 'LIKELY_DEEPFAKE' if risk > 65 else 'AUTHENTIC' if risk < 40 else 'REVIEW_REQUIRED',
-                'confidence': 0.88,
+                'risk_score': final_risk,
+                'is_authentic': final_risk < 50,
+                'verdict': verdict,
+                'confidence': confidence,
                 'findings': findings,
                 'kenya_warnings': kenya_warnings,
                 'kenya_audio_context': kenya_audio_ctx,
                 'detection_note': kenya_audio_ctx.get('detection_note', ''),
-                'details': {'mfcc_variance': round(mfcc_var, 1), 'silence_ratio': round(silence_ratio, 3)}
+                'details': {
+                    'ai_model_used': ai_available,
+                    'ai_fake_probability': round(ai_risk, 1) if ai_available else None,
+                    'mfcc_variance': round(mfcc_var, 1),
+                    'silence_ratio': round(silence_ratio, 3)
+                }
             }
         except Exception as e:
             return {'risk_score': 0, 'is_authentic': True, 'verdict': 'ERROR', 'error': str(e),
