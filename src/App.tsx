@@ -296,7 +296,8 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
           </span>
         </div>
 
-        <div className="hidden md:flex items-center gap-1 nav-pill absolute left-1/2 -translate-x-1/2">
+        {/* Desktop centered nav pills — hidden on mobile/tablet */}
+        <div className="hidden lg:flex items-center gap-1 nav-pill absolute left-1/2 -translate-x-1/2">
           {(['home', 'analyze'] as AppView[]).map(v => (
             <button
               key={v}
@@ -311,6 +312,23 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
           ))}
         </div>
 
+        {/* Mobile/tablet compact inline tabs */}
+        <div className="flex lg:hidden items-center gap-1 bg-white/[0.03] border border-white/[0.06] rounded-xl p-1">
+          {(['home', 'analyze'] as AppView[]).map(v => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 ${
+                view === v
+                  ? 'text-violet-300 bg-violet-500/12 border border-violet-500/20'
+                  : 'text-slate-500 border border-transparent'
+              }`}
+            >
+              {v === 'home' ? 'Home' : 'Analyze'}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center gap-3">
           <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 bg-white/[0.03] px-3 py-1.5 rounded-full border border-white/[0.06]">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -318,14 +336,14 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
           </div>
 
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-white/[0.06] transition-colors text-slate-300"
+            className="lg:hidden p-2 rounded-lg hover:bg-white/[0.06] transition-colors text-slate-300"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <XIcon size={20} /> : <Menu size={20} />}
           </button>
 
           {user ? (
-            <div className="relative hidden md:block">
+            <div className="relative hidden lg:block">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="flex items-center gap-2.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-violet-500/30 rounded-full pl-1.5 pr-4 py-1.5 transition-all duration-300"
@@ -385,7 +403,7 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
           ) : (
             <button
               onClick={() => setView('analyze')}
-              className="hidden md:flex btn-glow text-sm !px-6 !py-2.5"
+              className="hidden lg:flex btn-glow text-sm !px-6 !py-2.5"
             >
               <span className="flex items-center gap-2">
                 <Scan size={14} />
@@ -402,7 +420,7 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden overflow-hidden border-t border-white/[0.06] bg-[#050816]/95 backdrop-blur-2xl"
+            className="lg:hidden overflow-hidden border-t border-white/[0.06] bg-[#050816]/95 backdrop-blur-2xl"
           >
             <div className="p-4 flex flex-col gap-1">
               {user && (
