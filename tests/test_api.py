@@ -99,9 +99,11 @@ class TestAnalysisValidation:
 
 
 # ═══════════════════════════════════════════════════════════
-#  ANALYSIS ENDPOINTS  — FUNCTIONAL
+#  ANALYSIS ENDPOINTS  — FUNCTIONAL (require model inference)
+#  Run with: pytest -m slow   (skipped by default in fast CI)
 # ═══════════════════════════════════════════════════════════
 
+@pytest.mark.slow
 class TestImageAnalysis:
     def test_image_analysis_returns_result(self, client, test_image_bytes):
         buf, name = test_image_bytes
@@ -124,6 +126,7 @@ class TestImageAnalysis:
         assert isinstance(data.get('kenya_warnings', []), list)
 
 
+@pytest.mark.slow
 class TestTextAnalysis:
     def test_text_analysis_returns_result(self, client):
         resp = client.post('/api/analyze/text',
@@ -143,6 +146,7 @@ class TestTextAnalysis:
         assert data['risk_score'] >= 20
 
 
+@pytest.mark.slow
 class TestForwardAnalysis:
     def test_forward_analysis_returns_result(self, client):
         resp = client.post('/api/analyze/forward',
