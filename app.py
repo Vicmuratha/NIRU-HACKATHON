@@ -1,28 +1,45 @@
 """
-SafEye — Unified Backend
-Merges authentication, detection API, user profiles, and detection history
-into a single Flask application.
+SafEye — Unified Backend  v3.1
+Production-grade Flask application:
+  • Authentication (local + OAuth)
+  • AI-powered deepfake / misinformation detection
+  • User profiles & detection history
+  • Kenya election-integrity modules
 """
 
 import os
 import sqlite3
 import uuid
 import json
-import logging
 import warnings
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from functools import wraps
 
 import numpy as np
 
-# Load environment
+# ── Load .env early ──
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
+
+# ── Suppress TF noise before any TF import ──
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+warnings.filterwarnings('ignore')
+
+# ── Structured logging (must come before other app imports) ──
+from backend.logging_config import setup_logging
+from backend.config import get_config
+
+_cfg = get_config()
+setup_logging(level=_cfg.LOG_LEVEL, fmt=_cfg.LOG_FORMAT)
+
+import logging
+logger = logging.getLogger(__name__)
 
 from flask import (
     Flask, render_template, url_for, redirect, session,
@@ -44,17 +61,9 @@ try:
 except ImportError:
     HAS_OAUTH = False
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-# Suppress noisy warnings
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-warnings.filterwarnings('ignore')
+# ── Security & error handling ──
+from backend.middleware import init_security, rate_limit, validate_file_upload, validate_json_body
+from backend.errors import init_error_handlers, SafEyeError, AuthenticationError, ValidationError, AnalysisError
 
 # ─── Kenya-specific modules ───
 import sys
@@ -69,23 +78,27 @@ from backend.audio_context import get_audio_kenya_context
 from backend.fake_screenshot import detect_news_screenshot, run_ela as screenshot_ela
 
 # ══════════════════════════════════════════════════════════════
-#  FLASK APP SETUP
+#  FLASK APP FACTORY
 # ══════════════════════════════════════════════════════════════
 
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+config = get_config()
+FRONTEND_URL = config.FRONTEND_URL
 
 app = Flask(
     __name__,
     template_folder=os.path.join(BASE_DIR, 'templates'),
     static_folder=os.path.join(BASE_DIR, 'static')
 )
-app.secret_key = os.getenv("FLASK_SECRET_KEY") or os.getenv("SECRET_KEY", "super_secret_hackathon_key")
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'safeye-hackathon-secret-2026')
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_PATH'] = '/'
 
-# Build allowed origins: local + any tunnel URL from env
+# ── Apply config object ──
+app.config.from_object(config)
+app.secret_key = config.SECRET_KEY
+
+# ── Production security middleware & error handlers ──
+init_security(app)
+init_error_handlers(app)
+
+# ── CORS ──
 _cors_origins = [
     'http://localhost:3000',
     'http://localhost:7860',
@@ -94,7 +107,6 @@ _cors_origins = [
 ]
 if FRONTEND_URL not in _cors_origins:
     _cors_origins.append(FRONTEND_URL)
-# Also allow any loca.lt / ngrok URLs from env
 _extra_origins = os.getenv('EXTRA_CORS_ORIGINS', '')
 if _extra_origins:
     _cors_origins.extend([o.strip() for o in _extra_origins.split(',') if o.strip()])
@@ -102,8 +114,9 @@ if _extra_origins:
 CORS(app, supports_credentials=True, origins=_cors_origins)
 jwt = JWTManager(app)
 
-# Allow OAuth over HTTP for local testing
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+# Allow OAuth over HTTP only in development
+if app.debug:
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # ─── OAuth (Google + GitHub) ───
 if HAS_OAUTH:
@@ -126,22 +139,22 @@ if HAS_OAUTH:
 
 # ─── File Upload Config ───
 PROJECT_ROOT = BASE_DIR
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+UPLOAD_FOLDER = config.UPLOAD_FOLDER
 DATA_FOLDER = os.path.join(BASE_DIR, 'data')
-MODELS_DIR = os.path.join(BASE_DIR, 'models')
+MODELS_DIR = config.MODELS_DIR
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(DATA_FOLDER, exist_ok=True)
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH
 
 # ══════════════════════════════════════════════════════════════
 #  DATABASE
 # ══════════════════════════════════════════════════════════════
 
-DB_PATH = os.path.join(BASE_DIR, 'users.db')
+DB_PATH = config.DATABASE_PATH if config.DATABASE_PATH != ':memory:' else os.path.join(BASE_DIR, 'users.db')
 
 
 def get_db():
@@ -786,7 +799,7 @@ def login():
             return redirect(url_for('login'))
 
         # Update last_login
-        db.execute('UPDATE users SET last_login = ? WHERE id = ?', (datetime.utcnow(), user['id']))
+        db.execute('UPDATE users SET last_login = ? WHERE id = ?', (datetime.now(timezone.utc), user['id']))
         db.commit()
 
         session['user'] = {
@@ -835,7 +848,7 @@ def signup():
 
         db.execute(
             'INSERT INTO users (name, email, password, auth_provider, created_at) VALUES (?, ?, ?, ?, ?)',
-            (username, email, hash_password(password), 'local', datetime.utcnow())
+            (username, email, hash_password(password), 'local', datetime.now(timezone.utc))
         )
         db.commit()
 
@@ -868,12 +881,12 @@ if HAS_OAUTH:
         if not existing:
             db.execute(
                 'INSERT INTO users (name, email, password, profile_picture, auth_provider, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-                (user_info['name'], user_info['email'], '', user_info.get('picture', ''), 'google', datetime.utcnow())
+                (user_info['name'], user_info['email'], '', user_info.get('picture', ''), 'google', datetime.now(timezone.utc))
             )
         else:
             db.execute(
                 'UPDATE users SET last_login = ?, profile_picture = COALESCE(NULLIF(?, ""), profile_picture) WHERE email = ?',
-                (datetime.utcnow(), user_info.get('picture', ''), user_info['email'])
+                (datetime.now(timezone.utc), user_info.get('picture', ''), user_info['email'])
             )
         db.commit()
 
@@ -904,12 +917,12 @@ if HAS_OAUTH:
         if not existing:
             db.execute(
                 'INSERT INTO users (name, email, password, profile_picture, auth_provider, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-                (name, email, '', picture, 'github', datetime.utcnow())
+                (name, email, '', picture, 'github', datetime.now(timezone.utc))
             )
         else:
             db.execute(
                 'UPDATE users SET last_login = ?, profile_picture = COALESCE(NULLIF(?, ""), profile_picture) WHERE email = ?',
-                (datetime.utcnow(), picture, email)
+                (datetime.now(timezone.utc), picture, email)
             )
         db.commit()
 
@@ -947,7 +960,7 @@ def api_login():
     if not user or not check_password_hash(user['password'], password):
         return jsonify({'error': 'Invalid credentials'}), 401
 
-    db.execute('UPDATE users SET last_login = ? WHERE id = ?', (datetime.utcnow(), user['id']))
+    db.execute('UPDATE users SET last_login = ? WHERE id = ?', (datetime.now(timezone.utc), user['id']))
     db.commit()
 
     session['user'] = {
@@ -1065,7 +1078,7 @@ def update_profile():
         return jsonify({'error': 'No valid fields to update'}), 400
 
     updates.append('updated_at = ?')
-    values.append(datetime.utcnow())
+    values.append(datetime.now(timezone.utc))
     values.append(row['id'])
 
     db.execute(
@@ -1112,7 +1125,7 @@ def change_password():
 
     db.execute(
         'UPDATE users SET password = ?, updated_at = ? WHERE id = ?',
-        (hash_password(new_password), datetime.utcnow(), row['id'])
+        (hash_password(new_password), datetime.now(timezone.utc), row['id'])
     )
     db.commit()
 
@@ -1150,7 +1163,7 @@ def upload_profile_picture():
     db = get_db()
     db.execute(
         'UPDATE users SET profile_picture = ?, updated_at = ? WHERE email = ?',
-        (picture_url, datetime.utcnow(), user['email'])
+        (picture_url, datetime.now(timezone.utc), user['email'])
     )
     db.commit()
 
@@ -1304,12 +1317,11 @@ def get_all_users():
 # ══════════════════════════════════════════════════════════════
 
 @app.route('/api/analyze/image', methods=['POST'])
+@rate_limit(config.RATELIMIT_ANALYSIS)
 def analyze_image():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+    file, err = validate_file_upload('file', config.ALLOWED_IMAGE_EXTENSIONS)
+    if err:
+        return err
 
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_{secure_filename(file.filename)}")
     file.save(filepath)
@@ -1319,20 +1331,19 @@ def analyze_image():
         save_detection_history(user_id, 'image', file.filename, result)
         return jsonify(result)
     except Exception as e:
-        logger.error(f"Image analysis error: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error("Image analysis error: %s", e, exc_info=True)
+        return jsonify({'error': 'Image analysis failed. Please try again.'}), 500
     finally:
         if os.path.exists(filepath):
             os.remove(filepath)
 
 
 @app.route('/api/analyze/audio', methods=['POST'])
+@rate_limit(config.RATELIMIT_ANALYSIS)
 def analyze_audio():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+    file, err = validate_file_upload('file', config.ALLOWED_AUDIO_EXTENSIONS)
+    if err:
+        return err
 
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_{secure_filename(file.filename)}")
     file.save(filepath)
@@ -1342,19 +1353,22 @@ def analyze_audio():
         save_detection_history(user_id, 'audio', file.filename, result)
         return jsonify(result)
     except Exception as e:
-        logger.error(f"Audio analysis error: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error("Audio analysis error: %s", e, exc_info=True)
+        return jsonify({'error': 'Audio analysis failed. Please try again.'}), 500
     finally:
         if os.path.exists(filepath):
             os.remove(filepath)
 
 
 @app.route('/api/analyze/text', methods=['POST'])
+@rate_limit(config.RATELIMIT_ANALYSIS)
 def analyze_text():
-    data = request.get_json()
-    text = (data or {}).get('text', '')
-    if not text or len(text.strip()) < 5:
-        return jsonify({'error': 'Text too short'}), 400
+    data, err = validate_json_body('text')
+    if err:
+        return err
+    text = data['text']
+    if len(text.strip()) < 5:
+        return jsonify({'error': 'Text too short (minimum 5 characters)'}), 400
 
     try:
         result = text_detector.analyze_text(text)
@@ -1362,18 +1376,21 @@ def analyze_text():
         save_detection_history(user_id, 'text', f'text_{len(text)}_chars', result)
         return jsonify(result)
     except Exception as e:
-        logger.error(f"Text analysis error: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error("Text analysis error: %s", e, exc_info=True)
+        return jsonify({'error': 'Text analysis failed. Please try again.'}), 500
 
 
 @app.route('/api/analyze/forward', methods=['POST'])
+@rate_limit(config.RATELIMIT_ANALYSIS)
 def analyze_whatsapp_forward():
     """Analyse a WhatsApp forward for misinformation patterns."""
-    data = request.get_json()
-    text = (data or {}).get('text', '')
+    data, err = validate_json_body('text')
+    if err:
+        return err
+    text = data['text']
 
-    if not text or len(text.strip()) < 10:
-        return jsonify({'error': 'Text too short to analyse (min 10 characters)'}), 400
+    if len(text.strip()) < 10:
+        return jsonify({'error': 'Text too short to analyse (minimum 10 characters)'}), 400
 
     forward_result = analyze_forward(text)
     ai_result = text_detector.analyze_text(text)
@@ -1435,12 +1452,13 @@ def analyze_whatsapp_forward():
 
 
 @app.route('/api/analyze/document', methods=['POST'])
+@rate_limit(config.RATELIMIT_ANALYSIS)
 def analyze_document():
     """Analyse an uploaded image for Kenyan document forgery."""
-    if 'file' not in request.files:
-        return jsonify({'error': 'Image file required'}), 400
+    file, err = validate_file_upload('file', config.ALLOWED_DOC_EXTENSIONS)
+    if err:
+        return err
 
-    file = request.files['file']
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_{secure_filename(file.filename)}")
     file.save(filepath)
 
@@ -1531,10 +1549,15 @@ def serve_upload(filename):
 def health():
     return jsonify({
         'status': 'healthy',
-        'timestamp': datetime.utcnow().isoformat() + 'Z',
-        'models_loaded': image_detector.ai_model is not None,
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'models': {
+            'image_loaded': image_detector.ai_model is not None and image_detector.ai_model != 'unavailable',
+            'audio_loaded': audio_detector.model is not None,
+            'text_loaded': text_detector.pipeline is not None,
+        },
         'platform': 'SafEye Kenya',
-        'version': '3.0.0',
+        'version': config.APP_VERSION,
+        'environment': os.getenv('FLASK_ENV', 'production'),
         'modules': {
             'auth': True,
             'profile': True,
@@ -1553,9 +1576,15 @@ def health():
 # ══════════════════════════════════════════════════════════════
 
 if __name__ == '__main__':
+    port = int(os.getenv('PORT', 7860))
+    host = os.getenv('HOST', '0.0.0.0')
+    is_debug = os.getenv('FLASK_ENV', 'production').lower() == 'development'
+
+    logger.info("SafEye v%s starting on %s:%d (debug=%s)", config.APP_VERSION, host, port, is_debug)
     print("=" * 55)
-    print("  SafEye — Unified Backend v3.0")
+    print(f"  SafEye — Unified Backend v{config.APP_VERSION}")
     print("  Auth + Detection API + Profiles + History")
-    print(f"  Running on http://0.0.0.0:7860")
+    print(f"  Environment: {os.getenv('FLASK_ENV', 'production')}")
+    print(f"  Running on http://{host}:{port}")
     print("=" * 55)
-    app.run(host='0.0.0.0', port=7860, debug=True)
+    app.run(host=host, port=port, debug=is_debug)
