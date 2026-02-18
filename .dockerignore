@@ -1,3 +1,55 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.eggs
+dist
+build
+*.egg
+.pytest_cache
+.mypy_cache
+.coverage
+htmlcov
 venv/
-__pycache__/
-.git/
+.venv/
+
+# Node
+node_modules
+.npm
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.bak
+uploads/*
+!uploads/.gitkeep
+data/*.json
+users.db
+run_output.txt
+ngrok
+start-tunnel.sh
+deploy_package
+docs
+
+# Frontend source (built separately)
+src
+public
+index.html
+vite.config.ts
+tailwind.config.js
+postcss.config.js
+tsconfig*.json
+package*.json
