@@ -1,0 +1,59 @@
+# ═══════════════════════════════════════════════════════════
+#  SafEye — Docker Compose (Development & Production)
+# ═══════════════════════════════════════════════════════════
+
+services:
+  # ─── Backend API ───
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: safeye-backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-7860}:7860"
+    env_file:
+      - .env
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - PORT=7860
+      - HOST=0.0.0.0
+    volumes:
+      - uploads_data:/app/uploads
+      - models_data:/app/models
+      - db_data:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+
+  # ─── Frontend (Vite dev server — development only) ───
+  frontend:
+    image: node:20-alpine
+    container_name: safeye-frontend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles:
+      - dev
+
+volumes:
+  uploads_data:
+  models_data:
+  db_data:
+  node_modules:
