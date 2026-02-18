@@ -1,48 +1,81 @@
-# Use Python 3.9 slim (Good choice for compatibility)
-FROM python:3.9-slim
+# ═══════════════════════════════════════════════════════════
+#  SafEye — Production Dockerfile
+#  Multi-stage build · Non-root user · Optimised layers
+# ═══════════════════════════════════════════════════════════
 
-# Install system dependencies
-# Added 'ffmpeg' which is crucial for librosa/audio to work on Linux
-RUN apt-get update && apt-get install -y \
+# ── Stage 1: Dependencies ──
+FROM python:3.11-slim AS builder
+
+# System deps needed for building some Python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libglib2.0-0 \
+    libsndfile1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# Install CPU-only PyTorch first (prevents 5GB+ GPU download)
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+
+# ── Stage 2: Runtime ──
+FROM python:3.11-slim AS runtime
+
+LABEL maintainer="SafEye Team" \
+      version="3.1.0" \
+      description="SafEye — AI-powered deepfake and misinformation detection"
+
+# Runtime system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev \
+    libxrender1 \
     libgomp1 \
     libsndfile1 \
     ffmpeg \
+    tesseract-ocr \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    tini \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-WORKDIR /code
+# Create non-root user
+RUN groupadd -r safeye && useradd -r -g safeye -d /app -s /sbin/nologin safeye
 
-# --- CRITICAL AZURE OPTIMIZATION START ---
-# We install the CPU-only versions of Torch/Tensorflow MANUALLY here.
-# This prevents downloading the 5GB+ GPU versions that crash the build.
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir tensorflow-cpu
-# -----------------------------------------
+WORKDIR /app
 
-COPY requirements.txt /code/requirements.txt
+# Copy installed Python packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Install the rest of the dependencies
-# Note: Ensure 'torch' and 'tensorflow' are REMOVED from requirements.txt
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /code/requirements.txt
+# Copy application code
+COPY --chown=safeye:safeye . .
 
-COPY . .
+# Create required directories with proper permissions
+RUN mkdir -p /app/uploads /app/data /app/models \
+    && chown -R safeye:safeye /app
 
-# Create uploads folder with permissions
-RUN mkdir -p /code/uploads && chmod 777 /code/uploads
+# Copy gunicorn config
+COPY --chown=safeye:safeye gunicorn.conf.py /app/gunicorn.conf.py
 
-# Expose Port 8000 (Standard for Azure)
-EXPOSE 8000
+# Switch to non-root user
+USER safeye
 
-# Health Check (Adjusted for Port 8000)
-HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+# Expose port
+EXPOSE 7860
 
-# Start Command
-# Changed Port to 8000
-# Added --timeout 600 (10 minutes) to allow AI models to load without crashing
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--threads", "2", "--timeout", "600", "backend.simple_app:app"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:7860/api/health || exit 1
+
+# Use tini as init system for proper signal handling
+ENTRYPOINT ["tini", "--"]
+
+# Start with gunicorn using our config
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]
