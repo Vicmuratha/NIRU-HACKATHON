@@ -2,15 +2,54 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- ── Favicon ── -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <title>SafEye - AI-Powered Deepfake Detection Platform</title>
+
+    <!-- ── SEO ── -->
+    <title>SafEye — AI-Powered Deepfake & Misinformation Detection for Kenya</title>
+    <meta name="description" content="SafEye protects Kenya from digital deception. Detect deepfake images, manipulated audio, fake news screenshots, and WhatsApp misinformation with AI-powered forensic analysis." />
+    <meta name="keywords" content="deepfake detection, Kenya, AI, misinformation, election integrity, WhatsApp, fact check, SafEye" />
+    <meta name="author" content="SafEye Team" />
+
+    <!-- ── Open Graph ── -->
+    <meta property="og:title" content="SafEye — AI-Powered Deepfake Detection" />
+    <meta property="og:description" content="Protect Kenya from digital deception. Detect deepfakes, manipulated media, and misinformation." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_KE" />
+
+    <!-- ── Twitter Card ── -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SafEye — AI-Powered Deepfake Detection" />
+    <meta name="twitter:description" content="Protect Kenya from digital deception with AI-powered forensic analysis." />
+
+    <!-- ── Security ── -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!-- ── Performance ── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" as="style" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- ── Theme colour for mobile browsers ── -->
+    <meta name="theme-color" content="#050816" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
     <script type="module" src="/src/main.tsx"></script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <div style="padding:2rem;text-align:center;font-family:system-ui;background:#050816;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;">
+        <div>
+          <h1 style="font-size:1.5rem;margin-bottom:1rem;">SafEye requires JavaScript</h1>
+          <p style="color:#94a3b8;">Please enable JavaScript in your browser settings to use this application.</p>
+        </div>
+      </div>
+    </noscript>
   </body>
 </html>
