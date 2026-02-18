@@ -3,7 +3,7 @@
 //  Catches unhandled React errors and shows a recovery UI.
 // ═══════════════════════════════════════════════════════════
 
-import React, { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { ShieldAlert } from 'lucide-react';
 
 interface Props {
