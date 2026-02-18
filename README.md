@@ -135,8 +135,15 @@ brew install ffmpeg
 ```
 NIRU-HACKATHON/
 ├── app.py                     # Unified backend (Auth + Detection + Profiles + History)
-├── start-tunnel.sh            # 🌍 Public tunnel script (access from phone, any network)
+├── gunicorn.conf.py           # Production Gunicorn configuration
+├── docker-compose.yml         # Docker Compose for development & production
+├── Dockerfile                 # Multi-stage production Docker build
+├── start-tunnel.sh            # Public tunnel script (phone access)
 ├── backend/
+│   ├── config.py              # Centralised environment-aware configuration
+│   ├── middleware.py           # Security headers, rate limiting, request logging
+│   ├── errors.py              # Structured error handling & custom exceptions
+│   ├── logging_config.py      # JSON/text structured logging
 │   ├── app.py                 # Legacy detection API (port 7860)
 │   ├── simple_app.py          # Lightweight detection API (uses logic.py)
 │   ├── election_shield.py     # 🇰🇪 Election context analysis & incitement detection
@@ -147,38 +154,40 @@ NIRU-HACKATHON/
 ├── logic.py                   # Shared HuggingFace pipeline wrappers (image/audio/text)
 ├── models/
 │   ├── download_models.py     # Azure Blob / URL model downloader script
-│   ├── audio_model/           # Wav2Vec2 config + weights (~361 MB)
+│   ├── audio_model/           # WavLM config + weights (~361 MB)
 │   ├── image_model/           # EfficientNet-B4 checkpoint (~47 MB)
 │   ├── bestdeepfake/          # Alternate .pth checkpoint
 │   └── text_model/            # RoBERTa fake-news weights + tokenizer (~704 MB)
 ├── src/
 │   ├── App.tsx                # Main React component (hero, analysis panel, profile, history)
-│   ├── main.tsx               # Vite entry point
-│   └── styles.css             # Tailwind + custom animations
+│   ├── main.tsx               # Vite entry point (with ErrorBoundary)
+│   ├── styles.css             # Tailwind + custom animations
+│   ├── components/
+│   │   └── ErrorBoundary.tsx  # React error boundary with recovery UI
+│   ├── lib/
+│   │   └── api.ts             # Typed API client with timeout & error handling
+│   └── types/
+│       └── index.ts           # Shared TypeScript interfaces
 ├── static/css/                # CSS for auth templates
 ├── templates/                 # login.html, signup.html (Jinja2)
 ├── tests/
-│   ├── test_image.py
-│   ├── test_audio.py
-│   └── test_text.py
+│   ├── conftest.py            # Shared fixtures & test configuration
+│   ├── test_api.py            # Integration tests for Flask API routes
+│   ├── test_image.py          # Unit tests for image detector
+│   ├── test_audio.py          # Unit tests for audio detector
+│   └── test_text.py           # Unit tests for text detector
 ├── data/
 │   └── detection_log.json     # JSONL detection history
 ├── uploads/                   # Temporary file uploads (gitignored)
-├── deploy_package/            # Production Docker build (Gunicorn on port 8000)
-│   ├── Dockerfile
-│   ├── app.py
-│   └── requirements.txt
-├── docs/
-│   ├── README.md
-│   └── ROADMAP.md
-├── Dockerfile                 # Dev/CI Docker build (Gunicorn on port 8000)
-├── requirements.txt           # Python dependencies
+├── .env.example               # Environment variable template
+├── .dockerignore              # Docker build exclusions
+├── requirements.txt           # Python dependencies (pinned ranges)
 ├── package.json               # Node.js dependencies
 ├── vite.config.ts             # Vite config (host: 0.0.0.0, proxy /api → :7860)
 ├── tailwind.config.js
 ├── postcss.config.js
 ├── tsconfig.json
-└── index.html                 # Vite HTML entry
+└── index.html                 # Vite HTML entry (SEO + noscript)
 ```
 
 ---
@@ -503,43 +512,81 @@ All auth and profile routes are served from the **unified backend** on port 7860
 
 ## Docker & Deployment
 
-### Root Dockerfile
+### Quick Start with Docker Compose
 
-Builds a CPU-optimised container running `backend.simple_app:app` via Gunicorn on port 8000:
+```bash
+# Production (backend only)
+cp .env.example .env    # Edit .env with your secrets
+docker compose up -d
+
+# Development (backend + frontend)
+docker compose --profile dev up -d
+```
+
+### Production Dockerfile
+
+Multi-stage build with non-root user, tini init, and Gunicorn:
 
 ```bash
 docker build -t safeye .
-docker run -p 8000:8000 safeye
+docker run -p 7860:7860 --env-file .env safeye
 ```
 
 Key details:
-- Python 3.9 slim base with ffmpeg, libsndfile
-- CPU-only `torch` and `tensorflow-cpu` pre-installed (avoids 5 GB+ GPU wheels)
-- 600 s Gunicorn timeout for model loading
-- 50 MB max upload size
+- **Python 3.11 slim** multi-stage build (small final image)
+- CPU-only PyTorch pre-installed (avoids 5 GB+ GPU wheels)
+- Non-root `safeye` user for security
+- `tini` init system for proper signal handling
+- Gunicorn with production config (`gunicorn.conf.py`)
+- Health check on `/api/health`
+- Tesseract OCR installed for document analysis
 
-### deploy_package/
+### Production Gunicorn
 
-A self-contained deployment variant with its own `Dockerfile`, `app.py`, and `requirements.txt` for Azure App Service or similar PaaS. Runs on port 8000 with Gunicorn.
+```bash
+# Run directly with production config
+gunicorn -c gunicorn.conf.py app:app
+```
 
-Set `DOWNLOAD_MODELS_ON_STARTUP=true` to auto-download models when the container starts.
+Features: worker recycling, request timeouts, preloaded app, structured logging.
+
+### Environment-based Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| `FLASK_ENV` | `production` | `development`, `production`, or `testing` |
+| `FLASK_SECRET_KEY` | auto-generated | **Set in production!** Random 64-char string |
+| `JWT_SECRET_KEY` | auto-generated | **Set in production!** Random 64-char string |
+| `PORT` | `7860` | Server port |
+| `WORKERS` | `2` | Gunicorn worker count |
+| `RATELIMIT_ENABLED` | `true` | Enable API rate limiting |
+| `RATELIMIT_ANALYSIS` | `30/minute` | Rate limit for analysis endpoints |
+| `LOG_FORMAT` | `json` (prod) | `json` for production, `text` for development |
 
 ---
 
 ## Testing
 
 ```bash
-# Run all tests
-python -m unittest discover tests/
+# Run all tests with pytest
+pytest tests/ -v
 
-# Run a specific test
-python -m unittest tests/test_image.py
+# Run integration tests only
+pytest tests/test_api.py -v
 
-# Verbose output
-python -m unittest -v tests/
+# Run with coverage
+pytest tests/ --cov=backend --cov=app -v
+
+# Run specific test class
+pytest tests/test_api.py::TestHealthEndpoint -v
 ```
 
-Test files: `tests/test_image.py`, `tests/test_audio.py`, `tests/test_text.py`.
+Test files:
+- `tests/conftest.py` — Shared fixtures (Flask client, test files, detectors)
+- `tests/test_api.py` — Integration tests (API routes, validation, security headers)
+- `tests/test_image.py` — Image detector unit tests
+- `tests/test_audio.py` — Audio detector unit tests
+- `tests/test_text.py` — Text detector unit tests
 
 ---
 
