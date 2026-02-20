@@ -6,8 +6,9 @@ import warnings
 import threading
 import uuid
 import json
+import sqlite3
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 import numpy as np
 
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, session, g
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from werkzeug.utils import secure_filename
@@ -112,6 +113,98 @@ app.config['SECURITY_HEADERS'] = {
 # ── Attach security middleware (headers, rate limiting, request logging) ──
 init_security(app)
 
+# ══════════════════════════════════════════════════════════════
+#  DATABASE
+# ══════════════════════════════════════════════════════════════
+
+DB_PATH = os.path.join(BASE_DIR, 'safeye.db')
+
+
+def get_db():
+    """Get a database connection for the current request."""
+    if 'db' not in g:
+        g.db = sqlite3.connect(DB_PATH)
+        g.db.row_factory = sqlite3.Row
+    return g.db
+
+
+@app.teardown_appcontext
+def close_db(exception):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
+
+
+def init_db():
+    """Create all tables if they don't exist."""
+    db = sqlite3.connect(DB_PATH)
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_login TIMESTAMP DEFAULT NULL
+        )
+    ''')
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS detection_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            detection_type TEXT NOT NULL,
+            filename TEXT,
+            risk_score REAL,
+            verdict TEXT,
+            confidence REAL,
+            findings TEXT,
+            kenya_warnings TEXT,
+            details TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+    db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_history_user_id
+        ON detection_history(user_id)
+    ''')
+    db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_history_created_at
+        ON detection_history(created_at)
+    ''')
+    db.commit()
+    db.close()
+    logger.info(f"Database initialised at {DB_PATH}")
+
+
+init_db()
+
+
+def save_detection(detection_type, filename, result, user_id=None):
+    """Persist a detection result to the database."""
+    try:
+        db = get_db()
+        db.execute(
+            '''INSERT INTO detection_history
+               (user_id, detection_type, filename, risk_score, verdict, confidence, findings, kenya_warnings, details)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (
+                user_id,
+                detection_type,
+                filename,
+                result.get('risk_score'),
+                result.get('verdict'),
+                result.get('confidence'),
+                json.dumps(result.get('findings', [])),
+                json.dumps(result.get('kenya_warnings', [])),
+                json.dumps(result.get('details', {})),
+            )
+        )
+        db.commit()
+    except Exception as e:
+        logger.error(f"Failed to save detection: {e}")
+
+
 # ============== AUTHENTICATION ==============
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -120,16 +213,22 @@ def api_login():
         return jsonify(access_token=create_access_token(identity='admin')), 200
     return jsonify({'error': 'Invalid credentials'}), 401
 
-# ============== WEB AUTH PAGES (HACKATHON DEMO) ==============
-users_db: Dict[str, Dict[str, str]] = {}
+# ============== WEB AUTH PAGES (PERSISTENT - SQLite) ==============
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        if email in users_db and users_db[email]['password'] == password:
-            return f"Welcome back, {users_db[email]['name']}! (Redirecting to Dashboard...)"
+        db = get_db()
+        user = db.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+        if user and user['password'] == password:
+            session['user_id'] = user['id']
+            session['user_name'] = user['name']
+            db.execute('UPDATE users SET last_login = ? WHERE id = ?',
+                       (datetime.now(timezone.utc).isoformat(), user['id']))
+            db.commit()
+            return f"Welcome back, {user['name']}! (Redirecting to Dashboard...)"
         else:
             flash("Invalid email or password!")
             return redirect(url_for('login_page'))
@@ -144,10 +243,14 @@ def signup_page():
         if password != request.form['confirm_password']:
             flash("Passwords do not match!")
             return redirect(url_for('signup_page'))
-        if email in users_db:
+        db = get_db()
+        existing = db.execute('SELECT id FROM users WHERE email = ?', (email,)).fetchone()
+        if existing:
             flash("Email already exists!")
             return redirect(url_for('signup_page'))
-        users_db[email] = {'name': name, 'password': password}
+        db.execute('INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+                   (name, email, password))
+        db.commit()
         flash("Account created! Please log in.")
         return redirect(url_for('login_page'))
     return render_template('signup.html')
@@ -497,6 +600,7 @@ def analyze_image():
     file.save(filepath)
     try:
         result = image_detector.analyze_image(filepath)
+        save_detection('image', file.filename, result, user_id=session.get('user_id'))
         return jsonify(result)
     finally:
         if os.path.exists(filepath): os.remove(filepath)
@@ -511,6 +615,7 @@ def analyze_audio():
     file.save(filepath)
     try:
         result = audio_detector.analyze_audio(filepath)
+        save_detection('audio', file.filename, result, user_id=session.get('user_id'))
         return jsonify(result)
     finally:
         if os.path.exists(filepath): os.remove(filepath)
@@ -522,6 +627,7 @@ def analyze_text():
     if err:
         return err
     result = text_detector.analyze_text(data['text'])
+    save_detection('text', None, result, user_id=session.get('user_id'))
     return jsonify(result)
 
 # ============== WHATSAPP FORWARD CHECKER ==============
@@ -685,6 +791,66 @@ def analyze_document():
     finally:
         if os.path.exists(filepath):
             os.remove(filepath)
+
+# ============== DETECTION HISTORY API ==============
+@app.route('/api/history', methods=['GET'])
+def detection_history():
+    """Return recent detection history. Optionally filter by user session."""
+    limit = min(int(request.args.get('limit', 50)), 200)
+    user_id = session.get('user_id')
+
+    db = get_db()
+    if user_id:
+        rows = db.execute(
+            'SELECT * FROM detection_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?',
+            (user_id, limit)
+        ).fetchall()
+    else:
+        rows = db.execute(
+            'SELECT * FROM detection_history ORDER BY created_at DESC LIMIT ?',
+            (limit,)
+        ).fetchall()
+
+    history = []
+    for row in rows:
+        history.append({
+            'id': row['id'],
+            'detection_type': row['detection_type'],
+            'filename': row['filename'],
+            'risk_score': row['risk_score'],
+            'verdict': row['verdict'],
+            'confidence': row['confidence'],
+            'findings': json.loads(row['findings']) if row['findings'] else [],
+            'kenya_warnings': json.loads(row['kenya_warnings']) if row['kenya_warnings'] else [],
+            'details': json.loads(row['details']) if row['details'] else {},
+            'created_at': row['created_at'],
+        })
+
+    return jsonify({'history': history, 'count': len(history)})
+
+
+@app.route('/api/history/stats', methods=['GET'])
+def detection_stats():
+    """Return aggregate detection statistics."""
+    db = get_db()
+    total = db.execute('SELECT COUNT(*) as cnt FROM detection_history').fetchone()['cnt']
+    by_type = db.execute(
+        'SELECT detection_type, COUNT(*) as cnt, AVG(risk_score) as avg_risk '
+        'FROM detection_history GROUP BY detection_type'
+    ).fetchall()
+
+    return jsonify({
+        'total_detections': total,
+        'by_type': [
+            {
+                'type': row['detection_type'],
+                'count': row['cnt'],
+                'avg_risk_score': round(row['avg_risk'], 1) if row['avg_risk'] else 0,
+            }
+            for row in by_type
+        ],
+    })
+
 
 # ============== HEALTH CHECK ==============
 @app.route('/api/health', methods=['GET'])
