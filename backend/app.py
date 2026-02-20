@@ -371,7 +371,8 @@ class UltraImageDetector:
         # Noise (3%)
         total_risk += noise_result['risk'] * 0.03; confidence_sum += 0.03
 
-        final_risk = min(max(total_risk, 0), 100)
+        final_risk = min(max(total_risk, 0.0), 100.0)
+        confidence_sum = min(max(confidence_sum, 0.0), 1.0)
         verdict = "LIKELY_DEEPFAKE" if final_risk > 65 else "AUTHENTIC" if final_risk < 40 else "REVIEW_REQUIRED"
         
         kenya_warnings = []
@@ -380,7 +381,7 @@ class UltraImageDetector:
         if final_risk > 50:
             kenya_warnings.append({'type': 'MEDIA_MANIPULATION', 'severity': 'HIGH', 'warning': 'This image shows signs of manipulation. In Kenya, doctored news screenshots and fake campaign posters are common misinformation vectors.', 'action': 'Verify at the original news outlet website. Check PesaCheck.org for fact-checks.'})
 
-        return {'risk_score': round(final_risk, 1), 'verdict': verdict, 'confidence': round(max(0.6, confidence_sum), 2), 'findings': findings, 'kenya_warnings': kenya_warnings, 'details': {'ai_confidence': round(ai_result['fake_confidence']*100, 1) if ai_result['available'] else 0, 'ela_score': round(ela_result.get('ela_score', 0), 1)}}
+        return {'risk_score': round(final_risk, 1), 'verdict': verdict, 'confidence': round(min(max(0.6, confidence_sum), 1.0), 2), 'findings': findings, 'kenya_warnings': kenya_warnings, 'details': {'ai_confidence': round(min(ai_result['fake_confidence'] * 100, 100.0), 1) if ai_result['available'] else 0, 'ela_score': round(ela_result.get('ela_score', 0), 1)}}
 
 # ============== ULTRA-ACCURATE AUDIO DETECTOR ==============
 class UltraAudioDetector:
@@ -408,7 +409,8 @@ class UltraAudioDetector:
             
             if not (0.02 < silence_ratio < 0.15): risk += 30; findings.append("⚠️ Abnormal breathing pauses")
             
-            risk = min(risk, 98)
+            risk = min(max(risk, 0), 98)
+            confidence = round(min(max(0.5, 1.0 - (abs(mfcc_var - 500) / 1000)), 1.0), 2)
             kenya_warnings = []
             
             # Kenya-specific audio context (honest about the real threat)
@@ -431,9 +433,9 @@ class UltraAudioDetector:
                 })
 
             return {
-                'risk_score': risk,
+                'risk_score': min(max(risk, 0), 100),
                 'is_authentic': risk < 50,
-                'confidence': 0.88,
+                'confidence': confidence,
                 'findings': findings,
                 'kenya_warnings': kenya_warnings,
                 'kenya_audio_context': kenya_audio_ctx,
@@ -469,7 +471,11 @@ class UltraTextDetector:
         clickbait_count = sum(1 for kw in ['exposed', 'shocking', 'secret'] if kw in txt_lower)
         if clickbait_count > 0: risk = min(risk + 20, 96)
         
-        return {'risk_score': risk, 'is_authentic': risk < 50, 'confidence': confidence, 'findings': [f"AI Result: {ai_result['label']}"]}
+        # Clamp all output values to valid ranges (fixes G12)
+        risk = min(max(risk, 0), 100)
+        confidence = min(max(confidence, 0.0), 1.0)
+        
+        return {'risk_score': risk, 'is_authentic': risk < 50, 'confidence': round(confidence, 2), 'findings': [f"AI Result: {ai_result['label']}"]}
 
 # ============== INITIALIZATION ==============
 image_detector = UltraImageDetector()
