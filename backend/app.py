@@ -46,6 +46,7 @@ from backend.whatsapp_checker import analyze_forward
 from backend.kenya_documents import analyze_kenya_document, detect_document_type
 from backend.audio_context import get_audio_kenya_context
 from backend.fake_screenshot import detect_news_screenshot, run_ela as screenshot_ela
+from backend.middleware import init_security, rate_limit, validate_file_upload, validate_json_body
 
 warnings.filterwarnings('ignore')
 
@@ -98,7 +99,18 @@ def download_models_on_startup():
 download_models_on_startup()
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload
+app.config['RATELIMIT_ENABLED'] = True
+app.config['RATELIMIT_DEFAULT'] = '60/minute'
+app.config['SECURITY_HEADERS'] = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+}
+
+# ── Attach security middleware (headers, rate limiting, request logging) ──
+init_security(app)
 
 # ============== AUTHENTICATION ==============
 @app.route('/api/login', methods=['POST'])
@@ -464,11 +476,17 @@ image_detector = UltraImageDetector()
 audio_detector = UltraAudioDetector()
 text_detector = UltraTextDetector()
 
-#API ENDPOINTS 
+# ============== ALLOWED FILE TYPES ==============
+ALLOWED_IMAGE_TYPES = {'png', 'jpg', 'jpeg', 'webp'}
+ALLOWED_AUDIO_TYPES = {'wav', 'mp3', 'ogg', 'flac'}
+
+# ============== API ENDPOINTS ==============
 @app.route('/api/analyze/image', methods=['POST'])
+@rate_limit('30/minute')
 def analyze_image():
-    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
-    file = request.files['file']
+    file, err = validate_file_upload('file', allowed_extensions=ALLOWED_IMAGE_TYPES)
+    if err:
+        return err
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_{secure_filename(file.filename)}")
     file.save(filepath)
     try:
@@ -478,9 +496,11 @@ def analyze_image():
         if os.path.exists(filepath): os.remove(filepath)
 
 @app.route('/api/analyze/audio', methods=['POST'])
+@rate_limit('30/minute')
 def analyze_audio():
-    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
-    file = request.files['file']
+    file, err = validate_file_upload('file', allowed_extensions=ALLOWED_AUDIO_TYPES)
+    if err:
+        return err
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_{secure_filename(file.filename)}")
     file.save(filepath)
     try:
@@ -490,9 +510,12 @@ def analyze_audio():
         if os.path.exists(filepath): os.remove(filepath)
 
 @app.route('/api/analyze/text', methods=['POST'])
+@rate_limit('30/minute')
 def analyze_text():
-    data = request.get_json()
-    result = text_detector.analyze_text(data.get('text', ''))
+    data, err = validate_json_body('text')
+    if err:
+        return err
+    result = text_detector.analyze_text(data['text'])
     return jsonify(result)
 
 # ============== WHATSAPP FORWARD CHECKER ==============
