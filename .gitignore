@@ -358,3 +358,6 @@ models/*/*.pkl
 models/*/*.onnx
 models/*/*.pb
 app.py.bak
+
+# SQLite databases
+*.db
