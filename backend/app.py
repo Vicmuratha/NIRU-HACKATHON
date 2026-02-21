@@ -884,6 +884,99 @@ def detection_stats():
     })
 
 
+# ============== API v1 VERSIONED ROUTES ==============
+# Mirror analysis endpoints under /api/v1/ for forward compatibility.
+# Legacy /api/analyze/* routes remain for backward compatibility.
+
+@app.route('/api/v1/analyze/image', methods=['POST'])
+@rate_limit('30/minute')
+def analyze_image_v1():
+    return analyze_image()
+
+
+@app.route('/api/v1/analyze/audio', methods=['POST'])
+@rate_limit('30/minute')
+def analyze_audio_v1():
+    return analyze_audio()
+
+
+@app.route('/api/v1/analyze/text', methods=['POST'])
+@rate_limit('30/minute')
+def analyze_text_v1():
+    return analyze_text()
+
+
+@app.route('/api/v1/health', methods=['GET'])
+def health_v1():
+    return health()
+
+
+@app.route('/api/v1/history', methods=['GET'])
+def history_v1():
+    return detection_history()
+
+
+@app.route('/api/v1/history/stats', methods=['GET'])
+def stats_v1():
+    return detection_stats()
+
+
+@app.route('/api/v1/docs', methods=['GET'])
+def api_docs():
+    """Return OpenAPI-style documentation for the SafEye API."""
+    return jsonify({
+        'openapi': '3.0.0',
+        'info': {
+            'title': 'SafEye API',
+            'version': '1.0.0',
+            'description': 'AI-powered deepfake, audio manipulation, and misinformation detection API tailored for the Kenyan information ecosystem.',
+        },
+        'basePath': '/api/v1',
+        'endpoints': {
+            'POST /api/v1/analyze/image': {
+                'description': 'Analyse an image for deepfake indicators',
+                'content_type': 'multipart/form-data',
+                'parameters': {'file': 'Image file (png, jpg, jpeg, webp)'},
+                'response': {'risk_score': 'float 0-100', 'verdict': 'AUTHENTIC | REVIEW_REQUIRED | LIKELY_DEEPFAKE', 'confidence': 'float 0-1', 'findings': 'list[str]', 'kenya_warnings': 'list[object]'},
+            },
+            'POST /api/v1/analyze/audio': {
+                'description': 'Analyse an audio file for manipulation indicators',
+                'content_type': 'multipart/form-data',
+                'parameters': {'file': 'Audio file (wav, mp3, ogg, flac)'},
+                'response': {'risk_score': 'float 0-100', 'is_authentic': 'bool', 'confidence': 'float 0-1', 'findings': 'list[str]', 'kenya_warnings': 'list[object]'},
+            },
+            'POST /api/v1/analyze/text': {
+                'description': 'Analyse text for AI-generated or fake news indicators',
+                'content_type': 'application/json',
+                'parameters': {'text': 'string (required)'},
+                'response': {'risk_score': 'int 0-100', 'is_authentic': 'bool', 'confidence': 'float 0-1', 'findings': 'list[str]'},
+            },
+            'POST /api/v1/analyze/forward': {
+                'description': 'Analyse a WhatsApp forward for misinformation patterns',
+                'content_type': 'application/json',
+                'parameters': {'text': 'string (min 10 chars)'},
+                'response': {'risk_score': 'float 0-100', 'verdict': 'APPEARS_GENUINE | SUSPICIOUS | LIKELY_MISINFORMATION', 'forward_analysis': 'object'},
+            },
+            'POST /api/v1/analyze/document': {
+                'description': 'Analyse an image for Kenyan document forgery',
+                'content_type': 'multipart/form-data',
+                'parameters': {'file': 'Image file'},
+                'response': {'risk_score': 'float 0-100', 'verdict': 'string', 'document_analysis': 'object', 'screenshot_analysis': 'object'},
+            },
+            'GET /api/v1/health': {
+                'description': 'Health check — returns server status and loaded modules',
+            },
+            'GET /api/v1/history': {
+                'description': 'Retrieve detection history (optionally filtered by authenticated user)',
+                'parameters': {'limit': 'int (default 50, max 200)'},
+            },
+            'GET /api/v1/history/stats': {
+                'description': 'Aggregate detection statistics by type',
+            },
+        },
+    })
+
+
 # ============== HEALTH CHECK ==============
 @app.route('/api/health', methods=['GET'])
 def health():
