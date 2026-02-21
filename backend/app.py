@@ -496,6 +496,30 @@ class UltraAudioDetector:
         import librosa
         try:
             y, sr = librosa.load(audio_path, sr=self.sample_rate)
+        except Exception as e:
+            logger.error(f"Failed to load audio file: {e}")
+            return {
+                'risk_score': 0,
+                'is_authentic': True,
+                'confidence': 0.0,
+                'findings': ['❌ Could not read audio file — it may be corrupted or in an unsupported format.'],
+                'kenya_warnings': [],
+                'error': f'Audio load failed: {str(e)}'
+            }
+
+        # Reject extremely short audio (< 0.5 seconds)
+        duration = len(y) / sr
+        if duration < 0.5:
+            return {
+                'risk_score': 0,
+                'is_authentic': True,
+                'confidence': 0.0,
+                'findings': [f'❌ Audio too short ({duration:.1f}s) — need at least 0.5 seconds for analysis.'],
+                'kenya_warnings': [],
+                'error': 'Audio duration below minimum threshold (0.5s)'
+            }
+
+        try:
             if len(y) < 2048: y = np.pad(y, (0, 2048 - len(y)))
             
             # Simple Features
@@ -545,7 +569,15 @@ class UltraAudioDetector:
                 'detection_note': kenya_audio_ctx.get('detection_note', '')
             }
         except Exception as e:
-            return {'risk_score': 0, 'is_authentic': True, 'error': str(e)}
+            logger.error(f"Audio analysis error: {e}")
+            return {
+                'risk_score': 0,
+                'is_authentic': True,
+                'confidence': 0.0,
+                'findings': [f'❌ Analysis failed: {str(e)}'],
+                'kenya_warnings': [],
+                'error': str(e)
+            }
 
 # ============== ULTRA-ACCURATE TEXT DETECTOR ==============
 class UltraTextDetector:
