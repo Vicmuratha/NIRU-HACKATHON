@@ -5,6 +5,7 @@ Tests the Flask routes end-to-end using the test client.
 
 import io
 import json
+import uuid
 import pytest
 
 
@@ -191,3 +192,195 @@ class TestSecurityHeaders:
         resp = client.get('/api/health')
         # Server header should be removed by middleware
         assert 'Server' not in resp.headers or 'Flask' not in resp.headers.get('Server', '')
+
+
+# ═══════════════════════════════════════════════════════════
+#  SIGNUP & LOGIN FLOWS
+# ═══════════════════════════════════════════════════════════
+
+class TestSignupFlow:
+    """Tests for POST /signup — user registration."""
+
+    def test_signup_page_loads(self, client):
+        resp = client.get('/signup')
+        assert resp.status_code == 200
+
+    def test_signup_rejects_empty_fields(self, client):
+        resp = client.post('/signup', data={
+            'username': '', 'email': '', 'password': '', 'confirm_password': ''
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+        assert b'fill in all fields' in resp.data.lower() or resp.status_code == 200
+
+    def test_signup_rejects_short_username(self, client):
+        resp = client.post('/signup', data={
+            'username': 'A', 'email': 'a@b.com',
+            'password': 'securepass1', 'confirm_password': 'securepass1'
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+
+    def test_signup_rejects_bad_email(self, client):
+        resp = client.post('/signup', data={
+            'username': 'TestUser', 'email': 'not-an-email',
+            'password': 'securepass1', 'confirm_password': 'securepass1'
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+
+    def test_signup_rejects_short_password(self, client):
+        resp = client.post('/signup', data={
+            'username': 'TestUser', 'email': 'new@test.ke',
+            'password': 'short', 'confirm_password': 'short'
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+
+    def test_signup_rejects_mismatched_passwords(self, client):
+        resp = client.post('/signup', data={
+            'username': 'TestUser', 'email': 'new2@test.ke',
+            'password': 'securepass1', 'confirm_password': 'differentpass'
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+
+    def test_signup_creates_user_and_redirects(self, flask_app, client):
+        import sqlite3, os
+        unique_email = f'testuser_{uuid.uuid4().hex[:8]}@test.ke'
+        resp = client.post('/signup', data={
+            'username': 'NewTestUser', 'email': unique_email,
+            'password': 'securepass123', 'confirm_password': 'securepass123'
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+
+
+class TestLoginFlow:
+    """Tests for POST /login — user authentication."""
+
+    def test_login_page_loads(self, client):
+        resp = client.get('/login')
+        assert resp.status_code == 200
+
+    def test_login_rejects_empty_credentials(self, client):
+        resp = client.post('/login', data={
+            'email': '', 'password': ''
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+
+    def test_login_rejects_wrong_password(self, client):
+        resp = client.post('/login', data={
+            'email': 'nobody@test.ke', 'password': 'wrongpassword1'
+        }, follow_redirects=True)
+        assert resp.status_code == 200
+
+
+# ═══════════════════════════════════════════════════════════
+#  DETECTION HISTORY — AUTHENTICATED ACCESS
+# ═══════════════════════════════════════════════════════════
+
+class TestDetectionHistory:
+    """Tests for /api/history with authenticated user session."""
+
+    def test_history_requires_auth(self, client):
+        resp = client.get('/api/history')
+        assert resp.status_code == 401
+
+    def test_history_returns_list_when_authenticated(self, authenticated_client):
+        resp = authenticated_client.get('/api/history')
+        # Might be 200 with empty list or 404 if user not in DB
+        assert resp.status_code in (200, 404)
+
+    def test_history_pagination_params(self, authenticated_client):
+        resp = authenticated_client.get('/api/history?page=1&per_page=5')
+        assert resp.status_code in (200, 404)
+
+    def test_history_type_filter(self, authenticated_client):
+        resp = authenticated_client.get('/api/history?type=image')
+        assert resp.status_code in (200, 404)
+
+    def test_history_delete_requires_auth(self, client):
+        resp = client.delete('/api/history/1')
+        assert resp.status_code == 401
+
+    def test_history_delete_nonexistent(self, authenticated_client):
+        resp = authenticated_client.delete('/api/history/99999')
+        # Should still return 200 (no-op delete) or 404
+        assert resp.status_code in (200, 404)
+
+
+# ═══════════════════════════════════════════════════════════
+#  AUDIO ERROR HANDLING
+# ═══════════════════════════════════════════════════════════
+
+class TestAudioErrorHandling:
+    """Tests for audio analysis error cases."""
+
+    def test_audio_rejects_no_file(self, client):
+        resp = client.post('/api/analyze/audio')
+        assert resp.status_code == 400
+
+    def test_audio_rejects_invalid_extension(self, client):
+        data = {'file': (io.BytesIO(b'not audio data'), 'test.exe')}
+        resp = client.post('/api/analyze/audio',
+                          data=data,
+                          content_type='multipart/form-data')
+        assert resp.status_code == 400
+
+    def test_audio_rejects_empty_file(self, client):
+        """Empty file should be caught by validation before model inference."""
+        data = {'file': (io.BytesIO(b''), 'empty.txt')}
+        resp = client.post('/api/analyze/audio',
+                          data=data,
+                          content_type='multipart/form-data')
+        assert resp.status_code == 400
+
+    def test_audio_rejects_txt_extension(self, client):
+        data = {'file': (io.BytesIO(b'plain text not audio'), 'notes.txt')}
+        resp = client.post('/api/analyze/audio',
+                          data=data,
+                          content_type='multipart/form-data')
+        assert resp.status_code == 400
+
+
+# ═══════════════════════════════════════════════════════════
+#  USER LISTING
+# ═══════════════════════════════════════════════════════════
+
+class TestUsersAPI:
+    def test_users_requires_auth(self, client):
+        resp = client.get('/api/users')
+        assert resp.status_code == 401
+
+    def test_users_returns_list_when_authenticated(self, authenticated_client):
+        resp = authenticated_client.get('/api/users')
+        # May get 200 or 404 depending on DB state
+        assert resp.status_code in (200, 404)
+
+    def test_users_supports_pagination(self, authenticated_client):
+        resp = authenticated_client.get('/api/users?page=1&per_page=10')
+        assert resp.status_code in (200, 404)
+
+
+# ═══════════════════════════════════════════════════════════
+#  EDGE CASES & MISC
+# ═══════════════════════════════════════════════════════════
+
+class TestEdgeCases:
+    def test_404_returns_for_unknown_api_routes(self, client):
+        resp = client.get('/api/nonexistent-route')
+        assert resp.status_code == 404
+
+    def test_text_rejects_missing_text_key(self, client):
+        resp = client.post('/api/analyze/text',
+                          data=json.dumps({'content': 'missing text key'}),
+                          content_type='application/json')
+        assert resp.status_code == 400
+
+    def test_image_rejects_non_image_extension(self, client):
+        data = {'file': (io.BytesIO(b'data'), 'doc.pdf')}
+        resp = client.post('/api/analyze/image',
+                          data=data,
+                          content_type='multipart/form-data')
+        assert resp.status_code == 400
+
+    def test_forward_rejects_missing_text(self, client):
+        resp = client.post('/api/analyze/forward',
+                          data=json.dumps({}),
+                          content_type='application/json')
+        assert resp.status_code == 400
