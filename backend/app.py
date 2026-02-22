@@ -60,7 +60,12 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, 'templates'),
     static_folder=os.path.join(BASE_DIR, 'static')
 )
-CORS(app)
+CORS(app, supports_credentials=True, origins=[
+    'http://localhost:3000',
+    'http://localhost:7860',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:7860',
+])
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'safeye-hackathon-secret-2026')
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'super_secret_key')
 jwt = JWTManager(app)

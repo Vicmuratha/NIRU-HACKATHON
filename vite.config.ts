@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Backend Flask server URL — matches Dockerfile / docker-compose defaults
+const BACKEND_URL = process.env.VITE_BACKEND_URL || 'http://localhost:7860'
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
@@ -12,30 +15,31 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:7860',
-        changeOrigin: true
+        target: BACKEND_URL,
+        changeOrigin: true,
+        ws: true,
       },
       '/login': {
-        target: 'http://localhost:7860',
-        changeOrigin: true
+        target: BACKEND_URL,
+        changeOrigin: true,
       },
       '/signup': {
-        target: 'http://localhost:7860',
-        changeOrigin: true
+        target: BACKEND_URL,
+        changeOrigin: true,
       },
       '/logout': {
-        target: 'http://localhost:7860',
-        changeOrigin: true
+        target: BACKEND_URL,
+        changeOrigin: true,
       },
       '/auth': {
-        target: 'http://localhost:7860',
+        target: BACKEND_URL,
         changeOrigin: true,
-        cookieDomainRewrite: 'localhost'
+        cookieDomainRewrite: 'localhost',
       },
       '/uploads': {
-        target: 'http://localhost:7860',
-        changeOrigin: true
-      }
-    }
-  }
+        target: BACKEND_URL,
+        changeOrigin: true,
+      },
+    },
+  },
 })
