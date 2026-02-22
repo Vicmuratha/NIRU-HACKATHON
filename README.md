@@ -140,18 +140,19 @@ NIRU-HACKATHON/
 ├── Dockerfile                 # Multi-stage production Docker build
 ├── start-tunnel.sh            # Public tunnel script (phone access)
 ├── backend/
+│   ├── __init__.py            # Package init
 │   ├── config.py              # Centralised environment-aware configuration
 │   ├── middleware.py           # Security headers, rate limiting, request logging
 │   ├── errors.py              # Structured error handling & custom exceptions
 │   ├── logging_config.py      # JSON/text structured logging
 │   ├── app.py                 # Legacy detection API (port 7860)
-│   ├── simple_app.py          # Lightweight detection API (uses logic.py)
 │   ├── election_shield.py     # 🇰🇪 Election context analysis & incitement detection
 │   ├── whatsapp_checker.py    # 🇰🇪 WhatsApp forward misinformation detector
 │   ├── kenya_documents.py     # 🇰🇪 Kenyan document forgery detector (KRA, HELB, M-Pesa)
 │   ├── fake_screenshot.py     # 🇰🇪 Fake news screenshot detector (Citizen TV, NTV, Nation)
-│   └── audio_context.py       # 🇰🇪 Honest Kenyan audio threat context
-├── logic.py                   # Shared HuggingFace pipeline wrappers (image/audio/text)
+│   ├── audio_context.py       # 🇰🇪 Honest Kenyan audio threat context
+│   ├── data/                  # Backend data files
+│   └── uploads/               # Backend uploads directory
 ├── models/
 │   ├── download_models.py     # Azure Blob / URL model downloader script
 │   ├── audio_model/           # WavLM config + weights (~361 MB)
@@ -178,9 +179,12 @@ NIRU-HACKATHON/
 │   └── test_text.py           # Unit tests for text detector
 ├── data/
 │   └── detection_log.json     # JSONL detection history
+├── deploy_package/            # Standalone deployment build (app.py, Dockerfile, requirements.txt)
 ├── uploads/                   # Temporary file uploads (gitignored)
 ├── .env.example               # Environment variable template
 ├── .dockerignore              # Docker build exclusions
+├── CONTRIBUTING.md            # Contribution guidelines
+├── pytest.ini                 # Pytest configuration
 ├── requirements.txt           # Python dependencies (pinned ranges)
 ├── package.json               # Node.js dependencies
 ├── vite.config.ts             # Vite config (host: 0.0.0.0, proxy /api → :7860)
@@ -642,9 +646,11 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the full sprint plan. Key upcoming mi
 
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
+
 1. Fork the repository and create a branch from `main`
 2. Make your changes and add tests where applicable
-3. Run the test suite: `python -m unittest discover tests/`
+3. Run the test suite: `pytest tests/ -v`
 4. Update documentation to reflect any changes
 5. Submit a pull request with a clear description
 
@@ -652,7 +658,7 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the full sprint plan. Key upcoming mi
 
 ## License
 
-ISC — see [LICENSE](LICENSE).
+ISC
 
 ---
 
