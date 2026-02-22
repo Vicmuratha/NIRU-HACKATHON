@@ -34,6 +34,7 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, f
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from PIL import Image
 import exifread
 
@@ -222,7 +223,7 @@ def login_page():
         password = request.form['password']
         db = get_db()
         user = db.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
-        if user and user['password'] == password:
+        if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             session['user_name'] = user['name']
             db.execute('UPDATE users SET last_login = ? WHERE id = ?',
@@ -237,19 +238,35 @@ def login_page():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup_page():
     if request.method == 'POST':
-        name = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        if password != request.form['confirm_password']:
+        name = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if not name or not email or not password:
+            flash("Please fill in all fields!")
+            return redirect(url_for('signup_page'))
+
+        if '@' not in email or '.' not in email:
+            flash("Please enter a valid email address!")
+            return redirect(url_for('signup_page'))
+
+        if len(password) < 8:
+            flash("Password must be at least 8 characters!")
+            return redirect(url_for('signup_page'))
+
+        if password != confirm_password:
             flash("Passwords do not match!")
             return redirect(url_for('signup_page'))
+
         db = get_db()
         existing = db.execute('SELECT id FROM users WHERE email = ?', (email,)).fetchone()
         if existing:
             flash("Email already exists!")
             return redirect(url_for('signup_page'))
+
         db.execute('INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-                   (name, email, password))
+                   (name, email, generate_password_hash(password)))
         db.commit()
         flash("Account created! Please log in.")
         return redirect(url_for('login_page'))
