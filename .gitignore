@@ -361,3 +361,4 @@ app.py.bak
 
 # SQLite databases
 *.db
+users.db
