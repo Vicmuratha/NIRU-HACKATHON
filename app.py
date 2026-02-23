@@ -799,7 +799,7 @@ def login():
             return redirect(url_for('login'))
 
         # Update last_login
-        db.execute('UPDATE users SET last_login = ? WHERE id = ?', (datetime.now(timezone.utc), user['id']))
+        db.execute('UPDATE users SET last_login = ? WHERE id = ?', (datetime.now(timezone.utc).isoformat(), user['id']))
         db.commit()
 
         session['user'] = {
@@ -848,7 +848,7 @@ def signup():
 
         db.execute(
             'INSERT INTO users (name, email, password, auth_provider, created_at) VALUES (?, ?, ?, ?, ?)',
-            (username, email, hash_password(password), 'local', datetime.now(timezone.utc))
+            (username, email, hash_password(password), 'local', datetime.now(timezone.utc).isoformat())
         )
         db.commit()
 
@@ -881,12 +881,12 @@ if HAS_OAUTH:
         if not existing:
             db.execute(
                 'INSERT INTO users (name, email, password, profile_picture, auth_provider, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-                (user_info['name'], user_info['email'], '', user_info.get('picture', ''), 'google', datetime.now(timezone.utc))
+                (user_info['name'], user_info['email'], '', user_info.get('picture', ''), 'google', datetime.now(timezone.utc).isoformat())
             )
         else:
             db.execute(
                 'UPDATE users SET last_login = ?, profile_picture = COALESCE(NULLIF(?, ""), profile_picture) WHERE email = ?',
-                (datetime.now(timezone.utc), user_info.get('picture', ''), user_info['email'])
+                (datetime.now(timezone.utc).isoformat(), user_info.get('picture', ''), user_info['email'])
             )
         db.commit()
 
@@ -917,12 +917,12 @@ if HAS_OAUTH:
         if not existing:
             db.execute(
                 'INSERT INTO users (name, email, password, profile_picture, auth_provider, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-                (name, email, '', picture, 'github', datetime.now(timezone.utc))
+                (name, email, '', picture, 'github', datetime.now(timezone.utc).isoformat())
             )
         else:
             db.execute(
                 'UPDATE users SET last_login = ?, profile_picture = COALESCE(NULLIF(?, ""), profile_picture) WHERE email = ?',
-                (datetime.now(timezone.utc), picture, email)
+                (datetime.now(timezone.utc).isoformat(), picture, email)
             )
         db.commit()
 
@@ -960,7 +960,7 @@ def api_login():
     if not user or not check_password_hash(user['password'], password):
         return jsonify({'error': 'Invalid credentials'}), 401
 
-    db.execute('UPDATE users SET last_login = ? WHERE id = ?', (datetime.now(timezone.utc), user['id']))
+    db.execute('UPDATE users SET last_login = ? WHERE id = ?', (datetime.now(timezone.utc).isoformat(), user['id']))
     db.commit()
 
     session['user'] = {
@@ -1078,7 +1078,7 @@ def update_profile():
         return jsonify({'error': 'No valid fields to update'}), 400
 
     updates.append('updated_at = ?')
-    values.append(datetime.now(timezone.utc))
+    values.append(datetime.now(timezone.utc).isoformat())
     values.append(row['id'])
 
     db.execute(
@@ -1125,7 +1125,7 @@ def change_password():
 
     db.execute(
         'UPDATE users SET password = ?, updated_at = ? WHERE id = ?',
-        (hash_password(new_password), datetime.now(timezone.utc), row['id'])
+        (hash_password(new_password), datetime.now(timezone.utc).isoformat(), row['id'])
     )
     db.commit()
 
@@ -1163,7 +1163,7 @@ def upload_profile_picture():
     db = get_db()
     db.execute(
         'UPDATE users SET profile_picture = ?, updated_at = ? WHERE email = ?',
-        (picture_url, datetime.now(timezone.utc), user['email'])
+        (picture_url, datetime.now(timezone.utc).isoformat(), user['email'])
     )
     db.commit()
 
