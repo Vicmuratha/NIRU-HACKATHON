@@ -37,12 +37,22 @@ Thumbs.db
 uploads/*
 !uploads/.gitkeep
 data/*.json
-users.db
+*.db
 run_output.txt
 ngrok
 start-tunnel.sh
 deploy_package
 docs
+
+# AI Models (downloaded at runtime, ~500MB+)
+models/image_model/
+models/audio_model/
+models/text_model/
+models/bestdeepfake/
+
+# Tests (not needed in production image)
+tests/
+pytest.ini
 
 # Frontend source (built separately)
 src
@@ -53,3 +63,8 @@ tailwind.config.js
 postcss.config.js
 tsconfig*.json
 package*.json
+
+# Environment files
+.env
+.env.local
+.env.example

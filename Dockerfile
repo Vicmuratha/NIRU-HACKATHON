@@ -28,7 +28,9 @@ FROM python:3.11-slim AS runtime
 
 LABEL maintainer="SafEye Team" \
       version="3.1.0" \
-      description="SafEye — AI-powered deepfake and misinformation detection"
+      description="SafEye — AI-powered deepfake and misinformation detection" \
+      org.opencontainers.image.source="https://github.com/Vicmuratha/NIRU-HACKATHON" \
+      org.opencontainers.image.licenses="MIT"
 
 # Runtime system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
