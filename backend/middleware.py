@@ -5,6 +5,7 @@ Production-grade security headers, rate limiting, input validation, and request 
 
 import os
 import time
+import uuid
 import logging
 import hashlib
 from datetime import datetime
@@ -166,17 +167,23 @@ def validate_json_body(*required_fields: str):
 # ═══════════════════════════════════════════════════════════
 
 def log_request():
-    """Record request start time for latency tracking."""
+    """Record request start time and assign a unique request ID for tracing."""
     g.request_start = time.time()
+    # Use client-provided ID or generate a new UUID4
+    g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
 
 
 def log_response(response):
-    """Log request completion with latency."""
+    """Log request completion with latency and attach X-Request-ID header."""
+    request_id = getattr(g, "request_id", str(uuid.uuid4()))
+    response.headers["X-Request-ID"] = request_id
+
     duration = time.time() - getattr(g, "request_start", time.time())
     if request.path.startswith("/api/"):
         logger.info(
             "request_completed",
             extra={
+                "request_id": request_id,
                 "method": request.method,
                 "path": request.path,
                 "status": response.status_code,

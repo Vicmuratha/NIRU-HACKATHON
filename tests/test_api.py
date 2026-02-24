@@ -193,6 +193,20 @@ class TestSecurityHeaders:
         # Server header should be removed by middleware
         assert 'Server' not in resp.headers or 'Flask' not in resp.headers.get('Server', '')
 
+    def test_request_id_header_generated(self, client):
+        """Every response must include an X-Request-ID (UUID4) header."""
+        resp = client.get('/api/health')
+        rid = resp.headers.get('X-Request-ID')
+        assert rid is not None, "X-Request-ID header missing"
+        # Validate it is a proper UUID
+        uuid.UUID(rid, version=4)
+
+    def test_request_id_echo(self, client):
+        """If the client sends X-Request-ID, the server echoes it back."""
+        custom_id = str(uuid.uuid4())
+        resp = client.get('/api/health', headers={'X-Request-ID': custom_id})
+        assert resp.headers.get('X-Request-ID') == custom_id
+
 
 # ═══════════════════════════════════════════════════════════
 #  SIGNUP & LOGIN FLOWS
