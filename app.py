@@ -12,6 +12,8 @@ import sqlite3
 import time
 import uuid
 import json
+import secrets
+import hashlib
 import warnings
 import threading
 from datetime import datetime, timezone
@@ -217,6 +219,28 @@ def init_db():
     db.execute('''
         CREATE INDEX IF NOT EXISTS idx_history_created_at
         ON detection_history(created_at)
+    ''')
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            used INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            used INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
     ''')
 
     # ─── Migrate existing users table if needed ───
@@ -864,6 +888,113 @@ def signup():
 def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
+
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        if not email:
+            flash('Please enter your email address', 'error')
+            return redirect(url_for('forgot_password'))
+
+        db = get_db()
+        user = db.execute('SELECT id, auth_provider FROM users WHERE email = ?', (email,)).fetchone()
+
+        if user:
+            if user['auth_provider'] != 'local':
+                flash('This account uses social login. Please sign in with Google or GitHub.', 'error')
+                return redirect(url_for('forgot_password'))
+
+            # Invalidate any existing tokens for this user
+            db.execute('UPDATE password_reset_tokens SET used = 1 WHERE user_id = ? AND used = 0', (user['id'],))
+
+            # Generate a secure token
+            raw_token = secrets.token_urlsafe(48)
+            token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+            from datetime import timedelta
+            expires_at = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+
+            db.execute(
+                'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+                (user['id'], token_hash, expires_at)
+            )
+            db.commit()
+
+            # Build reset URL
+            reset_url = request.host_url.rstrip('/') + url_for('reset_password', token=raw_token)
+            logger.info(f'Password reset requested for {email}')
+
+            # Store the reset URL in session for demo/dev display
+            session['_reset_url'] = reset_url
+
+        # Always show the same message to prevent user enumeration
+        flash('If an account with that email exists, a password reset link has been generated.', 'success')
+        return redirect(url_for('forgot_password'))
+
+    reset_url = session.pop('_reset_url', None)
+    return render_template('forgot_password.html', reset_url=reset_url)
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    # Hash the token to compare with stored hash
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+    db = get_db()
+    row = db.execute(
+        'SELECT t.id, t.user_id, t.expires_at, t.used, u.email '
+        'FROM password_reset_tokens t JOIN users u ON t.user_id = u.id '
+        'WHERE t.token = ?',
+        (token_hash,)
+    ).fetchone()
+
+    if not row:
+        flash('Invalid or expired reset link.', 'error')
+        return redirect(url_for('forgot_password'))
+
+    if row['used']:
+        flash('This reset link has already been used.', 'error')
+        return redirect(url_for('forgot_password'))
+
+    # Check expiration
+    expires_at = datetime.fromisoformat(row['expires_at'])
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) > expires_at:
+        flash('This reset link has expired. Please request a new one.', 'error')
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if not new_password or not confirm_password:
+            flash('Please fill in all fields', 'error')
+            return redirect(url_for('reset_password', token=token))
+
+        if len(new_password) < 8:
+            flash('Password must be at least 8 characters', 'error')
+            return redirect(url_for('reset_password', token=token))
+
+        if new_password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return redirect(url_for('reset_password', token=token))
+
+        # Update password
+        db.execute(
+            'UPDATE users SET password = ?, updated_at = ? WHERE id = ?',
+            (hash_password(new_password), datetime.now(timezone.utc).isoformat(), row['user_id'])
+        )
+        # Mark token as used
+        db.execute('UPDATE password_reset_tokens SET used = 1 WHERE id = ?', (row['id'],))
+        db.commit()
+
+        logger.info(f'Password reset completed for {row["email"]}')
+        flash('Your password has been reset successfully! Please sign in.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('reset_password.html', token=token, email=row['email'])
 
 
 # ─── OAuth Routes ───
