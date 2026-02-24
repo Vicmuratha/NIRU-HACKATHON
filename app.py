@@ -9,6 +9,7 @@ Production-grade Flask application:
 
 import os
 import sqlite3
+import time
 import uuid
 import json
 import warnings
@@ -1542,12 +1543,23 @@ def serve_upload(filename):
 
 
 # ══════════════════════════════════════════════════════════════
-#  HEALTH CHECK
+#  HEALTH CHECK  (cached for 30 s to reduce model-status overhead)
 # ══════════════════════════════════════════════════════════════
+
+_health_cache: dict = {"data": None, "expires": 0.0}
+HEALTH_CACHE_TTL = int(os.getenv("HEALTH_CACHE_TTL", "30"))  # seconds
+
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    return jsonify({
+    now = time.time()
+    if _health_cache["data"] is not None and now < _health_cache["expires"]:
+        resp = jsonify(_health_cache["data"])
+        resp.headers["X-Cache"] = "HIT"
+        resp.headers["Cache-Control"] = f"public, max-age={HEALTH_CACHE_TTL}"
+        return resp
+
+    payload = {
         'status': 'healthy',
         'timestamp': datetime.now(timezone.utc).isoformat(),
         'models': {
@@ -1568,7 +1580,15 @@ def health():
             'news_screenshot_detector': True,
             'audio_context': True,
         }
-    })
+    }
+
+    _health_cache["data"] = payload
+    _health_cache["expires"] = now + HEALTH_CACHE_TTL
+
+    resp = jsonify(payload)
+    resp.headers["X-Cache"] = "MISS"
+    resp.headers["Cache-Control"] = f"public, max-age={HEALTH_CACHE_TTL}"
+    return resp
 
 
 # ══════════════════════════════════════════════════════════════
