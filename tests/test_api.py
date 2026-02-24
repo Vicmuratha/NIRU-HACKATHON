@@ -32,6 +32,20 @@ class TestHealthEndpoint:
         assert modules['election_shield'] is True
         assert modules['whatsapp_checker'] is True
 
+    def test_health_cache_header_present(self, client):
+        """First call should be a cache MISS, second within TTL a HIT."""
+        # Reset the module-level cache so this test is deterministic
+        import app as _app
+        _app._health_cache["data"] = None
+        _app._health_cache["expires"] = 0.0
+
+        resp1 = client.get('/api/health')
+        assert resp1.headers.get('X-Cache') == 'MISS'
+        assert 'max-age' in resp1.headers.get('Cache-Control', '')
+
+        resp2 = client.get('/api/health')
+        assert resp2.headers.get('X-Cache') == 'HIT'
+
 
 # ═══════════════════════════════════════════════════════════
 #  AUTH API
