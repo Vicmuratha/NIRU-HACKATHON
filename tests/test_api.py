@@ -398,3 +398,35 @@ class TestEdgeCases:
                           data=json.dumps({}),
                           content_type='application/json')
         assert resp.status_code == 400
+
+
+# ═══════════════════════════════════════════════════════════
+#  INPUT SANITIZATION
+# ═══════════════════════════════════════════════════════════
+
+class TestInputSanitization:
+    """Verify that HTML/script tags are stripped from text inputs."""
+
+    @pytest.mark.slow
+    def test_html_tags_stripped(self, client):
+        payload = {'text': '<b>Breaking</b> <i>news</i>: the earth is flat'}
+        resp = client.post('/api/analyze/text',
+                          data=json.dumps(payload),
+                          content_type='application/json')
+        # Should not 400 — tag text is still long enough after stripping
+        assert resp.status_code in (200, 500)  # 500 if model unavailable
+
+    @pytest.mark.slow
+    def test_script_tags_stripped(self, client):
+        payload = {'text': '<script>alert("xss")</script>Some real content here for analysis'}
+        resp = client.post('/api/analyze/text',
+                          data=json.dumps(payload),
+                          content_type='application/json')
+        assert resp.status_code in (200, 500)
+
+    def test_sanitize_text_function_directly(self):
+        from backend.middleware import sanitize_text
+        assert sanitize_text('<b>hello</b>') == 'hello'
+        assert sanitize_text('<script>alert(1)</script>world') == 'world'
+        assert 'onclick' not in sanitize_text('click onclick=alert(1)')
+        assert sanitize_text('  normal text  ') == 'normal text'

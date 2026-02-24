@@ -4,6 +4,7 @@ Production-grade security headers, rate limiting, input validation, and request 
 """
 
 import os
+import re
 import time
 import uuid
 import logging
@@ -146,9 +147,34 @@ def validate_file_upload(field: str = "file", allowed_extensions: set | None = N
     return file, None
 
 
-def validate_json_body(*required_fields: str):
+# ── Text sanitization ──────────────────────────────────────
+
+# Compiled once for performance
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+_SCRIPT_BLOCK_RE = re.compile(r"<script[\s\S]*?</script>", re.IGNORECASE)
+_STYLE_BLOCK_RE = re.compile(r"<style[\s\S]*?</style>", re.IGNORECASE)
+_EVENT_HANDLER_RE = re.compile(r"\bon\w+\s*=", re.IGNORECASE)
+
+
+def sanitize_text(text: str) -> str:
+    """
+    Strip HTML tags, <script>/<style> blocks, and inline event handlers
+    from user-supplied text to prevent stored-XSS and log injection.
+    """
+    if not isinstance(text, str):
+        return text
+    text = _SCRIPT_BLOCK_RE.sub("", text)
+    text = _STYLE_BLOCK_RE.sub("", text)
+    text = _HTML_TAG_RE.sub("", text)
+    text = _EVENT_HANDLER_RE.sub("", text)
+    return text.strip()
+
+
+def validate_json_body(*required_fields: str, sanitize: bool = True):
     """
     Validate that the request body is JSON and contains the required fields.
+    When *sanitize* is True (default), string values in the required fields
+    are run through sanitize_text() to strip HTML/script content.
     Returns (data, error_response).
     """
     data = request.get_json(silent=True)
@@ -158,6 +184,11 @@ def validate_json_body(*required_fields: str):
     missing = [f for f in required_fields if not data.get(f)]
     if missing:
         return None, (jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400)
+
+    if sanitize:
+        for field in required_fields:
+            if isinstance(data.get(field), str):
+                data[field] = sanitize_text(data[field])
 
     return data, None
 
