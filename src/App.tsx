@@ -96,7 +96,7 @@ interface AllUser {
 }
 
 type AnalysisTab = 'image' | 'audio' | 'text' | 'forward' | 'document';
-type AppView = 'home' | 'analyze' | 'profile';
+type AppView = 'home' | 'analyze' | 'profile' | 'history';
 
 // ─── API URL ───
 const API_BASE = '/api';
@@ -468,7 +468,7 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
                         My Profile
                       </button>
                       <button
-                        onClick={() => { setView('analyze'); setMenuOpen(false); }}
+                        onClick={() => { setView('history'); setMenuOpen(false); }}
                         className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:bg-white/[0.06] transition-all duration-200"
                       >
                         <History size={15} />
@@ -1525,7 +1525,7 @@ const Footer: React.FC = () => (
 );
 
 // ─── PROFILE PAGE ───
-const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
+const ProfilePage: React.FC<{ user: UserInfo | null; initialTab?: 'overview' | 'history' | 'users' | 'security' }> = ({ user: _user, initialTab }) => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -1533,7 +1533,7 @@ const ProfilePage: React.FC<{ user: UserInfo | null }> = ({ user: _user }) => {
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', bio: '', phone: '', location: '', organization: '' });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'users' | 'security'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'users' | 'security'>(initialTab || 'overview');
   const [historyFilter, setHistoryFilter] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
@@ -2235,9 +2235,9 @@ const App: React.FC = () => {
             <CTASection onAnalyze={() => setView('analyze')} />
             <Footer />
           </motion.div>
-        ) : view === 'profile' ? (
+        ) : view === 'profile' || view === 'history' ? (
           <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-            <ProfilePage user={user} />
+            <ProfilePage user={user} initialTab={view === 'history' ? 'history' : undefined} />
             <Footer />
           </motion.div>
         ) : (
