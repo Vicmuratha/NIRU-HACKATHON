@@ -40,6 +40,14 @@ export default defineConfig({
         target: BACKEND_URL,
         changeOrigin: true,
       },
+      '/forgot-password': {
+        target: BACKEND_URL,
+        changeOrigin: true,
+      },
+      '/reset-password': {
+        target: BACKEND_URL,
+        changeOrigin: true,
+      },
     },
   },
 })
