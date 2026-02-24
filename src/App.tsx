@@ -13,7 +13,8 @@ import {
   MessageSquare, FileCheck, Flag, Scale,
   Sparkles, Globe, Users, ChevronDown,
   CheckCircle2, Clock, TrendingUp, Menu, XIcon,
-  User, MapPin, Building2, Phone, Mail, Edit3, Save, Trash2, History
+  User, MapPin, Building2, Phone, Mail, Edit3, Save, Trash2, History,
+  Sun, Moon
 } from 'lucide-react';
 
 // ─── TYPES ───
@@ -120,14 +121,14 @@ const viewportSettings = { once: true, margin: '-80px' as any };
 // ─── FLOATING PARTICLES ───
 const Particles: React.FC = () => {
   const particles = useMemo(() =>
-    Array.from({ length: 50 }, (_, i) => ({
+    Array.from({ length: 60 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
-      size: Math.random() * 2.5 + 0.5,
-      delay: Math.random() * 20,
-      duration: Math.random() * 15 + 20,
-      color: ['#8b5cf6', '#06b6d4', '#f43f5e', '#10b981', '#a78bfa'][Math.floor(Math.random() * 5)],
-      opacity: Math.random() * 0.3 + 0.05,
+      size: Math.random() * 3 + 0.5,
+      delay: Math.random() * 25,
+      duration: Math.random() * 18 + 18,
+      color: ['#8b5cf6', '#06b6d4', '#f43f5e', '#10b981', '#a78bfa', '#818cf8'][Math.floor(Math.random() * 6)],
+      opacity: Math.random() * 0.35 + 0.05,
     })), []);
 
   return (
@@ -144,13 +145,33 @@ const Particles: React.FC = () => {
             opacity: p.opacity,
             animationDelay: `${p.delay}s`,
             animationDuration: `${p.duration}s`,
-            boxShadow: `0 0 ${p.size * 4}px ${p.color}`,
+            boxShadow: `0 0 ${p.size * 6}px ${p.color}`,
           }}
         />
       ))}
     </div>
   );
 };
+
+// ─── NOISE TEXTURE OVERLAY ───
+const NoiseOverlay: React.FC = () => (
+  <div className="noise-overlay" />
+);
+
+// ─── ORBITAL RINGS (Hero background effect) ───
+const OrbitalRings: React.FC = () => (
+  <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+    <div className="orbital-ring orbital-ring-1" style={{ top: '50%', left: '50%' }}>
+      <div className="orbital-dot" style={{ background: '#8b5cf6' }} />
+    </div>
+    <div className="orbital-ring orbital-ring-2" style={{ top: '50%', left: '50%' }}>
+      <div className="orbital-dot" style={{ background: '#06b6d4' }} />
+    </div>
+    <div className="orbital-ring orbital-ring-3" style={{ top: '50%', left: '50%' }}>
+      <div className="orbital-dot" style={{ background: '#f43f5e' }} />
+    </div>
+  </div>
+);
 
 // ─── ANIMATED COUNTER ───
 const AnimatedCounter: React.FC<{ value: number; suffix?: string; decimals?: number }> = ({
@@ -259,8 +280,72 @@ const ScrollIndicator: React.FC = () => (
   </motion.div>
 );
 
+// ─── THEME HOOK ───
+type Theme = 'dark' | 'light';
+
+const useTheme = () => {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('safeye-theme') as Theme | null;
+      return stored || 'dark';
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-theme', theme);
+    localStorage.setItem('safeye-theme', theme);
+
+    // Update theme-color meta tag
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#050816' : '#f8fafc');
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setThemeState(prev => prev === 'dark' ? 'light' : 'dark');
+  }, []);
+
+  return { theme, toggleTheme };
+};
+
+// ─── THEME TOGGLE BUTTON ───
+const ThemeToggle: React.FC<{ theme: Theme; toggleTheme: () => void }> = ({ theme, toggleTheme }) => (
+  <motion.button
+    onClick={toggleTheme}
+    className="theme-toggle"
+    whileTap={{ scale: 0.9 }}
+    title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+    aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+  >
+    <AnimatePresence mode="wait">
+      {theme === 'dark' ? (
+        <motion.div
+          key="sun"
+          initial={{ rotate: -90, scale: 0, opacity: 0 }}
+          animate={{ rotate: 0, scale: 1, opacity: 1 }}
+          exit={{ rotate: 90, scale: 0, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Sun size={16} />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="moon"
+          initial={{ rotate: 90, scale: 0, opacity: 0 }}
+          animate={{ rotate: 0, scale: 1, opacity: 1 }}
+          exit={{ rotate: -90, scale: 0, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Moon size={16} />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </motion.button>
+);
+
 // ─── NAVBAR ───
-const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: UserInfo | null }> = ({ view, setView, user }) => {
+const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: UserInfo | null; theme: Theme; toggleTheme: () => void }> = ({ view, setView, user, theme, toggleTheme }) => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -329,7 +414,9 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+
           <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 bg-white/[0.03] px-3 py-1.5 rounded-full border border-white/[0.06]">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>All Systems Active</span>
@@ -483,6 +570,16 @@ const Navbar: React.FC<{ view: AppView; setView: (v: AppView) => void; user: Use
                   Sign In
                 </a>
               )}
+
+              {/* Theme toggle in mobile menu */}
+              <div className="h-px bg-white/[0.06] my-1 mx-2" />
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-left text-slate-400 hover:bg-white/[0.04] transition-all"
+              >
+                <span className="text-slate-500">{theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</span>
+                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              </button>
             </div>
           </motion.div>
         )}
@@ -508,9 +605,16 @@ const HeroSection: React.FC<{ onAnalyze: () => void; onDemo: () => void }> = ({ 
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Ambient glow orbs */}
       <motion.div style={{ y: heroBgY }} className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-violet-600/[0.06] blur-[150px] pointer-events-none parallax-layer" />
       <motion.div style={{ y: heroBgY }} className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-cyan-500/[0.05] blur-[120px] pointer-events-none parallax-layer" />
       <motion.div style={{ y: heroBgY }} className="absolute top-1/3 left-1/4 w-[300px] h-[300px] rounded-full bg-rose-500/[0.03] blur-[100px] pointer-events-none parallax-layer" />
+
+      {/* Morphing blob */}
+      <div className="hero-blob" />
+
+      {/* Orbital rings */}
+      <OrbitalRings />
 
       <motion.div
         style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}
@@ -2095,6 +2199,7 @@ const App: React.FC = () => {
   const [view, setView] = useState<AppView>('home');
   const [user, setUser] = useState<UserInfo | null>(null);
   const [demoMode, setDemoMode] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     fetch('/api/me', { credentials: 'include' })
@@ -2116,8 +2221,9 @@ const App: React.FC = () => {
     <div className="relative min-h-screen">
       <div className="mesh-bg" />
       <div className="grid-pattern" />
+      <NoiseOverlay />
       <Particles />
-      <Navbar view={view} setView={setView} user={user} />
+      <Navbar view={view} setView={setView} user={user} theme={theme} toggleTheme={toggleTheme} />
       <AnimatePresence mode="wait">
         {view === 'home' ? (
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
