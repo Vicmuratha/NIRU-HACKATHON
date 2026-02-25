@@ -117,6 +117,7 @@
                 </div>
 
                 <form method="POST" action="/signup" class="auth-form" id="signup-form" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="input-group">
                         <label for="username">Full Name</label>
                         <div class="input-wrapper" id="username-wrapper">
