@@ -25,6 +25,7 @@ exifread>=3.0,<4.0
 pytesseract>=0.3.10,<1.0
 
 # ── Security ──
+flask-wtf>=1.2,<2.0
 requests>=2.31,<3.0
 
 # ── Testing ──

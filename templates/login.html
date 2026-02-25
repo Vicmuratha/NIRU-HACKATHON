@@ -106,6 +106,7 @@
                 </div>
 
                 <form method="POST" action="/login" class="auth-form" id="login-form" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="input-group">
                         <label for="email">Email Address</label>
                         <div class="input-wrapper" id="email-wrapper">
