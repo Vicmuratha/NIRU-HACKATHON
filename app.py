@@ -1282,13 +1282,32 @@ def upload_profile_picture():
     if ext not in ['.png', '.jpg', '.jpeg', '.webp']:
         return jsonify({'error': 'Invalid image format'}), 400
 
+    # Check file size (max 2MB)
+    file.seek(0, os.SEEK_END)
+    size = file.tell()
+    file.seek(0)
+    if size > 2 * 1024 * 1024:
+        return jsonify({'error': 'File too large (max 2MB)'}), 400
+
+    # Validate image content
+    try:
+        from PIL import Image
+        img = Image.open(file)
+        img.verify()
+        file.seek(0)
+    except Exception:
+        return jsonify({'error': 'Invalid image file'}), 400
+
     # Save the file
     profile_pics_dir = os.path.join(UPLOAD_FOLDER, 'profile_pictures')
     os.makedirs(profile_pics_dir, exist_ok=True)
 
     filename = f"{uuid.uuid4().hex}{ext}"
     filepath = os.path.join(profile_pics_dir, filename)
-    file.save(filepath)
+    try:
+        file.save(filepath)
+    except Exception:
+        return jsonify({'error': 'Failed to save file'}), 500
 
     # Update DB
     picture_url = f'/uploads/profile_pictures/{filename}'
