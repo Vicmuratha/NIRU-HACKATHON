@@ -48,9 +48,9 @@ from flask import (
     Flask, render_template, url_for, redirect, session,
     jsonify, request, flash, g, send_from_directory
 )
+from flask_wtf import CSRFProtect
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
-from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 from PIL import Image
 
@@ -93,29 +93,23 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, 'templates'),
     static_folder=os.path.join(BASE_DIR, 'static')
 )
+csrf = CSRFProtect(app)
 
 # ── Apply config object ──
 app.config.from_object(config)
 app.secret_key = config.SECRET_KEY
+app.config['WTF_CSRF_TIME_LIMIT'] = 3600
 
 # ── Production security middleware & error handlers ──
+
 init_security(app)
 init_error_handlers(app)
 
-# ── CSRF protection for form-based routes ──
-csrf = CSRFProtect(app)
-app.config['WTF_CSRF_CHECK_DEFAULT'] = False  # Disable global check
-
-# Only enforce CSRF on HTML form POST routes (not JSON API / OAuth)
-_CSRF_PROTECTED_PATHS = {'/login', '/signup', '/forgot-password'}
-
-@app.before_request
-def enforce_csrf_on_forms():
-    """Enforce CSRF tokens on form-based POST endpoints only."""
-    if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
-        path = request.path
-        if path in _CSRF_PROTECTED_PATHS or path.startswith('/reset-password/'):
-            csrf.protect()
+# ─── Inject csrf_token into all templates ───
+@app.context_processor
+def inject_csrf_token():
+    from flask_wtf.csrf import generate_csrf
+    return dict(csrf_token=generate_csrf())
 
 # ── CORS ──
 _cors_origins = [
