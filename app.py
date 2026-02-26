@@ -1418,10 +1418,20 @@ def get_all_users():
             'SELECT COUNT(*) as cnt FROM detection_history WHERE user_id = ?', (row['id'],)
         ).fetchone()['cnt']
 
+        def redact_email(email):
+            if not email or '@' not in email:
+                return ''
+            name, domain = email.split('@', 1)
+            if len(name) <= 2:
+                redacted = name[0] + '*' * (len(name)-1)
+            else:
+                redacted = name[0] + '*' * (len(name)-2) + name[-1]
+            return f"{redacted}@{domain}"
+
         users.append({
             'id': row['id'],
             'name': row['name'],
-            'email': row['email'],
+            'email': redact_email(row['email']),
             'bio': row['bio'] or '',
             'location': row['location'] or '',
             'organization': row['organization'] or '',
