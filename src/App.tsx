@@ -1216,6 +1216,11 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
                 key={t.key}
                 onClick={() => handleTabChange(t.key)}
                 className={`analysis-tab ${tab === t.key ? 'analysis-tab-active' : ''}`}
+                role="tab"
+                aria-selected={tab === t.key}
+                aria-controls={`tabpanel-${t.key}`}
+                id={`tab-${t.key}`}
+                tabIndex={tab === t.key ? 0 : -1}
               >
                 {t.icon}
                 <span className="hidden xs:inline sm:inline text-xs sm:text-sm">{t.label}</span>
@@ -1262,21 +1267,24 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
                       onDragLeave={() => setDragging(false)}
                       onDrop={onDrop}
                       onClick={() => fileRef.current?.click()}
+                      role="region"
+                      aria-label={`File upload dropzone for ${tabConfig.label}`}
+                      tabIndex={0}
                     >
-                      {loading && <div className="scan-line" />}
+                      {loading && <div className="scan-line" aria-live="polite" aria-busy="true" />}
                       {previewUrl && (tab === 'image' || tab === 'document') ? (
                         <div className="relative max-w-sm mx-auto">
-                          <img src={previewUrl} alt="Preview" className="rounded-2xl max-h-48 sm:max-h-64 mx-auto object-contain shadow-2xl shadow-black/30" />
+                          <img src={previewUrl} alt={`Preview of uploaded ${tabConfig.label}`} className="rounded-2xl max-h-48 sm:max-h-64 mx-auto object-contain shadow-2xl shadow-black/30" />
                           {loading && (
                             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                              <div className="spinner" />
+                              <div className="spinner" aria-label="Analyzing file" />
                             </div>
                           )}
                         </div>
                       ) : file ? (
                         <div className="flex flex-col items-center gap-3 sm:gap-4 py-4 sm:py-6">
                           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-                            {tab === 'image' ? <Image size={28} className="text-violet-400" /> : tab === 'document' ? <FileCheck size={28} className="text-amber-400" /> : <Mic size={28} className="text-cyan-400" />}
+                            {tab === 'image' ? <Image size={28} className="text-violet-400" aria-label="Image file icon" /> : tab === 'document' ? <FileCheck size={28} className="text-amber-400" aria-label="Document file icon" /> : <Mic size={28} className="text-cyan-400" aria-label="Audio file icon" />}
                           </div>
                           <div className="text-center">
                             <div className="font-semibold text-white text-sm">{file.name}</div>
@@ -1285,6 +1293,7 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
                           <button
                             onClick={e => { e.stopPropagation(); resetState(); }}
                             className="text-xs text-slate-500 hover:text-rose-400 transition-colors flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-rose-500/10"
+                            aria-label="Remove uploaded file"
                           >
                             <X size={12} /> Remove file
                           </button>
@@ -1292,7 +1301,7 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
                       ) : (
                         <div className="flex flex-col items-center gap-4 sm:gap-5 py-6 sm:py-8 relative z-10">
                           <div className="upload-icon-wrapper">
-                            <Upload size={24} className="text-violet-400 sm:w-7 sm:h-7" />
+                            <Upload size={24} className="text-violet-400 sm:w-7 sm:h-7" aria-label="Upload icon" />
                           </div>
                           <div className="text-center px-4">
                             <p className="text-white font-semibold text-sm sm:text-base mb-1.5">
@@ -1393,6 +1402,8 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 150 }}
+                    role="region"
+                    aria-label="Risk score gauge"
                   >
                     <RiskGauge score={result.risk_score} />
                   </motion.div>
