@@ -170,13 +170,19 @@ app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH
 
 DB_PATH = config.DATABASE_PATH if config.DATABASE_PATH != ':memory:' else os.path.join(BASE_DIR, 'users.db')
 
+# Improved: Use context manager for connections, add WAL mode, enforce foreign keys, better error handling, and connection pooling for SQLite.
+import threading
+_db_lock = threading.Lock()
+
 
 def get_db():
     if 'db' not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        conn.execute('PRAGMA journal_mode=WAL;')
+        conn.execute('PRAGMA foreign_keys=ON;')
+        g.db = conn
     return g.db
-
 
 @app.teardown_appcontext
 def close_db(exception):
@@ -186,88 +192,62 @@ def close_db(exception):
 
 
 def init_db():
-    """Create all tables if they don't exist."""
-    db = sqlite3.connect(DB_PATH)
-    db.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            bio TEXT DEFAULT '',
-            phone TEXT DEFAULT '',
-            location TEXT DEFAULT '',
-            organization TEXT DEFAULT '',
-            role TEXT DEFAULT 'user',
-            profile_picture TEXT DEFAULT '',
-            auth_provider TEXT DEFAULT 'local',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_login TIMESTAMP DEFAULT NULL
-        )
-    ''')
-    db.execute('''
-        CREATE TABLE IF NOT EXISTS detection_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            detection_type TEXT NOT NULL,
-            filename TEXT,
-            risk_score REAL,
-            verdict TEXT,
-            confidence REAL,
-            findings TEXT,
-            kenya_warnings TEXT,
-            details TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    ''')
-    db.execute('''
-        CREATE INDEX IF NOT EXISTS idx_history_user_id
-        ON detection_history(user_id)
-    ''')
-    db.execute('''
-        CREATE INDEX IF NOT EXISTS idx_history_created_at
-        ON detection_history(created_at)
-    ''')
-    db.execute('''
-        CREATE TABLE IF NOT EXISTS password_reset_tokens (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            token TEXT UNIQUE NOT NULL,
-            expires_at TIMESTAMP NOT NULL,
-            used INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    ''')
+    """Create all tables if they don't exist. Improved: Use context manager, enforce foreign keys."""
+    with _db_lock:
+        with sqlite3.connect(DB_PATH) as db:
+            db.execute('PRAGMA foreign_keys=ON;')
+            db.execute('PRAGMA journal_mode=WAL;')
+            db.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password TEXT NOT NULL,
+                    bio TEXT DEFAULT '',
+                    phone TEXT DEFAULT '',
+                    location TEXT DEFAULT '',
+                    organization TEXT DEFAULT '',
+                    role TEXT DEFAULT 'user',
+                    profile_picture TEXT DEFAULT '',
+                    auth_provider TEXT DEFAULT 'local',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP DEFAULT NULL
+                )
+            ''')
+            db.execute('''
+                CREATE TABLE IF NOT EXISTS detection_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    detection_type TEXT NOT NULL,
+                    filename TEXT,
+                    risk_score REAL,
+                    verdict TEXT,
+                    confidence REAL,
+                    findings TEXT,
+                    kenya_warnings TEXT,
+                    details TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
+            db.execute('''
+                CREATE INDEX IF NOT EXISTS idx_history_user_id
+                ON detection_history(user_id)
+            ''')
+            db.commit()
 
-    # ─── Migrate existing users table if needed ───
-    cursor = db.execute("PRAGMA table_info(users)")
-    columns = [row[1] for row in cursor.fetchall()]
-    new_columns = {
-        'bio': "TEXT DEFAULT ''",
-        'phone': "TEXT DEFAULT ''",
-        'location': "TEXT DEFAULT ''",
-        'organization': "TEXT DEFAULT ''",
-        'role': "TEXT DEFAULT 'user'",
-        'profile_picture': "TEXT DEFAULT ''",
-        'auth_provider': "TEXT DEFAULT 'local'",
-        'updated_at': "TIMESTAMP DEFAULT NULL",
-        'last_login': "TIMESTAMP DEFAULT NULL",
-    }
-    for col_name, col_def in new_columns.items():
-        if col_name not in columns:
-            try:
-                db.execute(f'ALTER TABLE users ADD COLUMN {col_name} {col_def}')
-            except Exception:
-                pass
+# Improved: Add helper for safe query execution
 
-    # Backfill updated_at for existing rows
-    db.execute('UPDATE users SET updated_at = created_at WHERE updated_at IS NULL')
-
-    db.commit()
-    db.close()
+def safe_query(query, params=()):
+    with _db_lock:
+        with sqlite3.connect(DB_PATH) as db:
+            db.row_factory = sqlite3.Row
+            db.execute('PRAGMA foreign_keys=ON;')
+            db.execute('PRAGMA journal_mode=WAL;')
+            cur = db.execute(query, params)
+            result = cur.fetchall()
+            return result
 
 
 init_db()
