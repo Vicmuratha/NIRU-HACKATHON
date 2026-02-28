@@ -670,3 +670,58 @@ ISC
 - [DeepFace](https://github.com/serengil/deepface) — Face extraction and texture analysis
 - [React](https://react.dev/), [Vite](https://vitejs.dev/), [Tailwind CSS](https://tailwindcss.com/) — Frontend stack
 - [Flask](https://flask.palletsprojects.com/) & [Authlib](https://authlib.org/) — Backend and OAuth
+
+---
+
+## Limitations & Known Issues
+- Models are not fine-tuned for all Kenyan contexts yet (see [ROADMAP](docs/ROADMAP.md)).
+- No persistent database in production (SQLite used for demo; PostgreSQL planned).
+- Video support is experimental; only keyframe analysis is available.
+- Swahili/Sheng text detection is basic; multilingual model in progress.
+- No CI/CD pipeline yet; tests may break on fresh clones.
+- Rate limiting and file validation are basic; security hardening ongoing.
+- Some features (history dashboard, advanced statistics) are in beta.
+
+---
+
+## Demo & Screenshots
+- [Demo Video](https://github.com/Vicmuratha/NIRU-HACKATHON/releases/tag/v1.0.0) — Full walkthrough
+- ![SafEye Dashboard](docs/demo_dashboard.png)
+- ![Analysis Panel](docs/demo_analysis.png)
+
+---
+
+## Contact & Support
+- Issues: [GitHub Issues](https://github.com/Vicmuratha/NIRU-HACKATHON/issues)
+- Email: safeye-support@protonmail.com
+- Twitter: [@SafEyeKenya](https://twitter.com/SafEyeKenya)
+
+---
+
+## FAQ
+**Q: Why are models not included in the repo?**
+A: Due to size (~1.1GB) and licensing. Use the downloader script after cloning.
+
+**Q: How do I run the demo?**
+A: See the Quick Start and Demo Script sections above.
+
+**Q: Can I use this for other countries?**
+A: Core detection works globally, but legal context and hoax patterns are Kenya-specific.
+
+**Q: How do I contribute?**
+A: Fork, branch, code, test, PR. See CONTRIBUTING.md.
+
+**Q: Is my data private?**
+A: No user data is shared. All analysis is local unless you opt-in to reporting.
+
+---
+
+## Architecture Diagram
+![SafEye Architecture](docs/architecture_diagram.png)
+
+---
+
+## Contributors
+- Vicmuratha (Lead, Backend, ML)
+- Team NIRU (Frontend, UX, Data)
+- Community contributors (see [CONTRIBUTING.md](CONTRIBUTING.md))
