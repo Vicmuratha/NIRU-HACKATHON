@@ -101,11 +101,13 @@ class ProductionConfig(_Base):
 
 
 class TestingConfig(_Base):
-    """Automated tests — in-memory DB, fast, deterministic."""
+    """Automated tests — temp DB file, fast, deterministic."""
     DEBUG = False
     TESTING = True
     SESSION_COOKIE_SECURE = False
-    DATABASE_PATH = ":memory:"
+    DATABASE_PATH = os.path.join(
+        _Base.BASE_DIR, "test_users.db"
+    )
     RATELIMIT_ENABLED = False
 
 

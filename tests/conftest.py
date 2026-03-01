@@ -27,10 +27,13 @@ os.environ['RATELIMIT_ENABLED'] = 'false'
 @pytest.fixture(scope='session')
 def flask_app():
     """Create the Flask app in testing mode."""
-    from app import app
+    from app import app, DB_PATH
     app.config['TESTING'] = True
     app.config['RATELIMIT_ENABLED'] = False
-    return app
+    yield app
+    # Clean up test database after all tests
+    if os.path.exists(DB_PATH) and 'test_' in os.path.basename(DB_PATH):
+        os.remove(DB_PATH)
 
 
 @pytest.fixture
