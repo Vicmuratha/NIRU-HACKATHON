@@ -114,6 +114,10 @@ app.config.from_object(config)
 app.secret_key = config.SECRET_KEY
 app.config['WTF_CSRF_TIME_LIMIT'] = 3600
 
+# Disable CSRF entirely in testing mode
+if app.config.get('TESTING'):
+    app.config['WTF_CSRF_ENABLED'] = False
+
 # ── Production security middleware & error handlers ──
 
 init_security(app)
