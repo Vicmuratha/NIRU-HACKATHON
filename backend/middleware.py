@@ -12,7 +12,7 @@ import hashlib
 from datetime import datetime
 from functools import wraps
 from collections import defaultdict
-from threading import Lock
+from threading import Lock, Thread
 
 from flask import request, jsonify, g, current_app
 from werkzeug.utils import secure_filename
@@ -98,6 +98,24 @@ class InMemoryRateLimiter:
 
 
 _limiter = InMemoryRateLimiter()
+
+# Periodic cleanup of stale rate limit buckets (every 60 minutes)
+import atexit
+
+def _schedule_limiter_cleanup():
+    """Run rate limiter cleanup every 60 minutes in a daemon thread."""
+    import time as _time
+    def _cleanup_loop():
+        while True:
+            _time.sleep(3600)
+            try:
+                _limiter.cleanup()
+            except Exception:
+                pass
+    t = Thread(target=_cleanup_loop, daemon=True)
+    t.start()
+
+_schedule_limiter_cleanup()
 
 
 def rate_limit(limit_str: str | None = None):
