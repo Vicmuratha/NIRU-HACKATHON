@@ -57,6 +57,15 @@ class _Base:
         "X-XSS-Protection": "1; mode=block",
         "Referrer-Policy": "strict-origin-when-cross-origin",
         "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "Content-Security-Policy": (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'"
+        ),
     }
 
     # ── Version ──
@@ -108,6 +117,7 @@ _configs = {
 
 
 def get_config():
-    """Return the config class matching FLASK_ENV (default: production)."""
+    """Return a config instance matching FLASK_ENV (default: production)."""
     env = os.getenv("FLASK_ENV", "production").lower()
-    return _configs.get(env, ProductionConfig)
+    cls = _configs.get(env, ProductionConfig)
+    return cls()
