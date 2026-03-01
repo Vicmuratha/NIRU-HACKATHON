@@ -253,6 +253,17 @@ def init_db():
                 CREATE INDEX IF NOT EXISTS idx_history_user_id
                 ON detection_history(user_id)
             ''')
+            db.execute('''
+                CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    token TEXT NOT NULL,
+                    expires_at TEXT NOT NULL,
+                    used INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ''')
             db.commit()
 
 # Improved: Add helper for safe query execution
