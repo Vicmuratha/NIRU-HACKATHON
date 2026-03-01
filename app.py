@@ -130,12 +130,14 @@ def inject_csrf_token():
     return dict(csrf_token=generate_csrf())
 
 # ── CORS ──
-_cors_origins = [
-    'http://localhost:3000',
-    'http://localhost:7860',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:7860',
-]
+_cors_origins = []
+if app.debug or app.config.get('TESTING'):
+    _cors_origins.extend([
+        'http://localhost:3000',
+        'http://localhost:7860',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:7860',
+    ])
 if FRONTEND_URL not in _cors_origins:
     _cors_origins.append(FRONTEND_URL)
 _extra_origins = os.getenv('EXTRA_CORS_ORIGINS', '')
@@ -186,7 +188,7 @@ app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH
 #  DATABASE
 # ══════════════════════════════════════════════════════════════
 
-DB_PATH = config.DATABASE_PATH if config.DATABASE_PATH != ':memory:' else os.path.join(BASE_DIR, 'users.db')
+DB_PATH = config.DATABASE_PATH
 
 # Improved: Use context manager for connections, add WAL mode, enforce foreign keys, better error handling, and connection pooling for SQLite.
 import threading
@@ -933,8 +935,10 @@ def forgot_password():
             reset_url = request.host_url.rstrip('/') + url_for('reset_password', token=raw_token)
             logger.info(f'Password reset requested for {email}')
 
-            # Store the reset URL in session for demo/dev display
-            session['_reset_url'] = reset_url
+            # In development, store the reset URL in session for display
+            # In production, this would be sent via email
+            if app.debug:
+                session['_reset_url'] = reset_url
 
         # Always show the same message to prevent user enumeration
         flash('If an account with that email exists, a password reset link has been generated.', 'success')
@@ -1695,8 +1699,8 @@ def analyze_document():
         save_detection_history(user_id, 'document', file.filename, result)
         return jsonify(result)
     except Exception as e:
-        logger.error(f'Document analysis error: {e}')
-        return jsonify({'error': str(e)}), 500
+        logger.error(f'Document analysis error: {e}', exc_info=True)
+        return jsonify({'error': 'Document analysis failed. Please try again.'}), 500
     finally:
         if os.path.exists(filepath):
             os.remove(filepath)
