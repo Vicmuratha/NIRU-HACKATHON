@@ -95,6 +95,20 @@ app = Flask(
 )
 csrf = CSRFProtect(app)
 
+# Exempt all API routes from CSRF (they use JWT / JSON, not form tokens)
+csrf.exempt('analyze_image')
+csrf.exempt('analyze_audio')
+csrf.exempt('analyze_text')
+csrf.exempt('analyze_whatsapp_forward')
+csrf.exempt('analyze_document')
+csrf.exempt('api_login')
+csrf.exempt('get_profile')
+csrf.exempt('update_profile')
+csrf.exempt('change_password')
+csrf.exempt('upload_profile_picture')
+csrf.exempt('delete_history_item')
+csrf.exempt('health')
+
 # ── Apply config object ──
 app.config.from_object(config)
 app.secret_key = config.SECRET_KEY
