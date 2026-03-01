@@ -1356,7 +1356,8 @@ def get_detection_history():
     per_page = request.args.get('per_page', 20, type=int)
     detection_type = request.args.get('type', None)
 
-    per_page = min(per_page, 100)
+    page = max(1, page)
+    per_page = max(1, min(per_page, 100))
     offset = (page - 1) * per_page
 
     db = get_db()
@@ -1423,6 +1424,18 @@ def delete_history_item(history_id):
 #  API — ALL USERS (for profile page user listing)
 # ══════════════════════════════════════════════════════════════
 
+def _redact_email(email):
+    """Redact email for public display: j***n@example.com."""
+    if not email or '@' not in email:
+        return ''
+    name, domain = email.split('@', 1)
+    if len(name) <= 2:
+        redacted = name[0] + '*' * (len(name) - 1)
+    else:
+        redacted = name[0] + '*' * (len(name) - 2) + name[-1]
+    return f"{redacted}@{domain}"
+
+
 @app.route('/api/users', methods=['GET'])
 def get_all_users():
     """Get all signed-up users (for profile listing)."""
@@ -1433,37 +1446,28 @@ def get_all_users():
     db = get_db()
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
-    per_page = min(per_page, 200)
+    page = max(1, page)
+    per_page = max(1, min(per_page, 200))
     offset = (page - 1) * per_page
 
     total = db.execute('SELECT COUNT(*) as total FROM users').fetchone()['total']
     rows = db.execute(
-        'SELECT id, name, email, bio, location, organization, role, profile_picture, '
-        'auth_provider, created_at, last_login '
-        'FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
+        'SELECT u.id, u.name, u.email, u.bio, u.location, u.organization, u.role, '
+        'u.profile_picture, u.auth_provider, u.created_at, u.last_login, '
+        'COALESCE(h.cnt, 0) as total_scans '
+        'FROM users u '
+        'LEFT JOIN (SELECT user_id, COUNT(*) as cnt FROM detection_history GROUP BY user_id) h '
+        'ON u.id = h.user_id '
+        'ORDER BY u.created_at DESC LIMIT ? OFFSET ?',
         (per_page, offset)
     ).fetchall()
 
     users = []
     for row in rows:
-        scan_count = db.execute(
-            'SELECT COUNT(*) as cnt FROM detection_history WHERE user_id = ?', (row['id'],)
-        ).fetchone()['cnt']
-
-        def redact_email(email):
-            if not email or '@' not in email:
-                return ''
-            name, domain = email.split('@', 1)
-            if len(name) <= 2:
-                redacted = name[0] + '*' * (len(name)-1)
-            else:
-                redacted = name[0] + '*' * (len(name)-2) + name[-1]
-            return f"{redacted}@{domain}"
-
         users.append({
             'id': row['id'],
             'name': row['name'],
-            'email': redact_email(row['email']),
+            'email': _redact_email(row['email']),
             'bio': row['bio'] or '',
             'location': row['location'] or '',
             'organization': row['organization'] or '',
@@ -1472,7 +1476,7 @@ def get_all_users():
             'auth_provider': row['auth_provider'] or 'local',
             'created_at': row['created_at'],
             'last_login': row['last_login'],
-            'total_scans': scan_count,
+            'total_scans': row['total_scans'],
         })
 
     return jsonify({
