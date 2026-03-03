@@ -1,5 +1,5 @@
 """
-SafEye — Gunicorn Production Configuration
+SafEye — Gunicorn Production Configuration v3.2
 Usage:  gunicorn -c gunicorn.conf.py app:app
 """
 
@@ -28,6 +28,11 @@ max_requests_jitter = 50     # Stagger restarts
 limit_request_line = 8190
 limit_request_fields = 100
 
+# ─── Temporary file uploads ───
+# Large media uploads (images, audio) use temp files instead of memory
+tmp_upload_dir = os.getenv("TMP_UPLOAD_DIR", "/tmp/safeye-uploads")
+worker_tmp_dir = "/dev/shm"  # Use RAM-backed filesystem for worker heartbeats
+
 # ─── Logging ───
 accesslog = "-"              # stdout
 errorlog = "-"               # stderr
@@ -46,9 +51,19 @@ preload_app = True
 # Don't leak framework version
 # (handled at response level too, but this covers edge cases)
 
+# ─── Forwarded headers ───
+# Trust X-Forwarded-* headers from reverse proxy (nginx, Cloudflare, etc.)
+forwarded_allow_ips = os.getenv("FORWARDED_ALLOW_IPS", "*")
+secure_scheme_headers = {
+    "X-Forwarded-Proto": "https",
+}
+
+
 # ─── Hooks ───
 def on_starting(server):
-    server.log.info("SafEye production server starting...")
+    server.log.info("SafEye v3.2 production server starting...")
+    # Ensure temp upload directory exists
+    os.makedirs(tmp_upload_dir, exist_ok=True)
 
 
 def post_fork(server, worker):
@@ -57,3 +72,7 @@ def post_fork(server, worker):
 
 def worker_exit(server, worker):
     server.log.info("Worker exited (pid: %s)", worker.pid)
+
+
+def worker_abort(server, worker):
+    server.log.warning("Worker ABORTED (pid: %s) — possible timeout", worker.pid)
