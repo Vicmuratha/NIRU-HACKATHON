@@ -69,7 +69,7 @@ class _Base:
     }
 
     # ── Version ──
-    APP_VERSION = "3.1.0"
+    APP_VERSION = "3.2.0"
 
 
 class DevelopmentConfig(_Base):
