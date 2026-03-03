@@ -108,6 +108,7 @@ csrf.exempt('change_password')
 csrf.exempt('upload_profile_picture')
 csrf.exempt('delete_history_item')
 csrf.exempt('health')
+csrf.exempt('version_info')
 
 # ── Apply config object ──
 app.config.from_object(config)
@@ -1720,6 +1721,30 @@ def serve_upload(filename):
 
 
 # ══════════════════════════════════════════════════════════════
+#  VERSION ENDPOINT
+# ══════════════════════════════════════════════════════════════
+
+@app.route('/api/version', methods=['GET'])
+def version_info():
+    """Return version and build metadata for monitoring dashboards."""
+    return jsonify({
+        'app': 'SafEye',
+        'version': config.APP_VERSION,
+        'platform': 'Kenya Election & Media Integrity Shield',
+        'python_version': os.popen('python3 --version').read().strip(),
+        'environment': os.getenv('FLASK_ENV', 'production'),
+        'capabilities': [
+            'deepfake_detection',
+            'audio_analysis',
+            'fake_news_classification',
+            'whatsapp_forward_checking',
+            'document_verification',
+            'election_shield',
+        ],
+    })
+
+
+# ══════════════════════════════════════════════════════════════
 #  HEALTH CHECK  (cached for 30 s to reduce model-status overhead)
 # ══════════════════════════════════════════════════════════════
 
@@ -1780,7 +1805,7 @@ if __name__ == '__main__':
     logger.info("SafEye v%s starting on %s:%d (debug=%s)", config.APP_VERSION, host, port, is_debug)
     print("=" * 55)
     print(f"  SafEye — Unified Backend v{config.APP_VERSION}")
-    print("  Auth + Detection API + Profiles + History")
+    print("  Auth + Detection API + Profiles + History + Election Shield")
     print(f"  Environment: {os.getenv('FLASK_ENV', 'production')}")
     print(f"  Running on http://{host}:{port}")
     print("=" * 55)
