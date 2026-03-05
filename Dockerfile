@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 FROM python:3.11-slim AS runtime
 
 LABEL maintainer="SafEye Team" \
-      version="3.2.0" \
+      version="3.3.0" \
       description="SafEye — AI-powered deepfake and misinformation detection" \
       org.opencontainers.image.source="https://github.com/Vicmuratha/NIRU-HACKATHON" \
       org.opencontainers.image.licenses="MIT"

@@ -7,7 +7,7 @@
 
 # Default target
 help: ## Show this help message
-	@echo "SafEye v3.2 — Available commands:"
+	@echo "SafEye v3.3 — Available commands:"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
