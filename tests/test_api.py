@@ -438,6 +438,91 @@ class TestInputSanitization:
                           content_type='application/json')
         assert resp.status_code in (200, 500)
 
+
+# ═══════════════════════════════════════════════════════════
+#  VERSION ENDPOINT
+# ═══════════════════════════════════════════════════════════
+
+class TestVersionEndpoint:
+    """Tests for GET /api/version — build & capability metadata."""
+
+    def test_version_returns_200(self, client):
+        resp = client.get('/api/version')
+        assert resp.status_code == 200
+
+    def test_version_has_required_fields(self, client):
+        data = client.get('/api/version').get_json()
+        assert data['app'] == 'SafEye'
+        assert 'version' in data
+        assert 'platform' in data
+        assert 'environment' in data
+
+    def test_version_lists_capabilities(self, client):
+        data = client.get('/api/version').get_json()
+        caps = data['capabilities']
+        assert isinstance(caps, list)
+        assert 'deepfake_detection' in caps
+        assert 'audio_analysis' in caps
+        assert 'fake_news_classification' in caps
+        assert 'whatsapp_forward_checking' in caps
+        assert 'document_verification' in caps
+        assert 'election_shield' in caps
+
+    def test_version_includes_python_version(self, client):
+        data = client.get('/api/version').get_json()
+        assert 'python_version' in data
+        assert 'Python' in data['python_version'] or '3.' in data['python_version']
+
+
+# ═══════════════════════════════════════════════════════════
+#  CORS HEADERS
+# ═══════════════════════════════════════════════════════════
+
+class TestCORSHeaders:
+    """Verify CORS headers on API responses."""
+
+    def test_options_preflight_allowed(self, client):
+        resp = client.options('/api/health')
+        # Should not be 405 Method Not Allowed
+        assert resp.status_code in (200, 204)
+
+    def test_cors_allows_frontend_origin(self, client):
+        resp = client.get('/api/health', headers={
+            'Origin': 'http://localhost:3000'
+        })
+        acao = resp.headers.get('Access-Control-Allow-Origin', '')
+        assert 'localhost:3000' in acao or acao == '*'
+
+
+# ═══════════════════════════════════════════════════════════
+#  PROFILE UPDATE VALIDATION
+# ═══════════════════════════════════════════════════════════
+
+class TestProfileValidation:
+    """Tests for PUT /api/profile input validation."""
+
+    def test_profile_update_requires_auth(self, client):
+        resp = client.put('/api/profile',
+                         data=json.dumps({'name': 'Hacker'}),
+                         content_type='application/json')
+        assert resp.status_code == 401
+
+    def test_password_change_requires_auth(self, client):
+        resp = client.put('/api/profile/password',
+                         data=json.dumps({
+                             'current_password': 'old',
+                             'new_password': 'new12345'
+                         }),
+                         content_type='application/json')
+        assert resp.status_code == 401
+
+    def test_profile_picture_upload_requires_auth(self, client):
+        data = {'file': (io.BytesIO(b'\x89PNG\r\n'), 'photo.png')}
+        resp = client.post('/api/profile/picture',
+                          data=data,
+                          content_type='multipart/form-data')
+        assert resp.status_code == 401
+
     def test_sanitize_text_function_directly(self):
         from backend.middleware import sanitize_text
         assert sanitize_text('<b>hello</b>') == 'hello'
