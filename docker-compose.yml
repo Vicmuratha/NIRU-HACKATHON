@@ -1,5 +1,8 @@
 # ═══════════════════════════════════════════════════════════
 #  SafEye — Docker Compose (Development & Production)
+#  Usage:
+#    Development:  docker compose --profile dev up
+#    Production:   docker compose up -d
 # ═══════════════════════════════════════════════════════════
 
 services:
@@ -34,6 +37,11 @@ services:
           memory: 4G
         reservations:
           memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ─── Frontend (Vite dev server — development only) ───
   frontend:
