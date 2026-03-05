@@ -2,7 +2,8 @@
 
 **Period**: February 9 – February 28, 2026 (20 days)  
 **Team**: NIRU  
-**Repo**: github.com/Vicmuratha/NIRU-HACKATHON
+**Repo**: github.com/Vicmuratha/NIRU-HACKATHON  
+**Last Updated**: March 5, 2026
 
 ---
 
@@ -26,20 +27,20 @@
 
 ### Gaps Identified
 
-| # | Gap | Severity | Notes |
-|---|-----|----------|-------|
-| G1 | **Models not fine-tuned** — generic EfficientNet-B4, heuristic audio, generic roberta text | **Critical** | Core deliverable |
-| G2 | **No persistent database** — in-memory `users_db = {}`, detection logs in flat JSON | High | Lost on restart |
-| G3 | **Tests broken** — import non-existent `detectors.*` modules | High | No CI possible |
-| G4 | **No rate limiting / file validation** — any file type accepted, no abuse prevention | High | Security risk |
-| G5 | **Duplicate code paths** — `logic.py` + `simple_app.py` + `backend/app.py` all do detection | Medium | Maintenance burden |
-| G6 | **No video support** | Medium | Feature gap |
-| G7 | **No analysis history in UI** — scans are fire-and-forget | Medium | UX gap |
-| G8 | **No CI/CD pipeline** | Medium | Dev velocity |
-| G9 | **Missing text model blobs in Azure** — `model.safetensors` + `spm.model` | Medium | Fresh deploy breaks |
-| G10 | **Auth not wired to React** — Flask and Vite on separate ports | Medium | Split UX |
-| G11 | **No Swahili / Kenya-specific text model** | Low | Hackathon context |
-| G12 | **Confidence scoring bug** — values > 1.0 in detection_log | Low | Incorrect output |
+| # | Gap | Severity | Status |
+|---|-----|----------|--------|
+| G1 | **Models not fine-tuned** — generic EfficientNet-B4, heuristic audio, generic roberta text | **Critical** | Open |
+| G2 | **No persistent database** — in-memory `users_db = {}`, detection logs in flat JSON | High | ✅ Fixed — SQLite persistence added |
+| G3 | **Tests broken** — import non-existent `detectors.*` modules | High | ✅ Fixed — full test suite with conftest fixtures |
+| G4 | **No rate limiting / file validation** — any file type accepted, no abuse prevention | High | ✅ Fixed — rate limiting + file extension validation |
+| G5 | **Duplicate code paths** — `logic.py` + `simple_app.py` + `backend/app.py` all do detection | Medium | ✅ Fixed — consolidated into unified `app.py` |
+| G6 | **No video support** | Medium | Open |
+| G7 | **No analysis history in UI** — scans are fire-and-forget | Medium | ✅ Fixed — HistoryPanel component + `/api/history` |
+| G8 | **No CI/CD pipeline** | Medium | ✅ Fixed — GitHub Actions CI with lint + test + Docker build |
+| G9 | **Missing text model blobs in Azure** — `model.safetensors` + `spm.model` | Medium | ✅ Fixed — Azure Blob config updated |
+| G10 | **Auth not wired to React** — Flask and Vite on separate ports | Medium | ✅ Fixed — unified server + Vite proxy |
+| G11 | **No Swahili / Kenya-specific text model** | Low | Partial — WhatsApp checker has Swahili patterns |
+| G12 | **Confidence scoring bug** — values > 1.0 in detection_log | Low | ✅ Fixed — clamped to 0–100 range |
 
 ---
 
@@ -271,9 +272,20 @@ Week 1 (Feb 9–14)           Week 2 (Feb 15–21)            Week 3 (Feb 22–2
 ## Priority Stack (if time runs short)
 
 1. **Must Have**: Fine-tuned image model + audio model with real inference + working demo
-2. **Should Have**: Database, video support, history dashboard, CI
-3. **Nice to Have**: Swahili support, Swagger docs, monitoring, rate limiting
+2. **Should Have**: ~~Database~~✅, video support, ~~history dashboard~~✅, ~~CI~~✅
+3. **Nice to Have**: Swahili support, Swagger docs, monitoring, ~~rate limiting~~✅
 
 ---
+
+## Post-Hackathon Improvements (March 2026+)
+
+| Area | Description | Priority |
+|------|-------------|----------|
+| Video deepfake detection | Frame-by-frame + temporal analysis for video files | High |
+| Swagger/OpenAPI docs | Interactive API documentation at `/api/docs` | Medium |
+| Model fine-tuning pipeline | Scripts for retraining on new data | Medium |
+| Swahili NLP model | Fine-tune multilingual model on Kenyan news corpus | Medium |
+| Azure App Service deploy | Production deployment with managed SSL | Low |
+| Application Insights | Request tracing, latency monitoring | Low |
 
 *Last updated: February 8, 2026*
