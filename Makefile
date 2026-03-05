@@ -3,7 +3,7 @@
 #  Common commands for development, testing, and deployment
 # ═══════════════════════════════════════════════════════════
 
-.PHONY: help install dev test lint docker-build docker-up docker-down clean models
+.PHONY: help install dev test lint docker-build docker-up docker-down clean models pre-commit pre-commit-run
 
 # Default target
 help: ## Show this help message
@@ -37,6 +37,16 @@ test: ## Run all tests with pytest
 
 test-cov: ## Run tests with coverage report
 	FLASK_ENV=testing pytest --cov=backend --cov-report=term-missing -v
+
+lint: ## Run flake8 linter on backend code
+	flake8 backend/ --max-line-length=120 --max-complexity=15 --statistics
+
+pre-commit: ## Install pre-commit hooks
+	pip install pre-commit
+	pre-commit install
+
+pre-commit-run: ## Run pre-commit on all files
+	pre-commit run --all-files
 
 # ─── Docker ───
 
