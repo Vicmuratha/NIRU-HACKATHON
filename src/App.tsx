@@ -14,7 +14,7 @@ import {
   Sparkles, Globe, Users, ChevronDown,
   CheckCircle2, Clock, TrendingUp, Menu, XIcon,
   User, MapPin, Building2, Phone, Mail, Edit3, Save, Trash2, History,
-  Sun, Moon
+  Sun, Moon, Video
 } from 'lucide-react';
 
 // ─── TYPES ───
@@ -95,7 +95,7 @@ interface AllUser {
   total_scans: number;
 }
 
-type AnalysisTab = 'image' | 'audio' | 'text' | 'forward' | 'document';
+type AnalysisTab = 'image' | 'audio' | 'text' | 'forward' | 'document' | 'video';
 type AppView = 'home' | 'analyze' | 'profile' | 'history';
 
 // ─── API URL ───
@@ -1068,6 +1068,7 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
     { key: 'text', label: 'Text', icon: <Type size={16} />, desc: 'Paste text content to verify authenticity' },
     { key: 'forward', label: 'WhatsApp', icon: <MessageSquare size={16} />, desc: 'Paste a WhatsApp forward to check for misinformation' },
     { key: 'document', label: 'Document', icon: <FileCheck size={16} />, desc: 'Upload a document image or news screenshot to verify' },
+    { key: 'video', label: 'Video', icon: <Video size={16} />, desc: 'Upload a video to detect deepfake manipulation (max 30s)' },
   ];
 
   const resetState = useCallback(() => {
@@ -1089,6 +1090,8 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
     setResult(null);
     setError(null);
     if ((tab === 'image' || tab === 'document') && f.type.startsWith('image/')) {
+      setPreviewUrl(URL.createObjectURL(f));
+    } else if (tab === 'video' && f.type.startsWith('video/')) {
       setPreviewUrl(URL.createObjectURL(f));
     } else {
       setPreviewUrl(null);
@@ -1257,7 +1260,7 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
                     <input
                       ref={fileRef}
                       type="file"
-                      accept={tab === 'image' ? 'image/*' : tab === 'document' ? 'image/*' : 'audio/*'}
+                      accept={tab === 'image' ? 'image/*' : tab === 'document' ? 'image/*' : tab === 'video' ? 'video/*' : 'audio/*'}
                       className="hidden"
                       onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
                     />
@@ -1281,10 +1284,19 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
                             </div>
                           )}
                         </div>
+                      ) : previewUrl && tab === 'video' ? (
+                        <div className="relative max-w-sm mx-auto">
+                          <video src={previewUrl} className="rounded-2xl max-h-48 sm:max-h-64 mx-auto object-contain shadow-2xl shadow-black/30" controls muted />
+                          {loading && (
+                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                              <div className="spinner" aria-label="Analyzing file" />
+                            </div>
+                          )}
+                        </div>
                       ) : file ? (
                         <div className="flex flex-col items-center gap-3 sm:gap-4 py-4 sm:py-6">
                           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-                            {tab === 'image' ? <Image size={28} className="text-violet-400" aria-label="Image file icon" /> : tab === 'document' ? <FileCheck size={28} className="text-amber-400" aria-label="Document file icon" /> : <Mic size={28} className="text-cyan-400" aria-label="Audio file icon" />}
+                            {tab === 'image' ? <Image size={28} className="text-violet-400" aria-label="Image file icon" /> : tab === 'document' ? <FileCheck size={28} className="text-amber-400" aria-label="Document file icon" /> : tab === 'video' ? <Video size={28} className="text-rose-400" aria-label="Video file icon" /> : <Mic size={28} className="text-cyan-400" aria-label="Audio file icon" />}
                           </div>
                           <div className="text-center">
                             <div className="font-semibold text-white text-sm">{file.name}</div>
@@ -1305,12 +1317,12 @@ const AnalysisPanel: React.FC<{ demoMode?: boolean; onDemoConsumed?: () => void 
                           </div>
                           <div className="text-center px-4">
                             <p className="text-white font-semibold text-sm sm:text-base mb-1.5">
-                              Drop your {tab === 'image' ? 'image' : tab === 'document' ? 'document screenshot' : 'audio file'} here
+                              Drop your {tab === 'image' ? 'image' : tab === 'document' ? 'document screenshot' : tab === 'video' ? 'video' : 'audio file'} here
                             </p>
                             <p className="text-xs sm:text-sm text-slate-500">or click to browse &middot; Max 50 MB</p>
                           </div>
                           <div className="flex gap-2 text-[11px] text-slate-500">
-                            {(tab === 'image' ? ['PNG', 'JPG', 'WEBP', 'BMP'] : tab === 'document' ? ['PNG', 'JPG', 'WEBP', 'Screenshots'] : ['WAV', 'MP3', 'FLAC', 'OGG']).map(f => (
+                            {(tab === 'image' ? ['PNG', 'JPG', 'WEBP', 'BMP'] : tab === 'document' ? ['PNG', 'JPG', 'WEBP', 'Screenshots'] : tab === 'video' ? ['MP4', 'AVI', 'MOV', 'WEBM'] : ['WAV', 'MP3', 'FLAC', 'OGG']).map(f => (
                               <span key={f} className="format-badge">{f}</span>
                             ))}
                           </div>
@@ -1698,6 +1710,7 @@ const ProfilePage: React.FC<{ user: UserInfo | null; initialTab?: 'overview' | '
       case 'text': return <Type size={14} />;
       case 'forward': return <MessageSquare size={14} />;
       case 'document': return <FileCheck size={14} />;
+      case 'video': return <Video size={14} />;
       default: return <Scan size={14} />;
     }
   };

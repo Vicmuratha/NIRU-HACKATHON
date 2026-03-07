@@ -34,7 +34,7 @@
 | G3 | **Tests broken** — import non-existent `detectors.*` modules | High | ✅ Fixed — full test suite with conftest fixtures |
 | G4 | **No rate limiting / file validation** — any file type accepted, no abuse prevention | High | ✅ Fixed — rate limiting + file extension validation |
 | G5 | **Duplicate code paths** — `logic.py` + `simple_app.py` + `backend/app.py` all do detection | Medium | ✅ Fixed — consolidated into unified `app.py` |
-| G6 | **No video support** | Medium | Open |
+| G6 | **No video support** | Medium | ✅ Fixed — keyframe extraction + per-frame analysis |
 | G7 | **No analysis history in UI** — scans are fire-and-forget | Medium | ✅ Fixed — HistoryPanel component + `/api/history` |
 | G8 | **No CI/CD pipeline** | Medium | ✅ Fixed — GitHub Actions CI with lint + test + Docker build |
 | G9 | **Missing text model blobs in Azure** — `model.safetensors` + `spm.model` | Medium | ✅ Fixed — Azure Blob config updated |

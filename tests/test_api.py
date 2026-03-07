@@ -104,6 +104,17 @@ class TestAnalysisValidation:
         resp = client.post('/api/analyze/document')
         assert resp.status_code == 400
 
+    def test_video_rejects_no_file(self, client):
+        resp = client.post('/api/analyze/video')
+        assert resp.status_code == 400
+
+    def test_video_rejects_invalid_extension(self, client):
+        data = {'file': (io.BytesIO(b'not a real file'), 'test.txt')}
+        resp = client.post('/api/analyze/video',
+                          data=data,
+                          content_type='multipart/form-data')
+        assert resp.status_code == 400
+
     def test_image_rejects_invalid_extension(self, client):
         data = {'file': (io.BytesIO(b'not a real file'), 'test.exe')}
         resp = client.post('/api/analyze/image',
@@ -189,6 +200,47 @@ class TestProfileAPI:
     def test_users_requires_auth(self, client):
         resp = client.get('/api/users')
         assert resp.status_code == 401
+
+
+# ═══════════════════════════════════════════════════════════
+#  PLATFORM STATS
+# ═══════════════════════════════════════════════════════════
+
+class TestStatsEndpoint:
+    def test_stats_returns_200(self, client):
+        resp = client.get('/api/stats')
+        assert resp.status_code == 200
+
+    def test_stats_has_required_fields(self, client):
+        data = client.get('/api/stats').get_json()
+        assert 'total_scans' in data
+        assert 'threats_detected' in data
+        assert 'registered_users' in data
+        assert 'by_type' in data
+        assert isinstance(data['by_type'], dict)
+        assert 'video' in data['by_type']
+
+    def test_stats_has_recent_threats(self, client):
+        data = client.get('/api/stats').get_json()
+        assert 'recent_threats' in data
+        assert isinstance(data['recent_threats'], list)
+
+
+# ═══════════════════════════════════════════════════════════
+#  VERSION ENDPOINT
+# ═══════════════════════════════════════════════════════════
+
+class TestVersionEndpoint:
+    def test_version_returns_200(self, client):
+        resp = client.get('/api/version')
+        assert resp.status_code == 200
+
+    def test_version_has_capabilities(self, client):
+        data = client.get('/api/version').get_json()
+        assert 'capabilities' in data
+        assert 'video_analysis' in data['capabilities']
+        assert 'deepfake_detection' in data['capabilities']
+        assert data['app'] == 'SafEye'
 
 
 # ═══════════════════════════════════════════════════════════

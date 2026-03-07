@@ -32,7 +32,10 @@ class _Base:
     UPLOAD_FOLDER = os.path.join(BASE_DIR, os.getenv("UPLOAD_FOLDER", "uploads"))
     ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp", "tiff"}
     ALLOWED_AUDIO_EXTENSIONS = {"wav", "mp3", "ogg", "flac", "m4a", "aac"}
+    ALLOWED_VIDEO_EXTENSIONS = {"mp4", "avi", "mov", "mkv", "webm"}
     ALLOWED_DOC_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS  # documents are images for OCR
+    MAX_VIDEO_DURATION = int(os.getenv("MAX_VIDEO_DURATION", 30))  # seconds
+    VIDEO_KEYFRAMES = int(os.getenv("VIDEO_KEYFRAMES", 5))  # frames to extract
 
     # ── Models ──
     MODELS_DIR = os.path.join(BASE_DIR, os.getenv("MODELS_DIR", "models"))
@@ -69,7 +72,7 @@ class _Base:
     }
 
     # ── Version ──
-    APP_VERSION = "3.3.0"
+    APP_VERSION = "3.4.0"
 
 
 class DevelopmentConfig(_Base):

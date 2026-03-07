@@ -1,5 +1,5 @@
 """
-SafEye — Gunicorn Production Configuration v3.2
+SafEye — Gunicorn Production Configuration v3.4
 Usage:  gunicorn -c gunicorn.conf.py app:app
 """
 
@@ -61,7 +61,7 @@ secure_scheme_headers = {
 
 # ─── Hooks ───
 def on_starting(server):
-    server.log.info("SafEye v3.2 production server starting...")
+    server.log.info("SafEye v3.4 production server starting...")
     # Ensure temp upload directory exists
     os.makedirs(tmp_upload_dir, exist_ok=True)
 

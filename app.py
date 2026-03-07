@@ -101,6 +101,7 @@ csrf.exempt('analyze_audio')
 csrf.exempt('analyze_text')
 csrf.exempt('analyze_whatsapp_forward')
 csrf.exempt('analyze_document')
+csrf.exempt('analyze_video')
 csrf.exempt('api_login')
 csrf.exempt('get_profile')
 csrf.exempt('update_profile')
@@ -109,6 +110,7 @@ csrf.exempt('upload_profile_picture')
 csrf.exempt('delete_history_item')
 csrf.exempt('health')
 csrf.exempt('version_info')
+csrf.exempt('platform_stats')
 
 # ── Apply config object ──
 app.config.from_object(config)
@@ -1630,6 +1632,147 @@ def analyze_whatsapp_forward():
     return jsonify(result)
 
 
+@app.route('/api/analyze/video', methods=['POST'])
+@rate_limit(config.RATELIMIT_ANALYSIS)
+def analyze_video():
+    """Analyse a video by extracting keyframes and running deepfake detection on each."""
+    file, err = validate_file_upload('file', config.ALLOWED_VIDEO_EXTENSIONS)
+    if err:
+        return err
+
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4().hex}_{secure_filename(file.filename)}")
+    file.save(filepath)
+    frame_dir = None
+
+    try:
+        import subprocess
+        import tempfile
+
+        # Get video duration using ffprobe
+        probe_cmd = [
+            'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+            '-of', 'default=noprint_wrappers=1:nokey=1', filepath
+        ]
+        try:
+            duration_str = subprocess.check_output(probe_cmd, stderr=subprocess.STDOUT, timeout=15).decode().strip()
+            duration = float(duration_str)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as e:
+            logger.error(f"ffprobe failed: {e}")
+            return jsonify({'error': 'Could not read video file. Ensure it is a valid video.'}), 400
+
+        max_duration = config.MAX_VIDEO_DURATION
+        if duration > max_duration:
+            return jsonify({'error': f'Video too long ({duration:.0f}s). Maximum is {max_duration}s.'}), 400
+
+        if duration < 0.5:
+            return jsonify({'error': 'Video too short (minimum 0.5s).'}), 400
+
+        # Extract keyframes
+        num_frames = config.VIDEO_KEYFRAMES
+        frame_dir = tempfile.mkdtemp(prefix='safeye_video_')
+        timestamps = [duration * i / num_frames for i in range(num_frames)]
+
+        extracted_frames = []
+        for i, ts in enumerate(timestamps):
+            frame_path = os.path.join(frame_dir, f'frame_{i:03d}.jpg')
+            extract_cmd = [
+                'ffmpeg', '-y', '-ss', str(ts), '-i', filepath,
+                '-frames:v', '1', '-q:v', '2', frame_path
+            ]
+            try:
+                subprocess.run(extract_cmd, check=True, capture_output=True, timeout=15)
+                if os.path.exists(frame_path) and os.path.getsize(frame_path) > 100:
+                    extracted_frames.append((frame_path, round(ts, 2)))
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                continue
+
+        if not extracted_frames:
+            return jsonify({'error': 'Could not extract any frames from video.'}), 400
+
+        # Analyse each frame
+        frame_results = []
+        for frame_path, timestamp in extracted_frames:
+            try:
+                frame_result = image_detector.analyze_image(frame_path)
+                frame_results.append({
+                    'timestamp': timestamp,
+                    'risk_score': frame_result.get('risk_score', 0),
+                    'verdict': frame_result.get('verdict', 'UNKNOWN'),
+                    'findings': frame_result.get('findings', []),
+                    'details': frame_result.get('details', {}),
+                })
+            except Exception as e:
+                logger.warning(f"Frame analysis failed at {timestamp}s: {e}")
+                frame_results.append({
+                    'timestamp': timestamp,
+                    'risk_score': 0,
+                    'verdict': 'ERROR',
+                    'findings': [f'Analysis failed: {str(e)}'],
+                    'details': {},
+                })
+
+        # Overall risk = max risk across frames
+        overall_risk = max(fr['risk_score'] for fr in frame_results) if frame_results else 0
+        avg_risk = sum(fr['risk_score'] for fr in frame_results) / len(frame_results) if frame_results else 0
+        deepfake_frames = sum(1 for fr in frame_results if fr['verdict'] == 'LIKELY_DEEPFAKE')
+
+        verdict = 'LIKELY_DEEPFAKE' if overall_risk > 65 else 'AUTHENTIC' if overall_risk < 40 else 'REVIEW_REQUIRED'
+
+        kenya_warnings = []
+        if overall_risk > 70:
+            kenya_warnings.append({
+                'type': 'VIDEO_MANIPULATION', 'severity': 'CRITICAL',
+                'warning': 'This video shows signs of deepfake manipulation. Manipulated videos of politicians are an emerging threat ahead of elections.',
+                'action': 'Report to NCIC: complaints@cohesion.or.ke | DCI: reportcrime@dci.go.ke'
+            })
+        elif overall_risk > 50:
+            kenya_warnings.append({
+                'type': 'VIDEO_SUSPICIOUS', 'severity': 'HIGH',
+                'warning': 'Some frames in this video show manipulation indicators. Verify with official sources.',
+                'action': 'Check PesaCheck.org for fact-checks before sharing.'
+            })
+
+        result = {
+            'risk_score': round(overall_risk, 1),
+            'verdict': verdict,
+            'confidence': round(max(0.6, avg_risk / 100), 2),
+            'findings': [
+                f'Analyzed {len(frame_results)} keyframes from {duration:.1f}s video',
+                f'Highest frame risk: {overall_risk:.1f}%',
+                f'Average frame risk: {avg_risk:.1f}%',
+                f'Deepfake frames: {deepfake_frames}/{len(frame_results)}',
+            ],
+            'kenya_warnings': kenya_warnings,
+            'is_authentic': overall_risk < 40,
+            'details': {
+                'duration': round(duration, 1),
+                'frames_analyzed': len(frame_results),
+                'deepfake_frames': deepfake_frames,
+                'max_risk': round(overall_risk, 1),
+                'avg_risk': round(avg_risk, 1),
+            },
+            'frame_analysis': frame_results,
+        }
+
+        user_id = get_current_user_id()
+        save_detection_history(user_id, 'video', file.filename, result)
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f'Video analysis error: {e}', exc_info=True)
+        return jsonify({'error': 'Video analysis failed. Please try again.'}), 500
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        # Cleanup extracted frames
+        import shutil
+        try:
+            if frame_dir and os.path.isdir(frame_dir):
+                shutil.rmtree(frame_dir, ignore_errors=True)
+        except Exception:
+            pass
+
+
 @app.route('/api/analyze/document', methods=['POST'])
 @rate_limit(config.RATELIMIT_ANALYSIS)
 def analyze_document():
@@ -1721,6 +1864,60 @@ def serve_upload(filename):
 
 
 # ══════════════════════════════════════════════════════════════
+#  PLATFORM STATISTICS (public dashboard stats)
+# ══════════════════════════════════════════════════════════════
+
+@app.route('/api/stats', methods=['GET'])
+def platform_stats():
+    """Return aggregate platform statistics for the public dashboard."""
+    db = get_db()
+
+    totals = db.execute('''
+        SELECT
+            COUNT(*) as total_scans,
+            COALESCE(SUM(CASE WHEN verdict IN ('LIKELY_DEEPFAKE', 'LIKELY_MISINFORMATION', 'LIKELY_FORGED', 'LIKELY_MANIPULATED') THEN 1 ELSE 0 END), 0) as threats_detected,
+            COALESCE(SUM(CASE WHEN verdict = 'AUTHENTIC' OR verdict = 'APPEARS_GENUINE' THEN 1 ELSE 0 END), 0) as authentic_count,
+            COALESCE(SUM(CASE WHEN detection_type = 'image' THEN 1 ELSE 0 END), 0) as image_scans,
+            COALESCE(SUM(CASE WHEN detection_type = 'audio' THEN 1 ELSE 0 END), 0) as audio_scans,
+            COALESCE(SUM(CASE WHEN detection_type = 'text' THEN 1 ELSE 0 END), 0) as text_scans,
+            COALESCE(SUM(CASE WHEN detection_type = 'forward' THEN 1 ELSE 0 END), 0) as forward_scans,
+            COALESCE(SUM(CASE WHEN detection_type = 'document' THEN 1 ELSE 0 END), 0) as document_scans,
+            COALESCE(SUM(CASE WHEN detection_type = 'video' THEN 1 ELSE 0 END), 0) as video_scans,
+            COALESCE(AVG(risk_score), 0) as avg_risk_score
+        FROM detection_history
+    ''').fetchone()
+
+    user_count = db.execute('SELECT COUNT(*) as cnt FROM users').fetchone()['cnt']
+
+    # Recent threats (last 7 days)
+    recent_threats = db.execute('''
+        SELECT detection_type, COUNT(*) as count
+        FROM detection_history
+        WHERE verdict IN ('LIKELY_DEEPFAKE', 'LIKELY_MISINFORMATION', 'LIKELY_FORGED', 'LIKELY_MANIPULATED')
+          AND created_at >= datetime('now', '-7 days')
+        GROUP BY detection_type
+        ORDER BY count DESC
+    ''').fetchall()
+
+    return jsonify({
+        'total_scans': totals['total_scans'],
+        'threats_detected': totals['threats_detected'],
+        'authentic_count': totals['authentic_count'],
+        'registered_users': user_count,
+        'avg_risk_score': round(totals['avg_risk_score'], 1),
+        'by_type': {
+            'image': totals['image_scans'],
+            'audio': totals['audio_scans'],
+            'text': totals['text_scans'],
+            'forward': totals['forward_scans'],
+            'document': totals['document_scans'],
+            'video': totals['video_scans'],
+        },
+        'recent_threats': [{'type': r['detection_type'], 'count': r['count']} for r in recent_threats],
+    }), 200
+
+
+# ══════════════════════════════════════════════════════════════
 #  VERSION ENDPOINT
 # ══════════════════════════════════════════════════════════════
 
@@ -1739,6 +1936,7 @@ def version_info():
             'fake_news_classification',
             'whatsapp_forward_checking',
             'document_verification',
+            'video_analysis',
             'election_shield',
         ],
     })
@@ -1780,6 +1978,7 @@ def health():
             'whatsapp_checker': True,
             'document_verifier': True,
             'news_screenshot_detector': True,
+            'video_analysis': True,
             'audio_context': True,
         }
     }
