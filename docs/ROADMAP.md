@@ -3,7 +3,7 @@
 **Period**: February 9 – February 28, 2026 (20 days)  
 **Team**: NIRU  
 **Repo**: github.com/Vicmuratha/NIRU-HACKATHON  
-**Last Updated**: March 5, 2026
+**Last Updated**: March 10, 2026
 
 ---
 
@@ -24,6 +24,10 @@
 | Dockerfile + deploy_package | ✅ | CPU-only torch, gunicorn, health check |
 | Vite build pipeline | ✅ | Builds clean, 0 TS errors |
 | Detection logging | ✅ | JSONL to data/detection_log.json |
+| Analytics trend API | ✅ | `/api/analytics/trends` — daily scan counts, type breakdown, top threats |
+| Threat intelligence feed | ✅ | `/api/threats/recent` — live feed of detected threats |
+| Report export API | ✅ | `/api/report/<id>` — structured, shareable detection reports with Kenya legal context |
+| System health metrics | ✅ | Health endpoint includes CPU load, memory, disk, uptime |
 
 ### Gaps Identified
 
@@ -41,6 +45,8 @@
 | G10 | **Auth not wired to React** — Flask and Vite on separate ports | Medium | ✅ Fixed — unified server + Vite proxy |
 | G11 | **No Swahili / Kenya-specific text model** | Low | Partial — WhatsApp checker has Swahili patterns |
 | G12 | **Confidence scoring bug** — values > 1.0 in detection_log | Low | ✅ Fixed — clamped to 0–100 range |
+| G13 | **No analytics / trend data** | Medium | ✅ Fixed — analytics trends API + threat feed |
+| G14 | **No shareable reports** | Medium | ✅ Fixed — report export with legal framework |
 
 ---
 

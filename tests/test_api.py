@@ -32,6 +32,17 @@ class TestHealthEndpoint:
         assert modules['election_shield'] is True
         assert modules['whatsapp_checker'] is True
 
+    def test_health_has_system_metrics(self, client):
+        """Health endpoint should include system resource metrics."""
+        import app as _app
+        _app._health_cache["data"] = None
+        _app._health_cache["expires"] = 0.0
+
+        data = client.get('/api/health').get_json()
+        assert 'system' in data
+        assert 'uptime_seconds' in data
+        assert data['uptime_seconds'] >= 0
+
     def test_health_cache_header_present(self, client):
         """First call should be a cache MISS, second within TTL a HIT."""
         # Reset the module-level cache so this test is deterministic
@@ -227,6 +238,67 @@ class TestStatsEndpoint:
 
 
 # ═══════════════════════════════════════════════════════════
+#  ANALYTICS TRENDS
+# ═══════════════════════════════════════════════════════════
+
+class TestAnalyticsTrends:
+    def test_trends_returns_200(self, client):
+        resp = client.get('/api/analytics/trends')
+        assert resp.status_code == 200
+
+    def test_trends_has_required_fields(self, client):
+        data = client.get('/api/analytics/trends').get_json()
+        assert 'period_days' in data
+        assert 'daily' in data
+        assert 'by_type' in data
+        assert 'top_threats' in data
+        assert isinstance(data['daily'], list)
+        assert isinstance(data['by_type'], list)
+
+    def test_trends_respects_days_param(self, client):
+        data = client.get('/api/analytics/trends?days=7').get_json()
+        assert data['period_days'] == 7
+
+    def test_trends_clamps_max_days(self, client):
+        data = client.get('/api/analytics/trends?days=999').get_json()
+        assert data['period_days'] == 90
+
+
+# ═══════════════════════════════════════════════════════════
+#  THREAT FEED
+# ═══════════════════════════════════════════════════════════
+
+class TestThreatFeed:
+    def test_threats_returns_200(self, client):
+        resp = client.get('/api/threats/recent')
+        assert resp.status_code == 200
+
+    def test_threats_has_required_fields(self, client):
+        data = client.get('/api/threats/recent').get_json()
+        assert 'count' in data
+        assert 'threats' in data
+        assert isinstance(data['threats'], list)
+
+    def test_threats_respects_limit(self, client):
+        data = client.get('/api/threats/recent?limit=5').get_json()
+        assert data['count'] <= 5
+
+
+# ═══════════════════════════════════════════════════════════
+#  REPORT EXPORT
+# ═══════════════════════════════════════════════════════════
+
+class TestReportExport:
+    def test_report_requires_auth(self, client):
+        resp = client.get('/api/report/1')
+        assert resp.status_code == 401
+
+    def test_report_not_found(self, authenticated_client):
+        resp = authenticated_client.get('/api/report/99999')
+        assert resp.status_code in (404,)
+
+
+# ═══════════════════════════════════════════════════════════
 #  VERSION ENDPOINT
 # ═══════════════════════════════════════════════════════════
 
@@ -240,6 +312,9 @@ class TestVersionEndpoint:
         assert 'capabilities' in data
         assert 'video_analysis' in data['capabilities']
         assert 'deepfake_detection' in data['capabilities']
+        assert 'analytics_trends' in data['capabilities']
+        assert 'threat_feed' in data['capabilities']
+        assert 'report_export' in data['capabilities']
         assert data['app'] == 'SafEye'
 
 

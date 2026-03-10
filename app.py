@@ -111,6 +111,9 @@ csrf.exempt('delete_history_item')
 csrf.exempt('health')
 csrf.exempt('version_info')
 csrf.exempt('platform_stats')
+csrf.exempt('analytics_trends')
+csrf.exempt('export_report')
+csrf.exempt('recent_threats')
 
 # ── Apply config object ──
 app.config.from_object(config)
@@ -1864,6 +1867,178 @@ def serve_upload(filename):
 
 
 # ══════════════════════════════════════════════════════════════
+#  ANALYTICS — TREND DATA
+# ══════════════════════════════════════════════════════════════
+
+@app.route('/api/analytics/trends', methods=['GET'])
+def analytics_trends():
+    """Return daily scan counts and threat trends for the past N days."""
+    days = request.args.get('days', 30, type=int)
+    days = max(1, min(days, 90))
+
+    db = get_db()
+
+    daily_scans = db.execute('''
+        SELECT DATE(created_at) as day,
+               COUNT(*) as total,
+               SUM(CASE WHEN verdict IN ('LIKELY_DEEPFAKE','LIKELY_MISINFORMATION','LIKELY_FORGED','LIKELY_MANIPULATED') THEN 1 ELSE 0 END) as threats,
+               ROUND(AVG(risk_score), 1) as avg_risk
+        FROM detection_history
+        WHERE created_at >= datetime('now', ? || ' days')
+        GROUP BY DATE(created_at)
+        ORDER BY day ASC
+    ''', (f'-{days}',)).fetchall()
+
+    type_breakdown = db.execute('''
+        SELECT detection_type,
+               COUNT(*) as count,
+               ROUND(AVG(risk_score), 1) as avg_risk,
+               MAX(risk_score) as max_risk
+        FROM detection_history
+        WHERE created_at >= datetime('now', ? || ' days')
+        GROUP BY detection_type
+        ORDER BY count DESC
+    ''', (f'-{days}',)).fetchall()
+
+    top_threats = db.execute('''
+        SELECT detection_type, verdict, COUNT(*) as count
+        FROM detection_history
+        WHERE verdict IN ('LIKELY_DEEPFAKE','LIKELY_MISINFORMATION','LIKELY_FORGED','LIKELY_MANIPULATED')
+          AND created_at >= datetime('now', ? || ' days')
+        GROUP BY detection_type, verdict
+        ORDER BY count DESC
+        LIMIT 10
+    ''', (f'-{days}',)).fetchall()
+
+    return jsonify({
+        'period_days': days,
+        'daily': [{
+            'date': row['day'],
+            'total_scans': row['total'],
+            'threats': row['threats'],
+            'avg_risk': row['avg_risk'],
+        } for row in daily_scans],
+        'by_type': [{
+            'type': row['detection_type'],
+            'count': row['count'],
+            'avg_risk': row['avg_risk'],
+            'max_risk': round(row['max_risk'], 1),
+        } for row in type_breakdown],
+        'top_threats': [{
+            'type': row['detection_type'],
+            'verdict': row['verdict'],
+            'count': row['count'],
+        } for row in top_threats],
+    }), 200
+
+
+# ══════════════════════════════════════════════════════════════
+#  REPORT EXPORT — SHAREABLE DETECTION REPORT
+# ══════════════════════════════════════════════════════════════
+
+@app.route('/api/report/<int:history_id>', methods=['GET'])
+def export_report(history_id):
+    """Generate a structured, shareable report from a detection history entry."""
+    user = session.get('user')
+    if not user:
+        return jsonify({'error': 'Authentication required'}), 401
+
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'error': 'User not found'}), 404
+
+    db = get_db()
+    row = db.execute(
+        'SELECT * FROM detection_history WHERE id = ? AND user_id = ?',
+        (history_id, user_id)
+    ).fetchone()
+
+    if not row:
+        return jsonify({'error': 'Report not found'}), 404
+
+    findings = json.loads(row['findings']) if row['findings'] else []
+    kenya_warnings = json.loads(row['kenya_warnings']) if row['kenya_warnings'] else []
+    details = json.loads(row['details']) if row['details'] else {}
+
+    report = {
+        'report_id': f'SAFEYE-{row["id"]:06d}',
+        'generated_at': datetime.now(timezone.utc).isoformat(),
+        'platform': 'SafEye — Kenya Election & Media Integrity Shield',
+        'version': config.APP_VERSION,
+        'analysis': {
+            'type': row['detection_type'],
+            'filename': row['filename'],
+            'date': row['created_at'],
+            'risk_score': row['risk_score'],
+            'verdict': row['verdict'],
+            'confidence': row['confidence'],
+            'findings': findings,
+            'details': details,
+        },
+        'kenya_context': {
+            'warnings': kenya_warnings,
+            'legal_framework': [
+                'Computer Misuse and Cybercrimes Act 2018',
+                'National Cohesion and Integration Commission Act',
+                'Elections Act 2011 (as amended)',
+                'Kenya Information and Communications Act',
+            ],
+            'reporting_contacts': {
+                'NCIC': 'complaints@cohesion.or.ke',
+                'DCI_Cybercrime': 'reportcrime@dci.go.ke',
+                'Communications_Authority': 'info@ca.go.ke',
+            },
+        },
+        'disclaimer': (
+            'This report is generated by AI-assisted analysis and should be used '
+            'as a screening tool, not as definitive proof. Always verify findings '
+            'with official sources before taking action.'
+        ),
+    }
+
+    return jsonify(report), 200
+
+
+# ══════════════════════════════════════════════════════════════
+#  THREAT INTELLIGENCE FEED
+# ══════════════════════════════════════════════════════════════
+
+@app.route('/api/threats/recent', methods=['GET'])
+def recent_threats():
+    """Return the most recent high-risk detections as a threat feed."""
+    limit = request.args.get('limit', 20, type=int)
+    limit = max(1, min(limit, 100))
+
+    db = get_db()
+    rows = db.execute('''
+        SELECT id, detection_type, risk_score, verdict, confidence, findings,
+               kenya_warnings, created_at
+        FROM detection_history
+        WHERE verdict IN ('LIKELY_DEEPFAKE','LIKELY_MISINFORMATION','LIKELY_FORGED','LIKELY_MANIPULATED')
+        ORDER BY created_at DESC
+        LIMIT ?
+    ''', (limit,)).fetchall()
+
+    threats = []
+    for row in rows:
+        threats.append({
+            'id': row['id'],
+            'type': row['detection_type'],
+            'risk_score': row['risk_score'],
+            'verdict': row['verdict'],
+            'confidence': row['confidence'],
+            'findings': json.loads(row['findings']) if row['findings'] else [],
+            'kenya_warnings': json.loads(row['kenya_warnings']) if row['kenya_warnings'] else [],
+            'detected_at': row['created_at'],
+        })
+
+    return jsonify({
+        'count': len(threats),
+        'threats': threats,
+    }), 200
+
+
+# ══════════════════════════════════════════════════════════════
 #  PLATFORM STATISTICS (public dashboard stats)
 # ══════════════════════════════════════════════════════════════
 
@@ -1938,6 +2113,9 @@ def version_info():
             'document_verification',
             'video_analysis',
             'election_shield',
+            'analytics_trends',
+            'threat_feed',
+            'report_export',
         ],
     })
 
@@ -1948,6 +2126,7 @@ def version_info():
 
 _health_cache: dict = {"data": None, "expires": 0.0}
 HEALTH_CACHE_TTL = int(os.getenv("HEALTH_CACHE_TTL", "30"))  # seconds
+_app_start_time = time.time()
 
 
 @app.route('/api/health', methods=['GET'])
@@ -1959,14 +2138,44 @@ def health():
         resp.headers["Cache-Control"] = f"public, max-age={HEALTH_CACHE_TTL}"
         return resp
 
+    # System resource metrics
+    system_metrics = {}
+    try:
+        import shutil
+        disk = shutil.disk_usage('/')
+        system_metrics['disk_usage_percent'] = round((disk.used / disk.total) * 100, 1)
+        system_metrics['disk_free_gb'] = round(disk.free / (1024 ** 3), 1)
+    except Exception:
+        pass
+    try:
+        load_1, load_5, load_15 = os.getloadavg()
+        system_metrics['load_avg'] = {
+            '1min': round(load_1, 2),
+            '5min': round(load_5, 2),
+            '15min': round(load_15, 2),
+        }
+    except (OSError, AttributeError):
+        pass
+    try:
+        import resource
+        mem_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        system_metrics['memory_rss_mb'] = round(mem_usage / 1024, 1)
+    except Exception:
+        pass
+
+    # Uptime
+    _uptime = round(time.time() - _app_start_time, 1) if _app_start_time else 0
+
     payload = {
         'status': 'healthy',
         'timestamp': datetime.now(timezone.utc).isoformat(),
+        'uptime_seconds': _uptime,
         'models': {
             'image_loaded': image_detector.ai_model is not None and image_detector.ai_model != 'unavailable',
             'audio_loaded': audio_detector.model is not None,
             'text_loaded': text_detector.pipeline is not None,
         },
+        'system': system_metrics,
         'platform': 'SafEye Kenya',
         'version': config.APP_VERSION,
         'environment': os.getenv('FLASK_ENV', 'production'),
@@ -2005,6 +2214,7 @@ if __name__ == '__main__':
     print("=" * 55)
     print(f"  SafEye — Unified Backend v{config.APP_VERSION}")
     print("  Auth + Detection API + Profiles + History + Election Shield")
+    print("  Analytics + Threat Feed + Report Export")
     print(f"  Environment: {os.getenv('FLASK_ENV', 'production')}")
     print(f"  Running on http://{host}:{port}")
     print("=" * 55)
