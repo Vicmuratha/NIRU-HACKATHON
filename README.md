@@ -342,7 +342,15 @@ TEXT_MODEL_DIR=/code/models/text_model
 
 ## API Reference
 
-### Detection API (`backend/app.py` — port 7860)
+### Detection API (`app.py` — port 7860)
+
+#### API Docs
+
+```
+GET /api/docs
+```
+
+Returns a machine-readable OpenAPI-style summary of the unified backend routes, including detection, analytics, profile, and report endpoints.
 
 #### Health Check
 
