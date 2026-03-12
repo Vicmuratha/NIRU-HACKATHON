@@ -59,6 +59,32 @@ class TestHealthEndpoint:
 
 
 # ═══════════════════════════════════════════════════════════
+#  API DOCS
+# ═══════════════════════════════════════════════════════════
+
+class TestApiDocsEndpoint:
+    def test_api_docs_returns_200(self, client):
+        resp = client.get('/api/docs')
+        assert resp.status_code == 200
+
+    def test_api_docs_has_required_fields(self, client):
+        data = client.get('/api/docs').get_json()
+        assert data['openapi'] == '3.0.0'
+        assert data['basePath'] == '/api'
+        assert 'info' in data
+        assert 'endpoints' in data
+        assert 'servers' in data
+
+    def test_api_docs_lists_core_endpoints(self, client):
+        endpoints = client.get('/api/docs').get_json()['endpoints']
+        assert 'GET /api/health' in endpoints
+        assert 'GET /api/version' in endpoints
+        assert 'GET /api/history' in endpoints
+        assert 'GET /api/report/{history_id}' in endpoints
+        assert 'POST /api/analyze/video' in endpoints
+
+
+# ═══════════════════════════════════════════════════════════
 #  AUTH API
 # ═══════════════════════════════════════════════════════════
 
