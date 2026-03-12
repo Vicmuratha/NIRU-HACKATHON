@@ -2120,6 +2120,101 @@ def version_info():
     })
 
 
+@app.route('/api/docs', methods=['GET'])
+def api_docs():
+    """Return machine-readable API documentation for the unified SafEye app."""
+    return jsonify({
+        'openapi': '3.0.0',
+        'info': {
+            'title': 'SafEye API',
+            'version': config.APP_VERSION,
+            'description': (
+                'Unified SafEye API for deepfake detection, misinformation screening, '
+                'user profiles, analytics, and Kenya-specific reporting context.'
+            ),
+        },
+        'servers': [
+            {'url': request.url_root.rstrip('/')}
+        ],
+        'basePath': '/api',
+        'authentication': {
+            'session_cookie': 'Required for profile, history, and report export endpoints.',
+            'public_endpoints': [
+                '/api/health',
+                '/api/version',
+                '/api/stats',
+                '/api/analytics/trends',
+                '/api/threats/recent',
+                '/api/docs',
+            ],
+        },
+        'endpoints': {
+            'GET /api/docs': {
+                'description': 'Return this API documentation payload.',
+            },
+            'GET /api/health': {
+                'description': 'Health check with model status, system metrics, and cache headers.',
+            },
+            'GET /api/version': {
+                'description': 'Build and capability metadata for the current deployment.',
+            },
+            'GET /api/stats': {
+                'description': 'Public dashboard statistics across scans, users, and threats.',
+            },
+            'GET /api/analytics/trends': {
+                'description': 'Trend data for scans and threats over a configurable number of days.',
+                'query_parameters': {'days': 'integer, optional, clamped to 1-90'},
+            },
+            'GET /api/threats/recent': {
+                'description': 'Recent high-risk detections for the threat feed.',
+                'query_parameters': {'limit': 'integer, optional, clamped to 1-100'},
+            },
+            'GET /api/profile': {
+                'description': 'Return the current authenticated user profile.',
+                'auth_required': True,
+            },
+            'GET /api/history': {
+                'description': 'Return paginated scan history for the authenticated user.',
+                'auth_required': True,
+            },
+            'GET /api/report/{history_id}': {
+                'description': 'Export a structured report for one authenticated scan history record.',
+                'auth_required': True,
+            },
+            'POST /api/analyze/image': {
+                'description': 'Analyze an image for deepfake and manipulation indicators.',
+                'content_type': 'multipart/form-data',
+                'parameters': {'file': 'Image file (png, jpg, jpeg, webp)'},
+            },
+            'POST /api/analyze/audio': {
+                'description': 'Analyze an audio file for manipulation indicators.',
+                'content_type': 'multipart/form-data',
+                'parameters': {'file': 'Audio file (wav, mp3, ogg, flac)'},
+            },
+            'POST /api/analyze/text': {
+                'description': 'Analyze text for fake-news and AI-generation indicators.',
+                'content_type': 'application/json',
+                'parameters': {'text': 'string (required)'},
+            },
+            'POST /api/analyze/forward': {
+                'description': 'Analyze a WhatsApp forward for misinformation patterns.',
+                'content_type': 'application/json',
+                'parameters': {'text': 'string, minimum 10 characters'},
+            },
+            'POST /api/analyze/video': {
+                'description': 'Analyze a video by extracting keyframes and scoring each frame.',
+                'content_type': 'multipart/form-data',
+                'parameters': {'file': 'Video file (mp4, mov, avi, mkv, webm)'},
+            },
+            'POST /api/analyze/document': {
+                'description': 'Analyze a document or screenshot for forgery and manipulation.',
+                'content_type': 'multipart/form-data',
+                'parameters': {'file': 'Image or document screenshot'},
+            },
+        },
+    })
+
+
 # ══════════════════════════════════════════════════════════════
 #  HEALTH CHECK  (cached for 30 s to reduce model-status overhead)
 # ══════════════════════════════════════════════════════════════
